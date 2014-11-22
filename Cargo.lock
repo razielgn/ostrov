@@ -1,4 +1,12 @@
 [root]
 name = "ostrov"
 version = "0.0.1"
+dependencies = [
+ "peg 0.1.0 (git+https://github.com/kevinmehall/rust-peg)",
+]
+
+[[package]]
+name = "peg"
+version = "0.1.0"
+source = "git+https://github.com/kevinmehall/rust-peg#646c41be98651d7462fb6f12f15ef44511af5c11"
 

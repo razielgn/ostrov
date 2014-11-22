@@ -23,3 +23,6 @@ doc = false
 
 [[test]]
 name = "tests"
+
+[dependencies.peg]
+git = "https://github.com/kevinmehall/rust-peg"
