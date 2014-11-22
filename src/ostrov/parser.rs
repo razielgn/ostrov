@@ -3,6 +3,7 @@ extern crate peg_syntax_ext;
 
 #[deriving(Show, PartialEq)]
 pub enum AST {
+    Atom(String),
     Integer(i64),
 }
 
@@ -41,22 +42,66 @@ peg! ast(r#"
 use parser::*;
 
 #[pub]
-value -> AST = integer
+value -> AST =
+    integer
+    / identifier
 
-integer -> AST = sign:sign digits:digits {
-    integer::parse_decimal(digits.as_slice(), &sign)
-}
+identifier -> AST =
+    initial subsequent* {
+        AST::Atom(match_str.to_string())
+    }
+    / peculiar_identifier {
+        AST::Atom(match_str.to_string())
+    }
 
-digits -> String = [0-9]+ {
-    match_str.to_string()
-}
+initial -> &'input str =
+    constituent
+    / special_initial
 
-sign -> IntegerSign = [-+]? {
-    integer::parse_sign(match_str)
-}
+constituent -> &'input str =
+    letter
+
+letter -> &'input str =
+    [a-zA-Z] { match_str }
+
+special_initial -> &'input str =
+    [!$%&*/<=>?^_~] { match_str }
+
+subsequent -> &'input str =
+    initial
+    / digit
+    / special_subsequent
+
+digit -> &'input str =
+    [0-9] { match_str }
+
+peculiar_identifier -> &'input str =
+    (
+        "->" subsequent*
+        / "..."
+        / "+"
+        / "-"
+    )
+    { match_str }
+
+special_subsequent -> &'input str =
+    [+-.@] { match_str }
+
+integer -> AST =
+    sign:sign digits:digits {
+        integer::parse_decimal(digits, &sign)
+    }
+
+digits -> &'input str =
+    [0-9]+ { match_str }
+
+sign -> IntegerSign =
+    [-+]? {
+        integer::parse_sign(match_str)
+    }
 
 "#)
 
-pub fn parse(input: &str) -> AST {
-    ast::value(input).unwrap()
+pub fn parse(input: &str) -> Result<AST, String> {
+    ast::value(input)
 }

@@ -1,20 +1,19 @@
-use ostrov::parser::AST;
-use ostrov::parser::parse;
+use parser_helpers::*;
 
 #[test]
 fn unsigned_integers() {
-    assert_eq!(AST::Integer(0), parse("0"));
-    assert_eq!(AST::Integer(1), parse("1"));
-    assert_eq!(AST::Integer(2), parse("2"));
+    assert_parse("0", integer(0));
+    assert_parse("1", integer(1));
+    assert_parse("2", integer(2));
 }
 
 #[test]
 fn signed_integers() {
-    assert_eq!(AST::Integer(0), parse("+0"));
-    assert_eq!(AST::Integer(1), parse("+1"));
-    assert_eq!(AST::Integer(2), parse("+2"));
+    assert_parse("+0", integer(0));
+    assert_parse("+1", integer(1));
+    assert_parse("+2", integer(2));
 
-    assert_eq!(AST::Integer(0), parse("-0"));
-    assert_eq!(AST::Integer(-1), parse("-1"));
-    assert_eq!(AST::Integer(-2), parse("-2"));
+    assert_parse("-0", integer(0));
+    assert_parse("-1", integer(-1));
+    assert_parse("-2", integer(-2));
 }
