@@ -57,6 +57,6 @@ sign -> IntegerSign = [-+]? {
 
 "#)
 
-pub fn parse(input: &str) -> AST {
-    ast::value(input).unwrap()
+pub fn parse(input: &str) -> Result<AST, String> {
+    ast::value(input)
 }
