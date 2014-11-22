@@ -41,19 +41,24 @@ peg! ast(r#"
 use parser::*;
 
 #[pub]
-value -> AST = integer
+value -> AST =
+    integer
 
-integer -> AST = sign:sign digits:digits {
-    integer::parse_decimal(digits.as_slice(), &sign)
-}
 
-digits -> String = [0-9]+ {
-    match_str.to_string()
-}
 
-sign -> IntegerSign = [-+]? {
-    integer::parse_sign(match_str)
-}
+
+integer -> AST =
+    sign:sign digits:digits {
+        integer::parse_decimal(digits, &sign)
+    }
+
+digits -> &'input str =
+    [0-9]+ { match_str }
+
+sign -> IntegerSign =
+    [-+]? {
+        integer::parse_sign(match_str)
+    }
 
 "#)
 
