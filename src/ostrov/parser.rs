@@ -3,6 +3,7 @@ extern crate peg_syntax_ext;
 
 #[deriving(Show, PartialEq)]
 pub enum AST {
+    Atom(String),
     Integer(i64),
 }
 
@@ -43,9 +44,48 @@ use parser::*;
 #[pub]
 value -> AST =
     integer
+    / identifier
 
+identifier -> AST =
+    initial subsequent* {
+        AST::Atom(match_str.to_string())
+    }
+    / peculiar_identifier {
+        AST::Atom(match_str.to_string())
+    }
 
+initial -> &'input str =
+    constituent
+    / special_initial
 
+constituent -> &'input str =
+    letter
+
+letter -> &'input str =
+    [a-zA-Z] { match_str }
+
+special_initial -> &'input str =
+    [!$%&*/<=>?^_~] { match_str }
+
+subsequent -> &'input str =
+    initial
+    / digit
+    / special_subsequent
+
+digit -> &'input str =
+    [0-9] { match_str }
+
+peculiar_identifier -> &'input str =
+    (
+        "->" subsequent*
+        / "..."
+        / "+"
+        / "-"
+    )
+    { match_str }
+
+special_subsequent -> &'input str =
+    [+-.@] { match_str }
 
 integer -> AST =
     sign:sign digits:digits {
