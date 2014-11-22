@@ -9,3 +9,17 @@ version = "0.0.1"
 keywords = ["language", "lisp", "scheme"]
 license = "MIT"
 authors = ["Federico Ravasio <ravasio.federico@gmail.com>"]
+
+[lib]
+name = "ostrov"
+path = "src/ostrov/lib.rs"
+doctest = false
+test = false
+
+[[bin]]
+name = "ostrov"
+test = false
+doc = false
+
+[[test]]
+name = "tests"
