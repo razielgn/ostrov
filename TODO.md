@@ -20,10 +20,10 @@
 * Identifiers (atoms).
 * Signed integers.
 * Lists.
+* Booleans.
 
 ## Missing
 
-* Booleans.
 * Characters.
 * Strings.
 * Dotted-lists.
