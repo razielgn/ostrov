@@ -37,6 +37,14 @@ pub mod integer {
     }
 }
 
+pub mod atom {
+    use parser::AST;
+
+    pub fn parse(str: &str) -> AST {
+        AST::Atom(str.to_string())
+    }
+}
+
 peg! ast(r#"
 
 use parser::*;
@@ -48,10 +56,10 @@ value -> AST =
 
 identifier -> AST =
     initial subsequent* {
-        AST::Atom(match_str.to_string())
+        atom::parse(match_str)
     }
     / peculiar_identifier {
-        AST::Atom(match_str.to_string())
+        atom::parse(match_str)
     }
 
 initial -> &'input str =
