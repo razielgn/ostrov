@@ -1,11 +1,17 @@
 use ostrov::parser::AST;
 use ostrov::parser::parse;
 
+use std::fmt::Show;
+
 pub fn assert_parse(input: &str, expected: AST) {
     match parse(input) {
         Ok(actual) => assert_eq!(expected, actual),
-        Err(error) => panic!("Expected {} from input \"{}\" , got {}", expected, input, error),
+        Err(error) => panic_expected(input, &expected, &error),
     }
+}
+
+fn panic_expected<A: Show, B: Show>(input: &str, expected: &A, actual: &B) {
+    panic!("Expected {} from input \"{}\" , got {}", expected, input, actual);
 }
 
 pub fn integer(val: i64)   -> AST { AST::Integer(val) }
