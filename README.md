@@ -2,6 +2,10 @@
 
 Ostrov is an R6RS Scheme implementation written in Rust.
 
+## Features
+
+See [TODO](TODO.md) for a list of implemented/missing features.
+
 ## Requirements
 
 * [Rust nightly with Cargo](http://www.rust-lang.org/install.html)
