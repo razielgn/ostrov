@@ -1,13 +1,7 @@
 #[phase(plugin)]
 extern crate peg_syntax_ext;
 
-#[deriving(Show, PartialEq, Clone)]
-pub enum AST {
-    Atom(String),
-    Bool(bool),
-    Integer(i64),
-    List(Vec<AST>),
-}
+use ast::AST;
 
 #[deriving(PartialEq)]
 pub enum IntegerSign {
@@ -16,7 +10,7 @@ pub enum IntegerSign {
 }
 
 pub mod integer {
-    use parser::AST;
+    use ast::AST;
     use parser::IntegerSign;
 
     pub fn parse_decimal(str: &str, sign: &IntegerSign) -> AST {
@@ -40,7 +34,7 @@ pub mod integer {
 }
 
 pub mod atom {
-    use parser::AST;
+    use ast::AST;
 
     pub fn parse(str: &str) -> AST {
         AST::Atom(str.to_string())
@@ -48,7 +42,7 @@ pub mod atom {
 }
 
 pub mod list {
-    use parser::AST;
+    use ast::AST;
 
     pub fn parse(values: Vec<AST>) -> AST {
         AST::List(values)
@@ -56,7 +50,7 @@ pub mod list {
 }
 
 pub mod bool {
-    use parser::AST;
+    use ast::AST;
 
     pub fn parse(str: &str) -> AST {
         AST::Bool(str == "t" || str == "T")
@@ -64,18 +58,17 @@ pub mod bool {
 }
 
 pub mod quoted {
-    use parser::AST;
+    use ast::AST;
+    use ast::atom_quote;
 
     pub fn parse(val: AST) -> AST {
-        AST::List(vec!(
-            AST::Atom("quote".to_string()),
-            val
-        ))
+        AST::List(vec!(atom_quote(), val))
     }
 }
 
 peg! ast(r#"
 
+use ast::AST;
 use parser::*;
 
 #[pub]

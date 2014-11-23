@@ -1,12 +1,9 @@
-use parser::AST;
+use ast::AST;
+use ast::atom_quote;
 
 #[deriving(Show, PartialEq)]
 pub enum Error {
     IrreducibleValue(AST),
-}
-
-fn atom_quote() -> AST {
-    AST::Atom("quote".to_string())
 }
 
 pub fn eval(value: AST) -> Result<AST, Error> {

@@ -1,6 +1,6 @@
+use ostrov::ast::AST;
 use ostrov::eval::Error;
 use ostrov::eval::eval;
-use ostrov::parser::AST;
 use ostrov::parser::parse;
 
 use std::fmt::Show;
