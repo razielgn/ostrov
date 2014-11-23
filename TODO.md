@@ -20,6 +20,7 @@
 * Identifiers (atoms).
 * Signed integers.
 * Lists.
+* Lists with `[]`.
 * Booleans.
 * Quoting.
 
@@ -28,7 +29,6 @@
 * Characters.
 * Strings.
 * Dotted-lists.
-* Lists with `[]`.
 * Vectors.
 * Bytevectors.
 * Unquoting.
