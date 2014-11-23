@@ -33,3 +33,9 @@
 * Quoting/unquoting.
 
 # Evaluation
+
+## Implemented
+
+* Evaluation of primitives (integers and booleans).
+
+## Missing
