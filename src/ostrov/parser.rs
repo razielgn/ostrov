@@ -5,6 +5,7 @@ extern crate peg_syntax_ext;
 pub enum AST {
     Atom(String),
     Integer(i64),
+    List(Vec<AST>),
 }
 
 #[deriving(PartialEq)]
@@ -37,6 +38,22 @@ pub mod integer {
     }
 }
 
+pub mod atom {
+    use parser::AST;
+
+    pub fn parse(str: &str) -> AST {
+        AST::Atom(str.to_string())
+    }
+}
+
+pub mod list {
+    use parser::AST;
+
+    pub fn parse(values: Vec<AST>) -> AST {
+        AST::List(values)
+    }
+}
+
 peg! ast(r#"
 
 use parser::*;
@@ -45,13 +62,14 @@ use parser::*;
 value -> AST =
     integer
     / identifier
+    / list
 
 identifier -> AST =
     initial subsequent* {
-        AST::Atom(match_str.to_string())
+        atom::parse(match_str)
     }
     / peculiar_identifier {
-        AST::Atom(match_str.to_string())
+        atom::parse(match_str)
     }
 
 initial -> &'input str =
@@ -90,6 +108,16 @@ special_subsequent -> &'input str =
 integer -> AST =
     sign:sign digits:digits {
         integer::parse_decimal(digits, &sign)
+    }
+
+list -> AST =
+    "(" values:(value ** whitespace) ")" {
+        list::parse(values)
+    }
+
+whitespace -> &'input str =
+    [ \t\r\n]+ {
+        match_str
     }
 
 digits -> &'input str =

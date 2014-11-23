@@ -8,5 +8,6 @@ pub fn assert_parse(input: &str, expected: AST) {
     }
 }
 
-pub fn integer(val: i64) -> AST { AST::Integer(val) }
-pub fn atom(val: &str)   -> AST { AST::Atom(val.to_string()) }
+pub fn integer(val: i64)   -> AST { AST::Integer(val) }
+pub fn atom(val: &str)     -> AST { AST::Atom(val.to_string()) }
+pub fn list(val: Vec<AST>) -> AST { AST::List(val) }
