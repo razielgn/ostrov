@@ -1,4 +1,4 @@
-use parser_helpers::*;
+use helpers::*;
 
 #[test]
 fn downcase() {

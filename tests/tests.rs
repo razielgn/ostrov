@@ -2,7 +2,7 @@
 
 extern crate ostrov;
 
-mod parser_helpers;
+mod helpers;
 
 mod parser_atoms;
 mod parser_booleans;
