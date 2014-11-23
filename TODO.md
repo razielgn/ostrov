@@ -21,6 +21,7 @@
 * Signed integers.
 * Lists.
 * Booleans.
+* Quoting.
 
 ## Missing
 
@@ -30,7 +31,7 @@
 * Lists with `[]`.
 * Vectors.
 * Bytevectors.
-* Quoting/unquoting.
+* Unquoting.
 
 # Evaluation
 
