@@ -63,6 +63,17 @@ pub mod bool {
     }
 }
 
+pub mod quoted {
+    use parser::AST;
+
+    pub fn parse(val: AST) -> AST {
+        AST::List(vec!(
+            AST::Atom("quote".to_string()),
+            val
+        ))
+    }
+}
+
 peg! ast(r#"
 
 use parser::*;
@@ -72,6 +83,7 @@ value -> AST =
     integer
     / boolean
     / identifier
+    / quoted
     / list
 
 identifier -> AST =
@@ -144,6 +156,11 @@ digits -> &'input str =
 sign -> IntegerSign =
     [-+]? {
         integer::parse_sign(match_str)
+    }
+
+quoted -> AST =
+    "'" value:value {
+        quoted::parse(value)
     }
 
 "#)
