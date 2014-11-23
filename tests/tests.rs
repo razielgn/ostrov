@@ -11,3 +11,4 @@ mod parser_lists;
 mod parser_quoted;
 
 mod eval_primitives;
+mod eval_quoted;
