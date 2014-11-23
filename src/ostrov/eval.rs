@@ -1,4 +1,5 @@
-use parser::AST;
+use ast::AST;
+use ast::atom_quote;
 
 #[deriving(Show, PartialEq)]
 pub enum Error {
@@ -6,9 +7,18 @@ pub enum Error {
 }
 
 pub fn eval(value: AST) -> Result<AST, Error> {
-    if value.is_reducible() {
-        Ok(value)
-    } else {
-        Err(Error::IrreducibleValue(value))
+    match value {
+        AST::Atom(atom) =>
+            Err(Error::IrreducibleValue(AST::Atom(atom))),
+        AST::Bool(_b) =>
+            Ok(value),
+        AST::Integer(_i) =>
+            Ok(value),
+        AST::List(list) =>
+            if !list.is_empty() && list[0] == atom_quote() {
+                Ok(list[1].clone())
+            } else {
+                Err(Error::IrreducibleValue(AST::List(list)))
+            },
     }
 }
