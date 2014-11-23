@@ -6,9 +6,14 @@ pub enum Error {
 }
 
 pub fn eval(value: AST) -> Result<AST, Error> {
-    if value.is_reducible() {
-        Ok(value)
-    } else {
-        Err(Error::IrreducibleValue(value))
+    match value {
+        AST::Atom(atom) =>
+            Err(Error::IrreducibleValue(AST::Atom(atom))),
+        AST::Bool(_b) =>
+            Ok(value),
+        AST::Integer(_i) =>
+            Ok(value),
+        AST::List(list) =>
+            Err(Error::IrreducibleValue(AST::List(list))),
     }
 }
