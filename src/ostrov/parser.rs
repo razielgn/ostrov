@@ -136,6 +136,9 @@ list -> AST =
     "(" values:(value ** whitespace) ")" {
         list::parse(values)
     }
+    / "[" values:(value ** whitespace) "]" {
+        list::parse(values)
+    }
 
 boolean -> AST =
     "\#" value:boolean_char {
