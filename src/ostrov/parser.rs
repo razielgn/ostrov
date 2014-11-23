@@ -151,3 +151,14 @@ sign -> IntegerSign =
 pub fn parse(input: &str) -> Result<AST, String> {
     ast::value(input)
 }
+
+impl AST {
+    pub fn is_reducible(&self) -> bool {
+        match *self {
+            AST::Atom(ref _a) => false,
+            AST::Bool(_b)     => true,
+            AST::Integer(_i)  => true,
+            AST::List(ref _l) => false,
+        }
+    }
+}
