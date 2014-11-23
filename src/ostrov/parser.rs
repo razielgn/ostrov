@@ -4,6 +4,7 @@ extern crate peg_syntax_ext;
 #[deriving(Show, PartialEq)]
 pub enum AST {
     Atom(String),
+    Bool(bool),
     Integer(i64),
     List(Vec<AST>),
 }
@@ -54,6 +55,14 @@ pub mod list {
     }
 }
 
+pub mod bool {
+    use parser::AST;
+
+    pub fn parse(str: &str) -> AST {
+        AST::Bool(str == "t" || str == "T")
+    }
+}
+
 peg! ast(r#"
 
 use parser::*;
@@ -61,6 +70,7 @@ use parser::*;
 #[pub]
 value -> AST =
     integer
+    / boolean
     / identifier
     / list
 
@@ -114,6 +124,14 @@ list -> AST =
     "(" values:(value ** whitespace) ")" {
         list::parse(values)
     }
+
+boolean -> AST =
+    "\#" value:boolean_char {
+        bool::parse(value)
+    }
+
+boolean_char -> &'input str =
+    [tfTF] { match_str }
 
 whitespace -> &'input str =
     [ \t\r\n]+ {
