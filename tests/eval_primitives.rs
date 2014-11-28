@@ -11,8 +11,8 @@ fn booleans() {
 }
 
 #[test]
-fn lists() {
-    assert_eval_err("()", irreducible_val_error(list(vec!())));
+fn empty_list_() {
+    assert_eval("()", empty_list());
 }
 
 #[test]

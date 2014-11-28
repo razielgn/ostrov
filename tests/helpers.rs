@@ -48,3 +48,4 @@ pub fn bool(val: bool)     -> AST { AST::Bool(val) }
 
 pub fn irreducible_val_error(val: AST) -> Error { Error::IrreducibleValue(val) }
 pub fn unbound_variable_error(val: &str) -> Error { Error::UnboundVariable(val.to_string()) }
+pub fn unappliable_value_error(val: AST) -> Error { Error::UnappliableValue(val) }
