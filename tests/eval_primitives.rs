@@ -31,6 +31,17 @@ fn plus_procedure() {
 }
 
 #[test]
+fn minus_procedure() {
+    assert_eval("(- 2)", integer(-2));
+    assert_eval("(- 2 3)", integer(-1));
+    assert_eval("(- 2 3 -9)", integer(8));
+    assert_eval("(- 2 3 -9 1)", integer(7));
+
+    assert_eval_err("(-)", bad_arity("-"));
+    assert_eval_err("(- ())", wrong_argument_type(empty_list()));
+}
+
+#[test]
 fn atoms() {
     assert_eval_err("atom", unbound_variable_error("atom"));
 }

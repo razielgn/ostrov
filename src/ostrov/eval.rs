@@ -42,6 +42,7 @@ fn eval_fun(name: &str, args: &[AST]) -> Result<AST, Error> {
     match name {
         "quote" => eval_fun_quote(args),
         "+"     => eval_fun_plus(args),
+        "-"     => eval_fun_minus(args),
         _       => Err(Error::UnboundVariable(name.to_string()))
     }
 }
@@ -61,6 +62,41 @@ fn eval_fun_plus(args: &[AST]) -> Result<AST, Error> {
     }
 
     Ok(AST::Integer(sum))
+}
+
+fn eval_fun_minus(args: &[AST]) -> Result<AST, Error> {
+    if args.len() == 0 {
+        Err(Error::BadArity("-".to_string()))
+    } else {
+        let head = args.head().unwrap();
+        let tail = args.tail();
+
+        let evald_head = try!(eval(head.clone()));
+
+        let start = match evald_head {
+            AST::Integer(n) => n,
+            _               => return Err(Error::WrongArgumentType(evald_head))
+        };
+
+        if tail.is_empty() {
+            Ok(AST::Integer(-start))
+        } else {
+            let mut sum: i64 = 0;
+
+            for val in tail.iter() {
+                let evald_val = try!(eval(val.clone()));
+
+                match evald_val {
+                    AST::Integer(n) =>
+                        sum = sum + n,
+                    _ =>
+                        return Err(Error::WrongArgumentType(evald_val))
+                };
+            }
+
+            Ok(AST::Integer(start - sum))
+        }
+    }
 }
 
 fn eval_fun_quote(args: &[AST]) -> Result<AST, Error> {
