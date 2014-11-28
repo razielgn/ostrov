@@ -7,6 +7,7 @@ pub enum Error {
     UnboundVariable(String),
     UnappliableValue(AST),
     WrongArgumentType(AST),
+    BadArity(String),
 }
 
 pub fn eval(value: AST) -> Result<AST, Error> {
