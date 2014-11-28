@@ -4,12 +4,13 @@ use ast::atom_quote;
 #[deriving(Show, PartialEq)]
 pub enum Error {
     IrreducibleValue(AST),
+    UnboundVariable(String),
 }
 
 pub fn eval(value: AST) -> Result<AST, Error> {
     match value {
         AST::Atom(atom) =>
-            Err(Error::IrreducibleValue(AST::Atom(atom))),
+            Err(Error::UnboundVariable(atom)),
         AST::Bool(_b) =>
             Ok(value),
         AST::Integer(_i) =>

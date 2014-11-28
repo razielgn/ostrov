@@ -17,5 +17,5 @@ fn lists() {
 
 #[test]
 fn atoms() {
-    assert_eval_err("atom", irreducible_val_error(atom("atom")));
+    assert_eval_err("atom", unbound_variable_error("atom"));
 }
