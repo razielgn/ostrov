@@ -3,7 +3,6 @@ use ast::atom_quote;
 
 #[deriving(Show, PartialEq)]
 pub enum Error {
-    IrreducibleValue(AST),
     UnboundVariable(String),
     UnappliableValue(AST),
     WrongArgumentType(AST),
