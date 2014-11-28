@@ -41,8 +41,26 @@ fn eval_list(list: &[AST]) -> Result<AST, Error> {
 fn eval_fun(name: &str, args: &[AST]) -> Result<AST, Error> {
     match name {
         "quote" => eval_fun_quote(args),
+        "+"     => eval_fun_plus(args),
         _       => Err(Error::UnboundVariable(name.to_string()))
     }
+}
+
+fn eval_fun_plus(args: &[AST]) -> Result<AST, Error> {
+    let mut sum: i64 = 0;
+
+    for val in args.iter() {
+        let evald_val = try!(eval(val.clone()));
+
+        match evald_val {
+            AST::Integer(n) =>
+                sum = sum + n,
+            _ =>
+                return Err(Error::WrongArgumentType(evald_val))
+        };
+    }
+
+    Ok(AST::Integer(sum))
 }
 
 fn eval_fun_quote(args: &[AST]) -> Result<AST, Error> {
