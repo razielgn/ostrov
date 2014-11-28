@@ -1,5 +1,4 @@
 use ast::AST;
-use ast::atom_quote;
 
 #[deriving(Show, PartialEq)]
 pub enum Error {
