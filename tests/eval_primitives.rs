@@ -3,11 +3,15 @@ use helpers::*;
 #[test]
 fn integers() {
     assert_eval("0", integer(0));
+
+    assert_eval_err("(0)", unappliable_value_error(integer(0)));
 }
 
 #[test]
 fn booleans() {
     assert_eval("#t", bool(true));
+
+    assert_eval_err("(#t)", unappliable_value_error(bool(true)));
 }
 
 #[test]
