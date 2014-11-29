@@ -43,6 +43,7 @@ fn eval_fun(name: &str, args: &[AST]) -> Result<AST, Error> {
         "+"     => eval_fun_plus(args),
         "-"     => eval_fun_minus(args),
         "*"     => eval_fun_product(args),
+        "/"     => eval_fun_division(args),
         _       => Err(Error::UnboundVariable(name.to_string()))
     }
 }
@@ -95,6 +96,39 @@ fn eval_fun_minus(args: &[AST]) -> Result<AST, Error> {
             }
 
             Ok(AST::Integer(start - sum))
+        }
+    }
+}
+
+fn eval_fun_division(args: &[AST]) -> Result<AST, Error> {
+    if args.len() == 0 {
+        Err(Error::BadArity("/".to_string()))
+    } else {
+        let head = args.head().unwrap();
+        let tail = args.tail();
+
+        let evald_head = try!(eval(head.clone()));
+
+        let mut div = match evald_head {
+            AST::Integer(n) => n,
+            _               => return Err(Error::WrongArgumentType(evald_head))
+        };
+
+        if tail.is_empty() {
+            Ok(AST::Integer(1 / div))
+        } else {
+            for val in tail.iter() {
+                let evald_val = try!(eval(val.clone()));
+
+                match evald_val {
+                    AST::Integer(n) =>
+                        div = div / n,
+                    _ =>
+                        return Err(Error::WrongArgumentType(evald_val))
+                };
+            }
+
+            Ok(AST::Integer(div))
         }
     }
 }

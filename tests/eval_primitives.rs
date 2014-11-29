@@ -53,6 +53,17 @@ fn product_procedure() {
 }
 
 #[test]
+fn division_procedure() {
+    assert_eval("(/ 2)", integer(0));
+    assert_eval("(/ 9 3)", integer(3));
+    assert_eval("(/ 9 3 3)", integer(1));
+    assert_eval("(/ 27 3 3 3)", integer(1));
+
+    assert_eval_err("(/)", bad_arity("/"));
+    assert_eval_err("(/ ())", wrong_argument_type(empty_list()));
+}
+
+#[test]
 fn atoms() {
     assert_eval_err("atom", unbound_variable_error("atom"));
 }
