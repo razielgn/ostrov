@@ -42,6 +42,17 @@ fn minus_procedure() {
 }
 
 #[test]
+fn product_procedure() {
+    assert_eval("(*)", integer(1));
+    assert_eval("(* 2)", integer(2));
+    assert_eval("(* 2 3)", integer(6));
+    assert_eval("(* 2 3 -9)", integer(-54));
+    assert_eval("(* 2 3 -9 2)", integer(-108));
+
+    assert_eval_err("(* ())", wrong_argument_type(empty_list()));
+}
+
+#[test]
 fn atoms() {
     assert_eval_err("atom", unbound_variable_error("atom"));
 }
