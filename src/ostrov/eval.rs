@@ -31,13 +31,13 @@ fn eval_list(list: &[AST]) -> Result<AST, Error> {
 
     match fun {
         &AST::Atom(ref atom) =>
-            eval_fun(atom.as_slice(), args),
+            apply(atom.as_slice(), args),
         _ =>
             Err(Error::UnappliableValue(fun.clone()))
     }
 }
 
-fn eval_fun(name: &str, args: &[AST]) -> Result<AST, Error> {
+fn apply(name: &str, args: &[AST]) -> Result<AST, Error> {
     match name {
         "quote" => eval_fun_quote(args),
         "+"     => eval_fun_plus(args),
