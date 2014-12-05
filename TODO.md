@@ -39,5 +39,6 @@
 
 * Evaluation of primitives (integers and booleans).
 * Evaluation of quoted values.
+* Application of `+`, `-`, `*`, `/`.
 
 ## Missing
