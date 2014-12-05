@@ -27,19 +27,32 @@ fn eval_list(list: &[AST]) -> Result<AST, Error> {
     }
 
     let fun = list.head().unwrap();
-    let args = list.tail();
 
     match fun {
-        &AST::Atom(ref atom) =>
-            apply(atom.as_slice(), args),
+        &AST::Atom(ref atom) if atom.as_slice() == "quote" =>
+            eval_quote(list),
+        &AST::Atom(ref atom) => {
+            let args = try!(eval_args(list.tail()));
+            apply(atom.as_slice(), args.as_slice())
+        },
         _ =>
             Err(Error::UnappliableValue(fun.clone()))
     }
 }
 
+fn eval_args(args: &[AST]) -> Result<Vec<AST>, Error> {
+    let mut out = Vec::with_capacity(args.len());
+
+    for arg in args.iter() {
+        let evald_arg = try!(eval(arg.clone()));
+        out.push(evald_arg);
+    }
+
+    Ok(out)
+}
+
 fn apply(name: &str, args: &[AST]) -> Result<AST, Error> {
     match name {
-        "quote" => eval_fun_quote(args),
         "+"     => eval_fun_plus(args),
         "-"     => eval_fun_minus(args),
         "*"     => eval_fun_product(args),
@@ -52,13 +65,10 @@ fn eval_fun_plus(args: &[AST]) -> Result<AST, Error> {
     let mut sum: i64 = 0;
 
     for val in args.iter() {
-        let evald_val = try!(eval(val.clone()));
-
-        match evald_val {
-            AST::Integer(n) =>
-                sum = sum + n,
-            _ =>
-                return Err(Error::WrongArgumentType(evald_val))
+        if let &AST::Integer(n) = val {
+            sum += n
+        } else {
+            return Err(Error::WrongArgumentType(val.clone()))
         };
     }
 
@@ -67,89 +77,80 @@ fn eval_fun_plus(args: &[AST]) -> Result<AST, Error> {
 
 fn eval_fun_minus(args: &[AST]) -> Result<AST, Error> {
     if args.len() == 0 {
-        Err(Error::BadArity("-".to_string()))
-    } else {
-        let head = args.head().unwrap();
-        let tail = args.tail();
+        return Err(Error::BadArity("-".to_string()))
+    }
 
-        let evald_head = try!(eval(head.clone()));
+    let head = args.head().unwrap();
+    let tail = args.tail();
 
-        let start = match evald_head {
-            AST::Integer(n) => n,
-            _               => return Err(Error::WrongArgumentType(evald_head))
+    let start =
+        if let &AST::Integer(n) = head {
+            n
+        } else {
+            return Err(Error::WrongArgumentType(head.clone()))
         };
 
-        if tail.is_empty() {
-            Ok(AST::Integer(-start))
-        } else {
-            let mut sum: i64 = 0;
-
-            for val in tail.iter() {
-                let evald_val = try!(eval(val.clone()));
-
-                match evald_val {
-                    AST::Integer(n) =>
-                        sum = sum + n,
-                    _ =>
-                        return Err(Error::WrongArgumentType(evald_val))
-                };
-            }
-
-            Ok(AST::Integer(start - sum))
-        }
+    if tail.is_empty() {
+        return Ok(AST::Integer(-start));
     }
+
+    let mut sum: i64 = 0;
+
+    for val in tail.iter() {
+        if let &AST::Integer(n) = val {
+            sum += n;
+        } else {
+            return Err(Error::WrongArgumentType(val.clone()))
+        };
+    }
+
+    Ok(AST::Integer(start - sum))
 }
 
 fn eval_fun_division(args: &[AST]) -> Result<AST, Error> {
     if args.len() == 0 {
-        Err(Error::BadArity("/".to_string()))
-    } else {
-        let head = args.head().unwrap();
-        let tail = args.tail();
+        return Err(Error::BadArity("/".to_string()))
+    }
 
-        let evald_head = try!(eval(head.clone()));
+    let head = args.head().unwrap();
+    let tail = args.tail();
 
-        let mut div = match evald_head {
-            AST::Integer(n) => n,
-            _               => return Err(Error::WrongArgumentType(evald_head))
+    let mut div =
+        if let &AST::Integer(n) = head {
+            n
+        } else {
+            return Err(Error::WrongArgumentType(head.clone()))
         };
 
-        if tail.is_empty() {
-            Ok(AST::Integer(1 / div))
-        } else {
-            for val in tail.iter() {
-                let evald_val = try!(eval(val.clone()));
-
-                match evald_val {
-                    AST::Integer(n) =>
-                        div = div / n,
-                    _ =>
-                        return Err(Error::WrongArgumentType(evald_val))
-                };
-            }
-
-            Ok(AST::Integer(div))
-        }
+    if tail.is_empty() {
+        return Ok(AST::Integer(1 / div))
     }
+
+    for val in tail.iter() {
+        if let &AST::Integer(n) = val {
+            div /= n;
+        } else {
+            return Err(Error::WrongArgumentType(val.clone()))
+        };
+    }
+
+    Ok(AST::Integer(div))
 }
 
 fn eval_fun_product(args: &[AST]) -> Result<AST, Error> {
     let mut product: i64 = 1;
 
     for val in args.iter() {
-        let evald_val = try!(eval(val.clone()));
-
-        match evald_val {
-            AST::Integer(n) =>
-                product = product * n,
-            _ =>
-                return Err(Error::WrongArgumentType(evald_val))
+        if let &AST::Integer(n) = val {
+            product *= n;
+        } else {
+            return Err(Error::WrongArgumentType(val.clone()))
         };
     }
 
     Ok(AST::Integer(product))
 }
 
-fn eval_fun_quote(args: &[AST]) -> Result<AST, Error> {
-    Ok(args[0].clone())
+fn eval_quote(list: &[AST]) -> Result<AST, Error> {
+    Ok(list.tail()[0].clone())
 }
