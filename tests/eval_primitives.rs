@@ -75,6 +75,17 @@ fn equal_sign() {
 }
 
 #[test]
+fn less_than_sign() {
+    assert_eval("(<)", bool(true));
+    assert_eval("(< 1)", bool(true));
+    assert_eval("(< 1 2)", bool(true));
+    assert_eval("(< 1 1)", bool(false));
+    assert_eval("(< 1 2 1)", bool(false));
+    assert_eval("(< 1 2 3 1)", bool(false));
+    assert_eval("(< 1 2 3 4 5)", bool(true));
+}
+
+#[test]
 fn atoms() {
     assert_eval_err("atom", unbound_variable_error("atom"));
 }
