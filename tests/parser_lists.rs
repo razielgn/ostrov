@@ -1,13 +1,13 @@
 use helpers::*;
 
 #[test]
-fn empty_list() {
-    assert_parse("()", list(vec!()));
+fn empty_list_() {
+    assert_parse("()", empty_list());
 }
 
 #[test]
 fn empty_list_with_brackets() {
-    assert_parse("[]", list(vec!()));
+    assert_parse("[]", empty_list());
 }
 
 #[test]
