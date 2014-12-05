@@ -53,29 +53,23 @@ fn eval_args(args: &[AST]) -> Result<Vec<AST>, Error> {
 
 fn apply(name: &str, args: &[AST]) -> Result<AST, Error> {
     match name {
-        "+"     => eval_fun_plus(args),
-        "-"     => eval_fun_minus(args),
-        "*"     => eval_fun_product(args),
-        "/"     => eval_fun_division(args),
-        _       => Err(Error::UnboundVariable(name.to_string()))
+        "+" => eval_fun_plus(args),
+        "-" => eval_fun_minus(args),
+        "*" => eval_fun_product(args),
+        "/" => eval_fun_division(args),
+        _   => Err(Error::UnboundVariable(name.to_string()))
     }
 }
 
 fn eval_fun_plus(args: &[AST]) -> Result<AST, Error> {
-    let mut sum: i64 = 0;
-
-    for val in args.iter() {
-        if let &AST::Integer(n) = val {
-            sum += n
-        } else {
-            return Err(Error::WrongArgumentType(val.clone()))
-        };
-    }
-
+    let args_ = try!(list_of_integers(args));
+    let sum = args_.iter().fold(0, |sum, n| sum + *n);
     Ok(AST::Integer(sum))
 }
 
-fn eval_fun_minus(args: &[AST]) -> Result<AST, Error> {
+fn eval_fun_minus(args_: &[AST]) -> Result<AST, Error> {
+    let args = try!(list_of_integers(args_));
+
     if args.len() == 0 {
         return Err(Error::BadArity("-".to_string()))
     }
@@ -83,31 +77,17 @@ fn eval_fun_minus(args: &[AST]) -> Result<AST, Error> {
     let head = args.head().unwrap();
     let tail = args.tail();
 
-    let start =
-        if let &AST::Integer(n) = head {
-            n
-        } else {
-            return Err(Error::WrongArgumentType(head.clone()))
-        };
-
     if tail.is_empty() {
-        return Ok(AST::Integer(-start));
+        return Ok(AST::Integer(- *head))
     }
 
-    let mut sum: i64 = 0;
-
-    for val in tail.iter() {
-        if let &AST::Integer(n) = val {
-            sum += n;
-        } else {
-            return Err(Error::WrongArgumentType(val.clone()))
-        };
-    }
-
-    Ok(AST::Integer(start - sum))
+    let tail_sum = tail.iter().fold(0, |sum, n| sum + *n);
+    Ok(AST::Integer(*head - tail_sum))
 }
 
-fn eval_fun_division(args: &[AST]) -> Result<AST, Error> {
+fn eval_fun_division(args_: &[AST]) -> Result<AST, Error> {
+    let args = try!(list_of_integers(args_));
+
     if args.len() == 0 {
         return Err(Error::BadArity("/".to_string()))
     }
@@ -115,42 +95,34 @@ fn eval_fun_division(args: &[AST]) -> Result<AST, Error> {
     let head = args.head().unwrap();
     let tail = args.tail();
 
-    let mut div =
-        if let &AST::Integer(n) = head {
-            n
-        } else {
-            return Err(Error::WrongArgumentType(head.clone()))
-        };
-
     if tail.is_empty() {
-        return Ok(AST::Integer(1 / div))
+        return Ok(AST::Integer(1 / *head))
     }
 
-    for val in tail.iter() {
-        if let &AST::Integer(n) = val {
-            div /= n;
-        } else {
-            return Err(Error::WrongArgumentType(val.clone()))
-        };
-    }
-
+    let div = tail.iter().fold(*head, |div, n| div / *n);
     Ok(AST::Integer(div))
 }
 
-fn eval_fun_product(args: &[AST]) -> Result<AST, Error> {
-    let mut product: i64 = 1;
-
-    for val in args.iter() {
-        if let &AST::Integer(n) = val {
-            product *= n;
-        } else {
-            return Err(Error::WrongArgumentType(val.clone()))
-        };
-    }
-
+fn eval_fun_product(args_: &[AST]) -> Result<AST, Error> {
+    let args = try!(list_of_integers(args_));
+    let product = args.iter().fold(1, |product, n| product * *n);
     Ok(AST::Integer(product))
 }
 
 fn eval_quote(list: &[AST]) -> Result<AST, Error> {
     Ok(list.tail()[0].clone())
+}
+
+fn list_of_integers(list: &[AST]) -> Result<Vec<i64>, Error> {
+    let mut integers = Vec::with_capacity(list.len());
+
+    for val in list.iter() {
+        if let &AST::Integer(n) = val {
+            integers.push(n);
+        } else {
+            return Err(Error::WrongArgumentType(val.clone()))
+        };
+    }
+
+    Ok(integers)
 }
