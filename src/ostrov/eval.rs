@@ -57,6 +57,7 @@ fn apply(name: &str, args: &[AST]) -> Result<AST, Error> {
         "-" => eval_fun_minus(args),
         "*" => eval_fun_product(args),
         "/" => eval_fun_division(args),
+        "=" => eval_fun_equals(args),
         _   => Err(Error::UnboundVariable(name.to_string()))
     }
 }
@@ -107,6 +108,17 @@ fn eval_fun_product(args_: &[AST]) -> Result<AST, Error> {
     let args = try!(list_of_integers(args_));
     let product = args.iter().fold(1, |product, n| product * *n);
     Ok(AST::Integer(product))
+}
+
+fn eval_fun_equals(args_: &[AST]) -> Result<AST, Error> {
+    if args_.len() < 2 {
+        return Ok(AST::Bool(true))
+    }
+
+    let args = try!(list_of_integers(args_));
+    let head = args.head().unwrap();
+    let outcome = args.iter().skip(1).all(|n| *n == *head);
+    Ok(AST::Bool(outcome))
 }
 
 fn eval_quote(list: &[AST]) -> Result<AST, Error> {

@@ -64,6 +64,17 @@ fn division_procedure() {
 }
 
 #[test]
+fn equal_sign() {
+    assert_eval("(=)", bool(true));
+    assert_eval("(= 1)", bool(true));
+    assert_eval("(= 23 23)", bool(true));
+    assert_eval("(= 23 42)", bool(false));
+    assert_eval("(= 23 23 42)", bool(false));
+    assert_eval("(= 23 23 23 42)", bool(false));
+    assert_eval("(= 23 23 23 23)", bool(true));
+}
+
+#[test]
 fn atoms() {
     assert_eval_err("atom", unbound_variable_error("atom"));
 }
