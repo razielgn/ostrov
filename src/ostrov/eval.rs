@@ -59,6 +59,7 @@ fn apply(name: &str, args: &[AST]) -> Result<AST, Error> {
         "/" => eval_fun_division(args),
         "=" => eval_fun_equals(args),
         "<" => eval_fun_less_than(args),
+        ">" => eval_fun_greater_than(args),
         _   => Err(Error::UnboundVariable(name.to_string()))
     }
 }
@@ -129,6 +130,16 @@ fn eval_fun_less_than(args_: &[AST]) -> Result<AST, Error> {
 
     let args = try!(list_of_integers(args_));
     let outcome = range(0, args.len() - 1).all(|i| args[i] < args[i + 1u]);
+    Ok(AST::Bool(outcome))
+}
+
+fn eval_fun_greater_than(args_: &[AST]) -> Result<AST, Error> {
+    if args_.len() < 2 {
+        return Ok(AST::Bool(true))
+    }
+
+    let args = try!(list_of_integers(args_));
+    let outcome = range(0, args.len() - 1).all(|i| args[i] > args[i + 1u]);
     Ok(AST::Bool(outcome))
 }
 
