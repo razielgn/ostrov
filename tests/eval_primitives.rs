@@ -97,6 +97,17 @@ fn greater_than_sign() {
 }
 
 #[test]
+fn not() {
+    assert_eval("(not #f)", bool(true));
+    assert_eval("(not #t)", bool(false));
+    assert_eval("(not 2)", bool(false));
+    assert_eval("(not 'a)", bool(false));
+
+    assert_eval_err("(not)", bad_arity("not"));
+    assert_eval_err("(not 2 3)", bad_arity("not"));
+}
+
+#[test]
 fn atoms() {
     assert_eval_err("atom", unbound_variable_error("atom"));
 }
