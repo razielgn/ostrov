@@ -224,7 +224,7 @@ fn eval_or(args: &[AST]) -> Result<AST, Error> {
 }
 
 fn eval_if(args: &[AST]) -> Result<AST, Error> {
-    if args.len() != 3 {
+    if args.len() < 1 || args.len() > 3 {
         return Err(Error::BadArity("if".to_string()))
     }
 
@@ -233,7 +233,11 @@ fn eval_if(args: &[AST]) -> Result<AST, Error> {
     let result = if condition != AST::Bool(false) {
         try!(eval(args[1].clone()))
     } else {
-        try!(eval(args[2].clone()))
+        if args.len() == 2 {
+            AST::Bool(false)
+        } else {
+            try!(eval(args[2].clone()))
+        }
     };
 
     Ok(result)
