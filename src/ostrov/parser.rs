@@ -83,7 +83,10 @@ use ast::AST;
 use parser::*;
 
 #[pub]
-grammar -> AST =
+grammar -> Vec<AST> =
+    expression*
+
+expression -> AST =
     __ ast:value {
         ast
     }
@@ -183,6 +186,6 @@ whitespace =
 
 "#)
 
-pub fn parse(input: &str) -> Result<AST, String> {
+pub fn parse(input: &str) -> Result<Vec<AST>, String> {
     ast::grammar(input)
 }
