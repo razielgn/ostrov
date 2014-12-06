@@ -6,6 +6,7 @@ pub enum Error {
     UnappliableValue(AST),
     WrongArgumentType(AST),
     BadArity(String),
+    IrreducibleValue(AST),
 }
 
 pub fn eval(value: AST) -> Result<AST, Error> {
@@ -18,6 +19,8 @@ pub fn eval(value: AST) -> Result<AST, Error> {
             Ok(value),
         AST::List(ref list) =>
             eval_list(list.as_slice()),
+        AST::DottedList(ref _list, ref _val) =>
+            Err(Error::IrreducibleValue(value.clone())),
     }
 }
 

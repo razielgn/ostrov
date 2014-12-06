@@ -47,6 +47,17 @@ pub mod list {
     pub fn parse(values: Vec<AST>) -> AST {
         AST::List(values)
     }
+
+    pub fn parse_dotted(mut left: Vec<AST>, right: AST) -> AST {
+        match right {
+            AST::List(list) => {
+                left.push_all(list.as_slice());
+                AST::List(left)
+            }
+            _ =>
+                AST::DottedList(left, box right)
+        }
+    }
 }
 
 pub mod bool {
@@ -136,6 +147,12 @@ list -> AST =
     }
     / "[" values:(value ** __) "]" __ {
         list::parse(values)
+    }
+    / "(" left:(value ++ __) "." __ right:value ")" __ {
+        list::parse_dotted(left, right)
+    }
+    / "[" left:(value ++ __) "." __ right:value "]" __ {
+        list::parse_dotted(left, right)
     }
 
 boolean -> AST =
