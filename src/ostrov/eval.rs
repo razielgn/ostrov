@@ -33,6 +33,8 @@ fn eval_list(list: &[AST]) -> Result<AST, Error> {
             eval_quote(list),
         &AST::Atom(ref atom) if atom.as_slice() == "and" =>
             eval_and(list.tail()),
+        &AST::Atom(ref atom) if atom.as_slice() == "or" =>
+            eval_or(list.tail()),
         &AST::Atom(ref atom) => {
             let args = try!(eval_args(list.tail()));
             apply(atom.as_slice(), args.as_slice())
@@ -195,6 +197,22 @@ fn eval_and(args: &[AST]) -> Result<AST, Error> {
         let val = try!(eval(val.clone()));
 
         if val == AST::Bool(false) {
+            return Ok(val)
+        }
+
+        last = val;
+    }
+
+    Ok(last)
+}
+
+fn eval_or(args: &[AST]) -> Result<AST, Error> {
+    let mut last = AST::Bool(false);
+
+    for val in args.iter() {
+        let val = try!(eval(val.clone()));
+
+        if val != AST::Bool(false) {
             return Ok(val)
         }
 

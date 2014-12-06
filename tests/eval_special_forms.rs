@@ -16,3 +16,11 @@ fn and() {
     assert_eval("(and #t 2)", integer(2));
     assert_eval("(and 1 #f a)", bool(false));
 }
+
+#[test]
+fn or() {
+    assert_eval("(or)", bool(false));
+    assert_eval("(or (+ 2 3))", integer(5));
+    assert_eval("(or #f 2)", integer(2));
+    assert_eval("(or 1 a)", integer(1));
+}
