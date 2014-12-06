@@ -1,7 +1,7 @@
 use helpers::*;
 
 #[test]
-fn any_value() {
+fn quote() {
     assert_eval("'1", integer(1));
     assert_eval("'a", atom("a"));
     assert_eval("'#t", bool(true));
