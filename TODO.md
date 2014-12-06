@@ -42,5 +42,6 @@
 * Application of `+`, `-`, `*`, `/`.
 * Application of `=`, `<`, `>`, `<=`, `>=` and `not`.
 * Evaluation of special forms `and` and `or`.
+* Evaluation of special form `if`.
 
 ## Missing
