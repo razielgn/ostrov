@@ -32,6 +32,10 @@ pub fn assert_eval_err(input: &str, expected: Error) {
     }
 }
 
+pub fn assert_fmt(input: &str, value: AST) {
+    assert_eq!(input, format!("{}", value));
+}
+
 fn panic_expected<A: Show, B: Show>(input: &str, expected: &A, actual: &B) {
     panic!("Expected {} from input \"{}\" , got {}", expected, input, actual);
 }
