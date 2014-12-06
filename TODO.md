@@ -23,12 +23,12 @@
 * Lists with `[]`.
 * Booleans.
 * Quoting.
+* Dotted-lists.
 
 ## Missing
 
 * Characters.
 * Strings.
-* Dotted-lists.
 * Vectors.
 * Bytevectors.
 * Unquoting.
