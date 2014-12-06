@@ -3,6 +3,7 @@ extern crate test;
 
 use ostrov::eval::eval;
 use ostrov::parser::parse;
+use ostrov::env::Env;
 
 use test::Bencher;
 
@@ -37,8 +38,10 @@ fn nested_evaluation(b: &mut Bencher) {
             )
         ";
 
+        let mut env = Env::new();
+
         match parse(input) {
-            Ok(ast) => match eval(ast.iter().last().unwrap()) {
+            Ok(ast) => match eval(ast.iter().last().unwrap(), &mut env) {
                 Ok(_actual) => {},
                 Err(error)  => panic!(format!("{}", error)),
             },

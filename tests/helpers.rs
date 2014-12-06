@@ -2,6 +2,7 @@ use ostrov::ast::AST;
 use ostrov::eval::Error;
 use ostrov::eval::eval;
 use ostrov::parser::parse;
+use ostrov::env::Env;
 
 use std::fmt::Show;
 
@@ -13,8 +14,10 @@ pub fn assert_parse(input: &str, expected: AST) {
 }
 
 pub fn assert_eval(input: &str, expected: AST) {
+    let mut env = Env::new();
+
     match parse(input) {
-        Ok(ast) => match eval(ast.iter().last().unwrap()) {
+        Ok(ast) => match ast.iter().map(|expr| eval(expr, &mut env)).last().unwrap() {
             Ok(actual) => assert_eq!(expected, actual),
             Err(error) => panic_expected(input, &expected, &error),
         },
@@ -23,8 +26,10 @@ pub fn assert_eval(input: &str, expected: AST) {
 }
 
 pub fn assert_eval_err(input: &str, expected: Error) {
+    let mut env = Env::new();
+
     match parse(input) {
-        Ok(ast) => match eval(ast.iter().last().unwrap()) {
+        Ok(ast) => match ast.iter().map(|expr| eval(expr, &mut env)).last().unwrap() {
             Ok(value)   => panic_expected(input, &expected, &value),
             Err(actual) => assert_eq!(expected, actual),
         },

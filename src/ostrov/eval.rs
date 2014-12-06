@@ -1,4 +1,5 @@
 use ast::AST;
+use env::Env;
 
 #[deriving(Show, PartialEq)]
 pub enum Error {
@@ -9,7 +10,7 @@ pub enum Error {
     IrreducibleValue(AST),
 }
 
-pub fn eval(value: &AST) -> Result<AST, Error> {
+pub fn eval(value: &AST, env: &mut Env) -> Result<AST, Error> {
     match value {
         &AST::Atom(ref atom) =>
             Err(Error::UnboundVariable(atom.to_string())),
@@ -18,13 +19,13 @@ pub fn eval(value: &AST) -> Result<AST, Error> {
         &AST::Integer(_i) =>
             Ok(value.clone()),
         &AST::List(ref list) =>
-            eval_list(list.as_slice()),
+            eval_list(list.as_slice(), env),
         &AST::DottedList(ref _list, ref _val) =>
             Err(Error::IrreducibleValue(value.clone())),
     }
 }
 
-fn eval_list(list: &[AST]) -> Result<AST, Error> {
+fn eval_list(list: &[AST], env: &mut Env) -> Result<AST, Error> {
     if list.is_empty() {
         return Ok(AST::List(vec!()));
     }
@@ -35,30 +36,30 @@ fn eval_list(list: &[AST]) -> Result<AST, Error> {
     match fun {
         &AST::Atom(ref atom) =>
             match atom.as_slice() {
-                "and"   => eval_and(args),
-                "if"    => eval_if(args),
-                "or"    => eval_or(args),
+                "and"   => eval_and(args, env),
+                "if"    => eval_if(args, env),
+                "or"    => eval_or(args, env),
                 "quote" => eval_quote(args),
-                fun     => apply(fun, args),
+                fun     => apply(fun, args, env),
             },
         _ =>
             Err(Error::UnappliableValue(fun.clone()))
     }
 }
 
-fn eval_args(args: &[AST]) -> Result<Vec<AST>, Error> {
+fn eval_args(args: &[AST], env: &mut Env) -> Result<Vec<AST>, Error> {
     let mut out = Vec::with_capacity(args.len());
 
     for arg in args.iter() {
-        let evald_arg = try!(eval(arg));
+        let evald_arg = try!(eval(arg, env));
         out.push(evald_arg);
     }
 
     Ok(out)
 }
 
-fn apply(fun: &str, args_: &[AST]) -> Result<AST, Error> {
-    let args = try!(eval_args(args_));
+fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
+    let args = try!(eval_args(args_, env));
 
     match fun {
         "+"   => eval_fun_plus(args),
@@ -194,11 +195,11 @@ fn list_of_integers(list: Vec<AST>) -> Result<Vec<i64>, Error> {
     Ok(integers)
 }
 
-fn eval_and(args: &[AST]) -> Result<AST, Error> {
+fn eval_and(args: &[AST], env: &mut Env) -> Result<AST, Error> {
     let mut last = AST::Bool(true);
 
     for val in args.iter() {
-        let val = try!(eval(val));
+        let val = try!(eval(val, env));
 
         if val == AST::Bool(false) {
             return Ok(val)
@@ -210,11 +211,11 @@ fn eval_and(args: &[AST]) -> Result<AST, Error> {
     Ok(last)
 }
 
-fn eval_or(args: &[AST]) -> Result<AST, Error> {
+fn eval_or(args: &[AST], env: &mut Env) -> Result<AST, Error> {
     let mut last = AST::Bool(false);
 
     for val in args.iter() {
-        let val = try!(eval(val));
+        let val = try!(eval(val, env));
 
         if val != AST::Bool(false) {
             return Ok(val)
@@ -226,20 +227,20 @@ fn eval_or(args: &[AST]) -> Result<AST, Error> {
     Ok(last)
 }
 
-fn eval_if(args: &[AST]) -> Result<AST, Error> {
+fn eval_if(args: &[AST], env: &mut Env) -> Result<AST, Error> {
     if args.len() < 1 || args.len() > 3 {
         return Err(Error::BadArity("if".to_string()))
     }
 
-    let condition = try!(eval(&args[0]));
+    let condition = try!(eval(&args[0], env));
 
     let result = if condition != AST::Bool(false) {
-        try!(eval(&args[1]))
+        try!(eval(&args[1], env))
     } else {
         if args.len() == 2 {
             AST::Bool(false)
         } else {
-            try!(eval(&args[2]))
+            try!(eval(&args[2], env))
         }
     };
 
