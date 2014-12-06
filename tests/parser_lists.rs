@@ -11,6 +11,19 @@ fn empty_list_with_brackets() {
 }
 
 #[test]
+fn with_dots() {
+    assert_parse("(1 . ())", list(vec!(integer(1))));
+    assert_parse("(1 2 . ())", list(vec!(integer(1), integer(2))));
+    assert_parse("(1 2 . (3))", list(vec!(integer(1), integer(2), integer(3))));
+    assert_parse("(1 . (2 . (3 . ())))", list(vec!(integer(1), integer(2), integer(3))));
+
+    assert_parse("[1 . []]", list(vec!(integer(1))));
+    assert_parse("[1 2 . []]", list(vec!(integer(1), integer(2))));
+    assert_parse("[1 2 . [3]]", list(vec!(integer(1), integer(2), integer(3))));
+    assert_parse("[1 . [2 . [3 . []]]]", list(vec!(integer(1), integer(2), integer(3))));
+}
+
+#[test]
 fn list_of_integers() {
     assert_parse("(1 2 3 4 5)", list(vec!(integer(1), integer(2), integer(3), integer(4), integer(5))));
 }

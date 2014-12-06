@@ -27,3 +27,11 @@ fn lists() {
                                              list(vec!(integer(1),
                                                        integer(2))))));
 }
+
+#[test]
+fn dotted_lists() {
+    assert_fmt("(+ (1 2) . a)", dotted_list(vec!(atom("+"),
+                                                 list(vec!(integer(1),
+                                                           integer(2)))),
+                                            atom("a")));
+}
