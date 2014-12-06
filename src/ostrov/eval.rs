@@ -13,7 +13,7 @@ pub enum Error {
 pub fn eval(value: &AST, env: &mut Env) -> Result<AST, Error> {
     match value {
         &AST::Atom(ref atom) =>
-            Err(Error::UnboundVariable(atom.to_string())),
+            eval_variable(atom, env),
         &AST::Bool(_b) =>
             Ok(value.clone()),
         &AST::Integer(_i) =>
@@ -40,6 +40,7 @@ fn eval_list(list: &[AST], env: &mut Env) -> Result<AST, Error> {
                 "if"    => eval_if(args, env),
                 "or"    => eval_or(args, env),
                 "quote" => eval_quote(args),
+                "define" => eval_define(args, env),
                 fun     => apply(fun, args, env),
             },
         _ =>
@@ -245,4 +246,32 @@ fn eval_if(args: &[AST], env: &mut Env) -> Result<AST, Error> {
     };
 
     Ok(result)
+}
+
+fn eval_define(args: &[AST], env: &mut Env) -> Result<AST, Error> {
+    if args.len() < 1 || args.len() > 2 {
+        return Err(Error::BadArity("define".to_string()))
+    }
+
+    let ref atom = args[0];
+
+    if let &AST::Atom(ref name) = atom {
+        if args.len() == 2 {
+            let body = try!(eval(&args[1], env));
+            env.set(name.to_string(), body.clone());
+
+            Ok(body)
+        } else {
+            Ok(AST::Atom(name.to_string()))
+        }
+    } else {
+        Err(Error::WrongArgumentType(atom.clone()))
+    }
+}
+
+fn eval_variable(name: &String, env: &mut Env) -> Result<AST, Error> {
+    match env.get(name) {
+        Some(value) => Ok(value.clone()),
+        None        => Err(Error::UnboundVariable(name.clone())),
+    }
 }
