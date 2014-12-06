@@ -126,43 +126,32 @@ fn eval_fun_equals(args_: &[AST]) -> Result<AST, Error> {
     Ok(AST::Bool(outcome))
 }
 
-fn eval_fun_less_than(args_: &[AST]) -> Result<AST, Error> {
-    if args_.len() < 2 {
-        return Ok(AST::Bool(true))
-    }
-
-    let args = try!(list_of_integers(args_));
-    let outcome = range(0, args.len() - 1).all(|i| args[i] < args[i + 1u]);
-    Ok(AST::Bool(outcome))
+fn eval_fun_less_than(args: &[AST]) -> Result<AST, Error> {
+    eval_fun_ord(args, |a, b| a < b)
 }
 
-fn eval_fun_less_than_or_equal(args_: &[AST]) -> Result<AST, Error> {
-    if args_.len() < 2 {
-        return Ok(AST::Bool(true))
-    }
-
-    let args = try!(list_of_integers(args_));
-    let outcome = range(0, args.len() - 1).all(|i| args[i] <= args[i + 1u]);
-    Ok(AST::Bool(outcome))
+fn eval_fun_less_than_or_equal(args: &[AST]) -> Result<AST, Error> {
+    eval_fun_ord(args, |a, b| a <= b)
 }
 
-fn eval_fun_greater_than(args_: &[AST]) -> Result<AST, Error> {
-    if args_.len() < 2 {
-        return Ok(AST::Bool(true))
-    }
-
-    let args = try!(list_of_integers(args_));
-    let outcome = range(0, args.len() - 1).all(|i| args[i] > args[i + 1u]);
-    Ok(AST::Bool(outcome))
+fn eval_fun_greater_than(args: &[AST]) -> Result<AST, Error> {
+    eval_fun_ord(args, |a, b| a > b)
 }
 
-fn eval_fun_greater_than_or_equal(args_: &[AST]) -> Result<AST, Error> {
+fn eval_fun_greater_than_or_equal(args: &[AST]) -> Result<AST, Error> {
+    eval_fun_ord(args, |a, b| a >= b)
+}
+
+fn eval_fun_ord(args_: &[AST], cmp: |i64, i64| -> bool) -> Result<AST, Error> {
     if args_.len() < 2 {
         return Ok(AST::Bool(true))
     }
 
     let args = try!(list_of_integers(args_));
-    let outcome = range(0, args.len() - 1).all(|i| args[i] >= args[i + 1u]);
+    let outcome = range(0, args.len() - 1).all(|i|
+        cmp(args[i], args[i + 1u])
+    );
+
     Ok(AST::Bool(outcome))
 }
 
