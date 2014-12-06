@@ -1,7 +1,8 @@
 #![feature(phase)]
 
 pub mod ast;
-pub mod parser;
-pub mod env;
-pub mod eval;
+mod parser;
+pub mod runtime;
+mod env;
+mod eval;
 pub mod repl;

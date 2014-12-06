@@ -1,39 +1,33 @@
+pub use ostrov::runtime::Runtime;
 use ostrov::ast::AST;
-use ostrov::eval::Error;
-use ostrov::eval::eval;
-use ostrov::parser::parse;
-use ostrov::env::Env;
+use ostrov::runtime::Error;
 
 use std::fmt::Show;
 
 pub fn assert_parse(input: &str, expected: AST) {
-    match parse(input) {
-        Ok(actual) => assert_eq!(expected, *actual.iter().last().unwrap()),
+    let runtime = Runtime::new();
+
+    match runtime.parse_str(input) {
+        Ok(exprs)  => assert_eq!(expected, *exprs.iter().last().unwrap()),
         Err(error) => panic_expected(input, &expected, &error),
     }
 }
 
 pub fn assert_eval(input: &str, expected: AST) {
-    let mut env = Env::new();
+    let mut runtime = Runtime::new();
 
-    match parse(input) {
-        Ok(ast) => match ast.iter().map(|expr| eval(expr, &mut env)).last().unwrap() {
-            Ok(actual) => assert_eq!(expected, actual),
-            Err(error) => panic_expected(input, &expected, &error),
-        },
-        Err(error) => panic_parse(&error, input),
+    match runtime.eval_str(input) {
+        Ok(exprs)  => assert_eq!(expected, *exprs.iter().last().unwrap()),
+        Err(error) => panic_expected(input, &expected, &error),
     }
 }
 
 pub fn assert_eval_err(input: &str, expected: Error) {
-    let mut env = Env::new();
+    let mut runtime = Runtime::new();
 
-    match parse(input) {
-        Ok(ast) => match ast.iter().map(|expr| eval(expr, &mut env)).last().unwrap() {
-            Ok(value)   => panic_expected(input, &expected, &value),
-            Err(actual) => assert_eq!(expected, actual),
-        },
-        Err(error) => panic_parse(&error, input),
+    match runtime.eval_str(input) {
+        Ok(exprs)  => panic_expected(input, &expected, &exprs),
+        Err(error) => assert_eq!(expected, error),
     }
 }
 
@@ -43,10 +37,6 @@ pub fn assert_fmt(input: &str, value: AST) {
 
 fn panic_expected<A: Show, B: Show>(input: &str, expected: &A, actual: &B) {
     panic!("Expected {} from input \"{}\" , got {}", expected, input, actual);
-}
-
-fn panic_parse(error: &String, input: &str) {
-    panic!("Parse error {} from input \"{}\"", error, input);
 }
 
 pub fn integer(val: i64)   -> AST { AST::Integer(val) }

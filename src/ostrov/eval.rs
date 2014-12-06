@@ -1,14 +1,6 @@
 use ast::AST;
 use env::Env;
-
-#[deriving(Show, PartialEq)]
-pub enum Error {
-    UnboundVariable(String),
-    UnappliableValue(AST),
-    WrongArgumentType(AST),
-    BadArity(String),
-    IrreducibleValue(AST),
-}
+use runtime::Error;
 
 pub fn eval(value: &AST, env: &mut Env) -> Result<AST, Error> {
     match value {

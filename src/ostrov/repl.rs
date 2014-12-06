@@ -1,29 +1,24 @@
-use env::Env;
-use eval::eval;
-use parser::parse;
+use runtime::Runtime;
 
 use std::io;
 
 pub fn repl() {
     let mut input = io::stdin();
 
-    let mut env = Env::new();
+    let mut runtime = Runtime::new();
 
     loop {
         print!("> ");
 
         match input.read_line() {
             Ok(line) => {
-                match parse(line.as_slice()) {
+                match runtime.eval_str(line.as_slice()) {
                     Ok(exprs) => {
                         for expr in exprs.iter() {
-                            match eval(expr, &mut env) {
-                                Ok(value)  => println!("=> {}", value),
-                                Err(error) => println!("{}", error),
-                            }
+                            println!("=> {}", expr);
                         }
                     },
-                    Err(error) => println!("Parse error: {}", error),
+                    Err(error) => println!("Error: {}", error),
                 }
             },
             Err(error) => {
