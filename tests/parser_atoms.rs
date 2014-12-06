@@ -54,3 +54,9 @@ fn peculiar_identifiers() {
     assert_parse("->", atom("->"));
     assert_parse("->test2", atom("->test2"));
 }
+
+#[test]
+fn whitespace() {
+    assert_parse(" \n\r\tlisp \n\r\t", atom("lisp"));
+    assert_parse(" \n\r\t-> \n\r\t", atom("->"));
+}

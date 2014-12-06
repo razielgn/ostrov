@@ -79,3 +79,9 @@ fn list_with_special_spaces_and_brackets() {
     assert_parse("[1\n\n2]", list(vec!(integer(1), integer(2))));
     assert_parse("[1 \t \r \n 2]", list(vec!(integer(1), integer(2))));
 }
+
+#[test]
+fn whitespace() {
+    assert_parse(" \n\r\t(1 2) \n\r\t", list(vec!(integer(1), integer(2))));
+    assert_parse(" \n\r\t[1  2] \n\r\t", list(vec!(integer(1), integer(2))));
+}
