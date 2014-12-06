@@ -11,3 +11,8 @@ fn upcase() {
     assert_parse("#T", bool(true));
     assert_parse("#F", bool(false));
 }
+
+#[test]
+fn whitespace() {
+    assert_parse(" \n\r\t#t \n\r\t", bool(true));
+}

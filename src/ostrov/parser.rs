@@ -72,6 +72,11 @@ use ast::AST;
 use parser::*;
 
 #[pub]
+grammar -> AST =
+    __ ast:value {
+        ast
+    }
+
 value -> AST =
     integer
     / boolean
@@ -80,11 +85,11 @@ value -> AST =
     / list
 
 identifier -> AST =
-    initial subsequent* {
-        atom::parse(match_str)
-    }
-    / peculiar_identifier {
-        atom::parse(match_str)
+    identifier:(
+        initial subsequent*   { match_str }
+        / peculiar_identifier { match_str }
+    ) __ {
+        atom::parse(identifier)
     }
 
 initial -> &'input str =
@@ -121,30 +126,25 @@ special_subsequent -> &'input str =
     [+-.@] { match_str }
 
 integer -> AST =
-    sign:sign digits:digits {
+    sign:sign digits:digits __ {
         integer::parse_decimal(digits, &sign)
     }
 
 list -> AST =
-    "(" values:(value ** whitespace) ")" {
+    "(" values:(value ** __) ")" __ {
         list::parse(values)
     }
-    / "[" values:(value ** whitespace) "]" {
+    / "[" values:(value ** __) "]" __ {
         list::parse(values)
     }
 
 boolean -> AST =
-    "\#" value:boolean_char {
+    "\#" value:boolean_char __ {
         bool::parse(value)
     }
 
 boolean_char -> &'input str =
     [tfTF] { match_str }
-
-whitespace -> &'input str =
-    [ \t\r\n]+ {
-        match_str
-    }
 
 digits -> &'input str =
     [0-9]+ { match_str }
@@ -159,8 +159,13 @@ quoted -> AST =
         quoted::parse(value)
     }
 
+__ = (whitespace)*
+
+whitespace =
+    [ \t\r\n]
+
 "#)
 
 pub fn parse(input: &str) -> Result<AST, String> {
-    ast::value(input)
+    ast::grammar(input)
 }
