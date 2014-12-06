@@ -40,5 +40,7 @@
 * Evaluation of primitives (integers and booleans).
 * Evaluation of quoted values.
 * Application of `+`, `-`, `*`, `/`.
+* Application of `=`, `<`, `>`, `<=`, `>=` and `not`.
+* Evaluation of special forms `and` and `or`.
 
 ## Missing

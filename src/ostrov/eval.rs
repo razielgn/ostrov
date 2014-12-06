@@ -31,6 +31,10 @@ fn eval_list(list: &[AST]) -> Result<AST, Error> {
     match fun {
         &AST::Atom(ref atom) if atom.as_slice() == "quote" =>
             eval_quote(list),
+        &AST::Atom(ref atom) if atom.as_slice() == "and" =>
+            eval_and(list.tail()),
+        &AST::Atom(ref atom) if atom.as_slice() == "or" =>
+            eval_or(list.tail()),
         &AST::Atom(ref atom) => {
             let args = try!(eval_args(list.tail()));
             apply(atom.as_slice(), args.as_slice())
@@ -57,6 +61,12 @@ fn apply(name: &str, args: &[AST]) -> Result<AST, Error> {
         "-" => eval_fun_minus(args),
         "*" => eval_fun_product(args),
         "/" => eval_fun_division(args),
+        "=" => eval_fun_equals(args),
+        "<" => eval_fun_less_than(args),
+        "<=" => eval_fun_less_than_or_equal(args),
+        ">" => eval_fun_greater_than(args),
+        ">=" => eval_fun_greater_than_or_equal(args),
+        "not" => eval_fun_not(args),
         _   => Err(Error::UnboundVariable(name.to_string()))
     }
 }
@@ -109,6 +119,59 @@ fn eval_fun_product(args_: &[AST]) -> Result<AST, Error> {
     Ok(AST::Integer(product))
 }
 
+fn eval_fun_equals(args_: &[AST]) -> Result<AST, Error> {
+    if args_.len() < 2 {
+        return Ok(AST::Bool(true))
+    }
+
+    let args = try!(list_of_integers(args_));
+    let head = args.head().unwrap();
+    let outcome = args.iter().skip(1).all(|n| *n == *head);
+    Ok(AST::Bool(outcome))
+}
+
+fn eval_fun_less_than(args: &[AST]) -> Result<AST, Error> {
+    eval_fun_ord(args, |a, b| a < b)
+}
+
+fn eval_fun_less_than_or_equal(args: &[AST]) -> Result<AST, Error> {
+    eval_fun_ord(args, |a, b| a <= b)
+}
+
+fn eval_fun_greater_than(args: &[AST]) -> Result<AST, Error> {
+    eval_fun_ord(args, |a, b| a > b)
+}
+
+fn eval_fun_greater_than_or_equal(args: &[AST]) -> Result<AST, Error> {
+    eval_fun_ord(args, |a, b| a >= b)
+}
+
+fn eval_fun_ord(args_: &[AST], cmp: |i64, i64| -> bool) -> Result<AST, Error> {
+    if args_.len() < 2 {
+        return Ok(AST::Bool(true))
+    }
+
+    let args = try!(list_of_integers(args_));
+    let outcome = range(0, args.len() - 1).all(|i|
+        cmp(args[i], args[i + 1u])
+    );
+
+    Ok(AST::Bool(outcome))
+}
+
+fn eval_fun_not(args: &[AST]) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity("not".to_string()))
+    }
+
+    let outcome = match args.head().unwrap() {
+        &AST::Bool(false) => true,
+        _                 => false,
+    };
+
+    Ok(AST::Bool(outcome))
+}
+
 fn eval_quote(list: &[AST]) -> Result<AST, Error> {
     Ok(list.tail()[0].clone())
 }
@@ -125,4 +188,36 @@ fn list_of_integers(list: &[AST]) -> Result<Vec<i64>, Error> {
     }
 
     Ok(integers)
+}
+
+fn eval_and(args: &[AST]) -> Result<AST, Error> {
+    let mut last = AST::Bool(true);
+
+    for val in args.iter() {
+        let val = try!(eval(val.clone()));
+
+        if val == AST::Bool(false) {
+            return Ok(val)
+        }
+
+        last = val;
+    }
+
+    Ok(last)
+}
+
+fn eval_or(args: &[AST]) -> Result<AST, Error> {
+    let mut last = AST::Bool(false);
+
+    for val in args.iter() {
+        let val = try!(eval(val.clone()));
+
+        if val != AST::Bool(false) {
+            return Ok(val)
+        }
+
+        last = val;
+    }
+
+    Ok(last)
 }
