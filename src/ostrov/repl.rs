@@ -12,7 +12,7 @@ pub fn repl() {
         match input.read_line() {
             Ok(line) => {
                 match parse(line.as_slice()) {
-                    Ok(ast) => match eval(ast) {
+                    Ok(ast) => match eval(&ast) {
                         Ok(val)    => println!("=> {}", val),
                         Err(error) => println!("{}", error),
                     },

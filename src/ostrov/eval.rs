@@ -9,17 +9,17 @@ pub enum Error {
     IrreducibleValue(AST),
 }
 
-pub fn eval(value: AST) -> Result<AST, Error> {
+pub fn eval(value: &AST) -> Result<AST, Error> {
     match value {
-        AST::Atom(atom) =>
-            Err(Error::UnboundVariable(atom)),
-        AST::Bool(_b) =>
-            Ok(value),
-        AST::Integer(_i) =>
-            Ok(value),
-        AST::List(ref list) =>
+        &AST::Atom(ref atom) =>
+            Err(Error::UnboundVariable(atom.to_string())),
+        &AST::Bool(_b) =>
+            Ok(value.clone()),
+        &AST::Integer(_i) =>
+            Ok(value.clone()),
+        &AST::List(ref list) =>
             eval_list(list.as_slice()),
-        AST::DottedList(ref _list, ref _val) =>
+        &AST::DottedList(ref _list, ref _val) =>
             Err(Error::IrreducibleValue(value.clone())),
     }
 }
@@ -50,7 +50,7 @@ fn eval_args(args: &[AST]) -> Result<Vec<AST>, Error> {
     let mut out = Vec::with_capacity(args.len());
 
     for arg in args.iter() {
-        let evald_arg = try!(eval(arg.clone()));
+        let evald_arg = try!(eval(arg));
         out.push(evald_arg);
     }
 
@@ -198,7 +198,7 @@ fn eval_and(args: &[AST]) -> Result<AST, Error> {
     let mut last = AST::Bool(true);
 
     for val in args.iter() {
-        let val = try!(eval(val.clone()));
+        let val = try!(eval(val));
 
         if val == AST::Bool(false) {
             return Ok(val)
@@ -214,7 +214,7 @@ fn eval_or(args: &[AST]) -> Result<AST, Error> {
     let mut last = AST::Bool(false);
 
     for val in args.iter() {
-        let val = try!(eval(val.clone()));
+        let val = try!(eval(val));
 
         if val != AST::Bool(false) {
             return Ok(val)
@@ -231,15 +231,15 @@ fn eval_if(args: &[AST]) -> Result<AST, Error> {
         return Err(Error::BadArity("if".to_string()))
     }
 
-    let condition = try!(eval(args[0].clone()));
+    let condition = try!(eval(&args[0]));
 
     let result = if condition != AST::Bool(false) {
-        try!(eval(args[1].clone()))
+        try!(eval(&args[1]))
     } else {
         if args.len() == 2 {
             AST::Bool(false)
         } else {
-            try!(eval(args[2].clone()))
+            try!(eval(&args[2]))
         }
     };
 

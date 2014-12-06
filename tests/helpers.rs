@@ -14,7 +14,7 @@ pub fn assert_parse(input: &str, expected: AST) {
 
 pub fn assert_eval(input: &str, expected: AST) {
     match parse(input) {
-        Ok(ast) => match eval(ast) {
+        Ok(ast) => match eval(&ast) {
             Ok(actual) => assert_eq!(expected, actual),
             Err(error) => panic_expected(input, &expected, &error),
         },
@@ -24,7 +24,7 @@ pub fn assert_eval(input: &str, expected: AST) {
 
 pub fn assert_eval_err(input: &str, expected: Error) {
     match parse(input) {
-        Ok(ast) => match eval(ast) {
+        Ok(ast) => match eval(&ast) {
             Ok(value)   => panic_expected(input, &expected, &value),
             Err(actual) => assert_eq!(expected, actual),
         },
