@@ -13,16 +13,25 @@ authors = ["Federico Ravasio <ravasio.federico@gmail.com>"]
 [lib]
 name = "ostrov"
 path = "src/ostrov/lib.rs"
+bench = false
 doctest = false
 test = false
 
 [[bin]]
 name = "ostrov"
-test = false
+bench = false
 doc = false
+test = false
 
 [[test]]
 name = "tests"
+bench = false
+doc = false
+
+[[bench]]
+name = "benchmarks"
+doc = false
+test = false
 
 [dependencies.peg]
 git = "https://github.com/kevinmehall/rust-peg"
