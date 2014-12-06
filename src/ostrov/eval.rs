@@ -30,18 +30,14 @@ fn eval_list(list: &[AST]) -> Result<AST, Error> {
     let args = list.tail();
 
     match fun {
-        &AST::Atom(ref atom) if atom.as_slice() == "quote" =>
-            eval_quote(args),
-        &AST::Atom(ref atom) if atom.as_slice() == "and" =>
-            eval_and(args),
-        &AST::Atom(ref atom) if atom.as_slice() == "or" =>
-            eval_or(args),
-        &AST::Atom(ref atom) if atom.as_slice() == "if" =>
-            eval_if(args),
-        &AST::Atom(ref atom) => {
-            let args = try!(eval_args(args));
-            apply(atom.as_slice(), args.as_slice())
-        },
+        &AST::Atom(ref atom) =>
+            match atom.as_slice() {
+                "and"   => eval_and(args),
+                "if"    => eval_if(args),
+                "or"    => eval_or(args),
+                "quote" => eval_quote(args),
+                fun     => apply(fun, args),
+            },
         _ =>
             Err(Error::UnappliableValue(fun.clone()))
     }
@@ -58,29 +54,31 @@ fn eval_args(args: &[AST]) -> Result<Vec<AST>, Error> {
     Ok(out)
 }
 
-fn apply(name: &str, args: &[AST]) -> Result<AST, Error> {
-    match name {
-        "+" => eval_fun_plus(args),
-        "-" => eval_fun_minus(args),
-        "*" => eval_fun_product(args),
-        "/" => eval_fun_division(args),
-        "=" => eval_fun_equals(args),
-        "<" => eval_fun_less_than(args),
-        "<=" => eval_fun_less_than_or_equal(args),
-        ">" => eval_fun_greater_than(args),
-        ">=" => eval_fun_greater_than_or_equal(args),
+fn apply(fun: &str, args_: &[AST]) -> Result<AST, Error> {
+    let args = try!(eval_args(args_));
+
+    match fun {
+        "+"   => eval_fun_plus(args),
+        "-"   => eval_fun_minus(args),
+        "*"   => eval_fun_product(args),
+        "/"   => eval_fun_division(args),
+        "="   => eval_fun_equals(args),
+        "<"   => eval_fun_less_than(args),
+        "<="  => eval_fun_less_than_or_equal(args),
+        ">"   => eval_fun_greater_than(args),
+        ">="  => eval_fun_greater_than_or_equal(args),
         "not" => eval_fun_not(args),
-        _   => Err(Error::UnboundVariable(name.to_string()))
+        _     => Err(Error::UnboundVariable(fun.to_string()))
     }
 }
 
-fn eval_fun_plus(args: &[AST]) -> Result<AST, Error> {
+fn eval_fun_plus(args: Vec<AST>) -> Result<AST, Error> {
     let args_ = try!(list_of_integers(args));
     let sum = args_.iter().fold(0, |sum, n| sum + *n);
     Ok(AST::Integer(sum))
 }
 
-fn eval_fun_minus(args_: &[AST]) -> Result<AST, Error> {
+fn eval_fun_minus(args_: Vec<AST>) -> Result<AST, Error> {
     let args = try!(list_of_integers(args_));
 
     if args.len() == 0 {
@@ -98,7 +96,7 @@ fn eval_fun_minus(args_: &[AST]) -> Result<AST, Error> {
     Ok(AST::Integer(*head - tail_sum))
 }
 
-fn eval_fun_division(args_: &[AST]) -> Result<AST, Error> {
+fn eval_fun_division(args_: Vec<AST>) -> Result<AST, Error> {
     let args = try!(list_of_integers(args_));
 
     if args.len() == 0 {
@@ -116,13 +114,13 @@ fn eval_fun_division(args_: &[AST]) -> Result<AST, Error> {
     Ok(AST::Integer(div))
 }
 
-fn eval_fun_product(args_: &[AST]) -> Result<AST, Error> {
+fn eval_fun_product(args_: Vec<AST>) -> Result<AST, Error> {
     let args = try!(list_of_integers(args_));
     let product = args.iter().fold(1, |product, n| product * *n);
     Ok(AST::Integer(product))
 }
 
-fn eval_fun_equals(args_: &[AST]) -> Result<AST, Error> {
+fn eval_fun_equals(args_: Vec<AST>) -> Result<AST, Error> {
     if args_.len() < 2 {
         return Ok(AST::Bool(true))
     }
@@ -133,23 +131,23 @@ fn eval_fun_equals(args_: &[AST]) -> Result<AST, Error> {
     Ok(AST::Bool(outcome))
 }
 
-fn eval_fun_less_than(args: &[AST]) -> Result<AST, Error> {
+fn eval_fun_less_than(args: Vec<AST>) -> Result<AST, Error> {
     eval_fun_ord(args, |a, b| a < b)
 }
 
-fn eval_fun_less_than_or_equal(args: &[AST]) -> Result<AST, Error> {
+fn eval_fun_less_than_or_equal(args: Vec<AST>) -> Result<AST, Error> {
     eval_fun_ord(args, |a, b| a <= b)
 }
 
-fn eval_fun_greater_than(args: &[AST]) -> Result<AST, Error> {
+fn eval_fun_greater_than(args: Vec<AST>) -> Result<AST, Error> {
     eval_fun_ord(args, |a, b| a > b)
 }
 
-fn eval_fun_greater_than_or_equal(args: &[AST]) -> Result<AST, Error> {
+fn eval_fun_greater_than_or_equal(args: Vec<AST>) -> Result<AST, Error> {
     eval_fun_ord(args, |a, b| a >= b)
 }
 
-fn eval_fun_ord(args_: &[AST], cmp: |i64, i64| -> bool) -> Result<AST, Error> {
+fn eval_fun_ord(args_: Vec<AST>, cmp: |i64, i64| -> bool) -> Result<AST, Error> {
     if args_.len() < 2 {
         return Ok(AST::Bool(true))
     }
@@ -162,7 +160,7 @@ fn eval_fun_ord(args_: &[AST], cmp: |i64, i64| -> bool) -> Result<AST, Error> {
     Ok(AST::Bool(outcome))
 }
 
-fn eval_fun_not(args: &[AST]) -> Result<AST, Error> {
+fn eval_fun_not(args: Vec<AST>) -> Result<AST, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity("not".to_string()))
     }
@@ -179,7 +177,7 @@ fn eval_quote(list: &[AST]) -> Result<AST, Error> {
     Ok(list[0].clone())
 }
 
-fn list_of_integers(list: &[AST]) -> Result<Vec<i64>, Error> {
+fn list_of_integers(list: Vec<AST>) -> Result<Vec<i64>, Error> {
     let mut integers = Vec::with_capacity(list.len());
 
     for val in list.iter() {
