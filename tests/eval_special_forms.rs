@@ -8,3 +8,11 @@ fn quote() {
     assert_eval("'(1)", list(vec!(integer(1))));
     assert_eval("'[1]", list(vec!(integer(1))));
 }
+
+#[test]
+fn and() {
+    assert_eval("(and)", bool(true));
+    assert_eval("(and (+ 2 3))", integer(5));
+    assert_eval("(and #t 2)", integer(2));
+    assert_eval("(and 1 #f a)", bool(false));
+}
