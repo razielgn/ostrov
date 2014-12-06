@@ -1,8 +1,8 @@
 extern crate ostrov;
 extern crate test;
 
-use ostrov::eval::eval;
-use ostrov::parser::parse;
+use ostrov::ast::AST;
+use ostrov::runtime::Runtime;
 
 use test::Bencher;
 
@@ -37,11 +37,10 @@ fn nested_evaluation(b: &mut Bencher) {
             )
         ";
 
-        match parse(input) {
-            Ok(ast) => match eval(ast.iter().last().unwrap()) {
-                Ok(_actual) => {},
-                Err(error)  => panic!(format!("{}", error)),
-            },
+        let mut runtime = Runtime::new();
+
+        match runtime.eval_str(input) {
+            Ok(exprs)  => assert_eq!(AST::Integer(3), exprs[0]),
             Err(error) => panic!(format!("{}", error)),
         }
     })

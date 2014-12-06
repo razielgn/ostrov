@@ -2,6 +2,7 @@
 extern crate peg_syntax_ext;
 
 use ast::AST;
+use runtime::Error;
 
 #[deriving(PartialEq)]
 pub enum IntegerSign {
@@ -186,6 +187,9 @@ whitespace =
 
 "#)
 
-pub fn parse(input: &str) -> Result<Vec<AST>, String> {
-    ast::grammar(input)
+pub fn parse(input: &str) -> Result<Vec<AST>, Error> {
+    match ast::grammar(input) {
+        Ok(exprs)  => Ok(exprs),
+        Err(error) => Err(Error::ParseError(error)),
+    }
 }

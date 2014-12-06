@@ -14,5 +14,6 @@ mod parser_quoted;
 
 mod eval_primitives;
 mod eval_special_forms;
+mod eval_define;
 
 mod ast_fmt;
