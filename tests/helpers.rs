@@ -47,10 +47,14 @@ fn panic_parse(error: &String, input: &str) {
 pub fn integer(val: i64)   -> AST { AST::Integer(val) }
 pub fn atom(val: &str)     -> AST { AST::Atom(val.to_string()) }
 pub fn list(val: Vec<AST>) -> AST { AST::List(val) }
+pub fn dotted_list(list: Vec<AST>, val: AST) -> AST {
+    AST::DottedList(list, box val)
+}
 pub fn empty_list()        -> AST { AST::List(vec!()) }
 pub fn bool(val: bool)     -> AST { AST::Bool(val) }
 
 pub fn unbound_variable_error(val: &str) -> Error { Error::UnboundVariable(val.to_string()) }
 pub fn unappliable_value_error(val: AST) -> Error { Error::UnappliableValue(val) }
+pub fn irreducible_value(val: AST) -> Error { Error::IrreducibleValue(val) }
 pub fn wrong_argument_type(val: AST) -> Error { Error::WrongArgumentType(val) }
 pub fn bad_arity(val: &str) -> Error { Error::BadArity(val.to_string()) }
