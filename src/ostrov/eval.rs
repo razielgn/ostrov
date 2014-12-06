@@ -27,18 +27,19 @@ fn eval_list(list: &[AST]) -> Result<AST, Error> {
     }
 
     let fun = list.head().unwrap();
+    let args = list.tail();
 
     match fun {
         &AST::Atom(ref atom) if atom.as_slice() == "quote" =>
-            eval_quote(list.tail()),
+            eval_quote(args),
         &AST::Atom(ref atom) if atom.as_slice() == "and" =>
-            eval_and(list.tail()),
+            eval_and(args),
         &AST::Atom(ref atom) if atom.as_slice() == "or" =>
-            eval_or(list.tail()),
+            eval_or(args),
         &AST::Atom(ref atom) if atom.as_slice() == "if" =>
-            eval_if(list.tail()),
+            eval_if(args),
         &AST::Atom(ref atom) => {
-            let args = try!(eval_args(list.tail()));
+            let args = try!(eval_args(args));
             apply(atom.as_slice(), args.as_slice())
         },
         _ =>
