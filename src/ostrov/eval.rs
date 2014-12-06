@@ -30,7 +30,7 @@ fn eval_list(list: &[AST]) -> Result<AST, Error> {
 
     match fun {
         &AST::Atom(ref atom) if atom.as_slice() == "quote" =>
-            eval_quote(list),
+            eval_quote(list.tail()),
         &AST::Atom(ref atom) if atom.as_slice() == "and" =>
             eval_and(list.tail()),
         &AST::Atom(ref atom) if atom.as_slice() == "or" =>
@@ -175,7 +175,7 @@ fn eval_fun_not(args: &[AST]) -> Result<AST, Error> {
 }
 
 fn eval_quote(list: &[AST]) -> Result<AST, Error> {
-    Ok(list.tail()[0].clone())
+    Ok(list[0].clone())
 }
 
 fn list_of_integers(list: &[AST]) -> Result<Vec<i64>, Error> {
