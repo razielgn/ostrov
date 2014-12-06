@@ -24,3 +24,14 @@ fn or() {
     assert_eval("(or #f 2)", integer(2));
     assert_eval("(or 1 a)", integer(1));
 }
+
+#[test]
+fn if_() {
+    assert_eval("(if #t (+ 1) a)", integer(1));
+    assert_eval("(if #f a (+ 1))", integer(1));
+    assert_eval("(if (and #t #f) a 1)", integer(1));
+
+    assert_eval_err("(if)", bad_arity("if"));
+    assert_eval_err("(if a b)", bad_arity("if"));
+    assert_eval_err("(if a b c d)", bad_arity("if"));
+}
