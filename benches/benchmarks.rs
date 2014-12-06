@@ -38,7 +38,7 @@ fn nested_evaluation(b: &mut Bencher) {
         ";
 
         match parse(input) {
-            Ok(ast) => match eval(ast) {
+            Ok(ast) => match eval(ast.iter().last().unwrap()) {
                 Ok(_actual) => {},
                 Err(error)  => panic!(format!("{}", error)),
             },

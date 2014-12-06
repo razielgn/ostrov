@@ -4,6 +4,7 @@ extern crate ostrov;
 
 mod helpers;
 
+mod parser;
 mod parser_atoms;
 mod parser_booleans;
 mod parser_dotted_lists;

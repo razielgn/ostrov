@@ -12,9 +12,13 @@ pub fn repl() {
         match input.read_line() {
             Ok(line) => {
                 match parse(line.as_slice()) {
-                    Ok(ast) => match eval(ast) {
-                        Ok(val)    => println!("=> {}", val),
-                        Err(error) => println!("{}", error),
+                    Ok(exprs) => {
+                        for expr in exprs.iter() {
+                            match eval(expr) {
+                                Ok(value)  => println!("=> {}", value),
+                                Err(error) => println!("{}", error),
+                            }
+                        }
                     },
                     Err(error) => println!("Parse error: {}", error),
                 }
