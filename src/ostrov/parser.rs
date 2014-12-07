@@ -55,8 +55,11 @@ pub mod list {
                 left.push_all(list.as_slice());
                 AST::List(left)
             }
-            _ =>
-                AST::DottedList(left, box right)
+            AST::DottedList(list, right) => {
+                left.push_all(list.as_slice());
+                AST::DottedList(left, right)
+            }
+            _ => AST::DottedList(left, box right)
         }
     }
 }
