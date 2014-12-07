@@ -12,8 +12,12 @@ mod parser_integers;
 mod parser_lists;
 mod parser_quoted;
 
-mod eval_primitives;
-mod eval_special_forms;
-mod eval_define;
+mod eval_application;
+mod eval_basic_types;
+mod eval_boolean_procedures;
+mod eval_conditionals;
+mod eval_definitions;
+mod eval_integer_procedures;
+mod eval_quotation;
 
 mod ast_fmt;
