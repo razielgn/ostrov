@@ -65,7 +65,16 @@ fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
         ">"   => eval_fun_greater_than(args),
         ">="  => eval_fun_greater_than_or_equal(args),
         "not" => eval_fun_not(args),
-        _     => Err(Error::UnboundVariable(fun.to_string()))
+        _     => {
+            let res = try!(eval_variable(&fun.to_string(), env));
+
+            match res {
+                AST::Fn(name, args_names, body) => {
+                    eval_procedure(name, args_names, args, *body, env)
+                },
+                _ => Err(Error::UnappliableValue(res.clone()))
+            }
+        }
     }
 }
 
@@ -247,23 +256,64 @@ fn eval_define(args: &[AST], env: &mut Env) -> Result<AST, Error> {
 
     let ref atom = args[0];
 
-    if let &AST::Atom(ref name) = atom {
-        if args.len() == 2 {
-            let body = try!(eval(&args[1], env));
-            env.set(name.to_string(), body.clone());
-
-            Ok(body)
-        } else {
-            Ok(AST::Atom(name.to_string()))
-        }
-    } else {
-        Err(Error::WrongArgumentType(atom.clone()))
+    match atom {
+        &AST::Atom(ref name) => eval_define_variable(name, args, env),
+        &AST::List(ref list) if list.len() > 0 => eval_define_procedure(list.as_slice(), args, env),
+        _ => Err(Error::WrongArgumentType(atom.clone()))
     }
+}
+
+fn eval_define_variable(name: &String, args: &[AST], env: &mut Env) -> Result<AST, Error> {
+    if args.len() == 2 {
+        let body = try!(eval(&args[1], env));
+        env.set(name.to_string(), body.clone());
+
+        Ok(body)
+    } else {
+        Ok(AST::Atom(name.to_string()))
+    }
+}
+
+fn eval_define_procedure(list: &[AST], args: &[AST], env: &mut Env) -> Result<AST, Error> {
+    let procedure_name = try!(atom_or_error(&list[0]));
+
+    let tail = list.tail();
+    let mut args_list: Vec<String> = Vec::with_capacity(tail.len());
+    for arg in tail.iter() {
+        let arg = try!(atom_or_error(arg));
+        args_list.push(arg);
+    }
+
+    let procedure = AST::Fn(procedure_name.clone(), args_list, box args[1].clone());
+    env.set(procedure_name.clone(), procedure);
+
+    Ok(AST::Atom(procedure_name))
 }
 
 fn eval_variable(name: &String, env: &mut Env) -> Result<AST, Error> {
     match env.get(name) {
         Some(value) => Ok(value.clone()),
         None        => Err(Error::UnboundVariable(name.clone())),
+    }
+}
+
+fn eval_procedure(name: String, arg_names: Vec<String>, args: Vec<AST>, body: AST, env: &Env) -> Result<AST, Error> {
+    if arg_names.len() != args.len() {
+        return Err(Error::BadArity(name));
+    }
+
+    let mut inner_env = Env::wraps(env);
+    for (name, value) in arg_names.iter().zip(args.iter()) {
+        inner_env.set(name.clone(), value.clone());
+    }
+
+    eval(&body, &mut inner_env)
+}
+
+fn atom_or_error(value: &AST) -> Result<String, Error> {
+    if let &AST::Atom(ref atom) = value {
+        Ok(atom.to_string())
+    } else {
+        Err(Error::WrongArgumentType(value.clone()))
     }
 }

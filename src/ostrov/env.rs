@@ -33,4 +33,8 @@ impl<'a> Env<'a> {
     fn get_from_outer(&'a self, name: &String) -> Option<&'a AST> {
         self.outer.and_then(|env| env.get(name))
     }
+
+    pub fn remove(&mut self, name: &String) {
+        self.defs.remove(name);
+    }
 }
