@@ -12,7 +12,7 @@ pub fn eval(value: &AST, env: &mut Env) -> Result<AST, Error> {
             Ok(value.clone()),
         &AST::List(ref list) =>
             eval_list(list.as_slice(), env),
-        &AST::DottedList(ref _list, ref _val) =>
+        _ =>
             Err(Error::IrreducibleValue(value.clone())),
     }
 }

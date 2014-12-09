@@ -47,6 +47,10 @@ pub fn dotted_list(list: Vec<AST>, val: AST) -> AST {
 }
 pub fn empty_list()        -> AST { AST::List(vec!()) }
 pub fn bool(val: bool)     -> AST { AST::Bool(val) }
+pub fn func(name: &str, args: Vec<&str>, body: AST) -> AST {
+    let args = args.iter().map(|s| s.to_string()).collect();
+    AST::Fn(name.to_string(), args, box body)
+}
 
 pub fn unbound_variable_error(val: &str) -> Error { Error::UnboundVariable(val.to_string()) }
 pub fn unappliable_value_error(val: AST) -> Error { Error::UnappliableValue(val) }
