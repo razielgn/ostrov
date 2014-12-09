@@ -16,34 +16,34 @@ pub fn atom_quote() -> AST {
     AST::Atom("quote".to_string())
 }
 
-fn fmt_list(items: &Vec<AST>, f: &mut Formatter) -> Result<(), Error> {
-    try!("(".fmt(f));
-
-    let mut i = 0;
-    for item in items.iter() {
+fn fmt_join_with_spaces<T: Show>(items: &[T], f: &mut Formatter) -> Result<(), Error> {
+    for (i, item) in items.iter().enumerate() {
         try!(item.fmt(f));
 
-        i += 1;
-        if i != items.len() {
+        if i + 1 != items.len() {
             try!(" ".fmt(f));
         }
     }
 
-    ")".fmt(f)
+    Ok(())
+}
+
+fn fmt_list(items: &Vec<AST>, f: &mut Formatter) -> Result<(), Error> {
+    try!("(".fmt(f));
+    try!(fmt_join_with_spaces(items.as_slice(), f));
+    try!(")".fmt(f));
+
+    Ok(())
 }
 
 fn fmt_dotted_list(items: &Vec<AST>, right: &AST, f: &mut Formatter) -> Result<(), Error> {
     try!("(".fmt(f));
-
-    for item in items.iter() {
-        try!(item.fmt(f));
-        try!(" ".fmt(f));
-    }
-
-    try!(". ".fmt(f));
+    try!(fmt_join_with_spaces(items.as_slice(), f));
+    try!(" . ".fmt(f));
     try!(right.fmt(f));
+    try!(")".fmt(f));
 
-    ")".fmt(f)
+    Ok(())
 }
 
 impl Show for AST {
