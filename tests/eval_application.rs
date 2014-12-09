@@ -17,13 +17,8 @@ fn atoms() {
 }
 
 #[test]
-#[should_fail]
 fn lists() {
-    assert_eval_err("('(1))", unappliable_value_error(list(vec!(integer(1)))));
+    assert_eval_err("('(1))", unappliable_value_error(list(vec!(atom("quote"),
+                                                                list(vec!(integer(1)))))));
 }
 
-#[test]
-#[should_fail]
-fn dotted_lists() {
-    assert_eval_err("('(1 . 2))", unappliable_value_error(dotted_list(vec!(integer(1)), integer(2))));
-}
