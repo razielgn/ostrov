@@ -43,5 +43,9 @@
 * Application of `=`, `<`, `>`, `<=`, `>=` and `not`.
 * Evaluation of special forms `and` and `or`.
 * Evaluation of special form `if`.
+* Creation of variables (`(define pi ...)`).
+* Creation of procedures with arguments (`(define (fact n) ...)`).
 
 ## Missing
+
+* Creation of procedures with variable arguments (`(define (+ . addends) ..)`).
