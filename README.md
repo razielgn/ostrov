@@ -1,4 +1,4 @@
-# Ostrov ![build status](https://api.travis-ci.org/razielgn/ostrov.svg)
+# Ostrov [![build status](https://api.travis-ci.org/razielgn/ostrov.svg)](https://travis-ci.org/razielgn/ostrov)
 
 Ostrov is an R6RS Scheme implementation written in Rust.
 
