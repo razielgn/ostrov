@@ -22,6 +22,11 @@ fn lists() {
                                                                 list(vec!(integer(1)))))));
 }
 
+#[test]
+fn expressions_in_first_position() {
+    assert_eval("(define (x) 1)
+                 ((if #t x))", integer(1));
+}
 
 #[test]
 fn procedure_with_no_args() {
@@ -60,4 +65,14 @@ fn procedure_with_two_args_previous_scoping_is_kept() {
 fn procedure_with_mismatched_arity() {
     assert_eval_err("(define (sum x y) (+ x y))
                      (sum 4)", bad_arity("sum"));
+}
+
+#[test]
+fn lambda_with_fixed_arguments_number() {
+    assert_eval("((lambda (x y) (+ x y)) 6 8)", integer(14));
+}
+
+#[test]
+fn lambda_with_fixed_arguments_number_bad_arity() {
+    assert_eval_err("((lambda (x y) (+ x y)) 6 8 9)", bad_arity_lambda());
 }

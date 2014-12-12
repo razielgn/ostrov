@@ -5,7 +5,7 @@ use parser::parse;
 
 #[deriving(Show, PartialEq)]
 pub enum Error {
-    BadArity(String),
+    BadArity(Option<String>),
     IrreducibleValue(AST),
     ParseError(String),
     UnappliableValue(AST),

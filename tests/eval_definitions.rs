@@ -20,6 +20,14 @@ fn define_with_two_args() {
 }
 
 #[test]
+fn define_with_one_arg_lambda() {
+    assert_eval("(define f (lambda (x) 1))
+                 f", func("f", vec!("x"), integer(1)));
+    assert_eval("(define f (lambda (x) 1))
+                 (f 9)", integer(1));
+}
+
+#[test]
 fn define_procedure() {
     assert_eval("(define (x) 3)", atom("x")); // unspecified behaviour
 

@@ -45,7 +45,10 @@
 * Evaluation of special form `if`.
 * Creation of variables (`(define pi ...)`).
 * Creation of procedures with arguments (`(define (fact n) ...)`).
+* Evaluation of lambdas with fixed number of arguments (`(lambda (x y z) ...)`).
 
 ## Missing
 
 * Creation of procedures with variable arguments (`(define (+ . addends) ..)`).
+* Evaluation of lambdas with any number of arguments (`(lambda args ...)`).
+* Evaluation of lambdas with variable number of arguments (`(lambda (h . t) ...)`).

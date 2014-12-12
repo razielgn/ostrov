@@ -9,7 +9,7 @@ pub enum AST {
     DottedList(Vec<AST>, Box<AST>),
     Integer(i64),
     List(Vec<AST>),
-    Fn(String, Vec<String>, Box<AST>),
+    Fn(Option<String>, Vec<String>, Box<AST>),
 }
 
 fn fmt_join_with_spaces<T: Show>(items: &[T], f: &mut Formatter) -> Result<(), Error> {
@@ -42,9 +42,19 @@ fn fmt_dotted_list(items: &Vec<AST>, right: &AST, f: &mut Formatter) -> Result<(
     Ok(())
 }
 
-fn fmt_procedure(name: &String, args: &Vec<String>, f: &mut Formatter) -> Result<(), Error> {
-    try!("<procedure ".fmt(f));
-    try!(name.fmt(f));
+fn fmt_procedure(name: &Option<String>, args: &Vec<String>, f: &mut Formatter) -> Result<(), Error> {
+    try!("<".fmt(f));
+
+    match name {
+        &Some(ref n) => {
+            try!("procedure ".fmt(f));
+            try!(n.fmt(f));
+        }
+        _ => {
+            try!("lambda".fmt(f));
+        }
+    };
+
     try!(" (".fmt(f));
     try!(fmt_join_with_spaces(args.as_slice(), f));
     try!(")>".fmt(f));

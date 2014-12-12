@@ -41,3 +41,9 @@ fn procedures() {
     assert_fmt("<procedure foo (bar baz)>",
                func("foo", vec!("bar", "baz"), integer(1)));
 }
+
+#[test]
+fn lambdas() {
+    assert_fmt("<lambda (bar baz)>",
+               lambda(vec!("bar", "baz"), integer(1)));
+}
