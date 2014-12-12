@@ -22,6 +22,11 @@ fn lists() {
                                                                 list(vec!(integer(1)))))));
 }
 
+#[test]
+fn expressions_in_first_position() {
+    assert_eval("(define (x) 1)
+                 ((if #t x))", integer(1));
+}
 
 #[test]
 fn procedure_with_no_args() {

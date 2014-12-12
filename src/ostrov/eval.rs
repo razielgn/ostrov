@@ -35,8 +35,19 @@ fn eval_list(list: &[AST], env: &mut Env) -> Result<AST, Error> {
                 "define" => eval_define(args, env),
                 fun     => apply(fun, args, env),
             },
-        _ =>
-            Err(Error::UnappliableValue(fun.clone()))
+        &AST::Bool(ref _b) =>
+            Err(Error::UnappliableValue(fun.clone())),
+        &AST::Integer(ref _i) =>
+            Err(Error::UnappliableValue(fun.clone())),
+        &AST::List(ref list) if list.head() == Some(&AST::Atom("quote".to_string())) =>
+            Err(Error::UnappliableValue(fun.clone())),
+        head => {
+            let mut value = args.clone().to_vec();
+            let evald_head = try!(eval(head, env));
+            value.insert(0, evald_head);
+
+            eval_list(value.as_slice(), env)
+        }
     }
 }
 
