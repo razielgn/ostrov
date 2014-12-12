@@ -5,86 +5,63 @@ use ast::AST;
 use runtime::Error;
 
 #[deriving(PartialEq)]
-pub enum IntegerSign {
+enum IntegerSign {
     Positive,
     Negative,
 }
 
-pub mod integer {
-    use ast::AST;
-    use parser::IntegerSign;
+fn parse_decimal(str: &str, sign: &IntegerSign) -> AST {
+    let integer: i64 = from_str(str).unwrap();
 
-    pub fn parse_decimal(str: &str, sign: &IntegerSign) -> AST {
-        let integer: i64 = from_str(str).unwrap();
-
-        AST::Integer(
-            if *sign == IntegerSign::Negative {
-                -integer
-            } else {
-                integer
-            }
-        )
-    }
-
-    pub fn parse_sign(str: &str) -> IntegerSign {
-        match str {
-            "-" => IntegerSign::Negative,
-            _   => IntegerSign::Positive,
+    AST::Integer(
+        if *sign == IntegerSign::Negative {
+            -integer
+        } else {
+            integer
         }
+    )
+}
+
+fn parse_sign(str: &str) -> IntegerSign {
+    match str {
+        "-" => IntegerSign::Negative,
+        _   => IntegerSign::Positive,
     }
 }
 
-pub mod atom {
-    use ast::AST;
-
-    pub fn parse(str: &str) -> AST {
-        AST::Atom(str.to_string())
-    }
+fn parse_atom(str: &str) -> AST {
+    AST::Atom(str.to_string())
 }
 
-pub mod list {
-    use ast::AST;
+fn parse_list(values: Vec<AST>) -> AST {
+    AST::List(values)
+}
 
-    pub fn parse(values: Vec<AST>) -> AST {
-        AST::List(values)
-    }
-
-    pub fn parse_dotted(mut left: Vec<AST>, right: AST) -> AST {
-        match right {
-            AST::List(list) => {
-                left.push_all(list.as_slice());
-                AST::List(left)
-            }
-            AST::DottedList(list, right) => {
-                left.push_all(list.as_slice());
-                AST::DottedList(left, right)
-            }
-            _ => AST::DottedList(left, box right)
+fn parse_dotted_list(mut left: Vec<AST>, right: AST) -> AST {
+    match right {
+        AST::List(list) => {
+            left.push_all(list.as_slice());
+            AST::List(left)
         }
+        AST::DottedList(list, right) => {
+            left.push_all(list.as_slice());
+            AST::DottedList(left, right)
+        }
+        _ => AST::DottedList(left, box right)
     }
 }
 
-pub mod bool {
-    use ast::AST;
-
-    pub fn parse(str: &str) -> AST {
-        AST::Bool(str == "t" || str == "T")
-    }
+fn parse_bool(str: &str) -> AST {
+    AST::Bool(str == "t" || str == "T")
 }
 
-pub mod quoted {
-    use ast::AST;
-    use ast::atom_quote;
-
-    pub fn parse(val: AST) -> AST {
-        AST::List(vec!(atom_quote(), val))
-    }
+fn parse_quoted(val: AST) -> AST {
+    AST::List(vec!(AST::Atom("quote".to_string()), val))
 }
 
 peg! ast(r#"
 
 use ast::AST;
-use parser::*;
 
 #[pub]
 grammar -> Vec<AST> =
@@ -107,7 +84,7 @@ identifier -> AST =
         initial subsequent*   { match_str }
         / peculiar_identifier { match_str }
     ) __ {
-        atom::parse(identifier)
+        super::parse_atom(identifier)
     }
 
 initial -> &'input str =
@@ -145,42 +122,42 @@ special_subsequent -> &'input str =
 
 integer -> AST =
     sign:sign digits:digits __ {
-        integer::parse_decimal(digits, &sign)
+        super::parse_decimal(digits, &sign)
     }
 
 list -> AST =
     "(" values:(value ** __) ")" __ {
-        list::parse(values)
+        super::parse_list(values)
     }
     / "[" values:(value ** __) "]" __ {
-        list::parse(values)
+        super::parse_list(values)
     }
     / "(" left:(value ++ __) "." __ right:value ")" __ {
-        list::parse_dotted(left, right)
+        super::parse_dotted_list(left, right)
     }
     / "[" left:(value ++ __) "." __ right:value "]" __ {
-        list::parse_dotted(left, right)
+        super::parse_dotted_list(left, right)
     }
 
 boolean -> AST =
     "\#" value:boolean_char __ {
-        bool::parse(value)
+        super::parse_bool(value)
     }
 
 boolean_char -> &'input str =
     [tfTF] { match_str }
 
 digits -> &'input str =
-    [0-9]+ { match_str }
+    digit+ { match_str }
 
-sign -> IntegerSign =
+sign -> super::IntegerSign =
     [-+]? {
-        integer::parse_sign(match_str)
+        super::parse_sign(match_str)
     }
 
 quoted -> AST =
     "'" value:value {
-        quoted::parse(value)
+        super::parse_quoted(value)
     }
 
 __ = (whitespace)*

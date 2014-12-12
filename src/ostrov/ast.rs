@@ -12,11 +12,6 @@ pub enum AST {
     Fn(String, Vec<String>, Box<AST>),
 }
 
-#[inline]
-pub fn atom_quote() -> AST {
-    AST::Atom("quote".to_string())
-}
-
 fn fmt_join_with_spaces<T: Show>(items: &[T], f: &mut Formatter) -> Result<(), Error> {
     for (i, item) in items.iter().enumerate() {
         try!(item.fmt(f));
