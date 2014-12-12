@@ -61,3 +61,4 @@ pub fn unappliable_value_error(val: AST) -> Error { Error::UnappliableValue(val)
 pub fn irreducible_value(val: AST) -> Error { Error::IrreducibleValue(val) }
 pub fn wrong_argument_type(val: AST) -> Error { Error::WrongArgumentType(val) }
 pub fn bad_arity(val: &str) -> Error { Error::BadArity(Some(val.to_string())) }
+pub fn bad_arity_lambda() -> Error { Error::BadArity(None) }

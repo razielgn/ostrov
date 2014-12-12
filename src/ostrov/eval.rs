@@ -12,6 +12,8 @@ pub fn eval(value: &AST, env: &mut Env) -> Result<AST, Error> {
             Ok(value.clone()),
         &AST::List(ref list) =>
             eval_list(list.as_slice(), env),
+        &AST::Fn(ref _name, ref _args, ref _body) =>
+            Ok(value.clone()),
         _ =>
             Err(Error::IrreducibleValue(value.clone())),
     }
@@ -33,12 +35,15 @@ fn eval_list(list: &[AST], env: &mut Env) -> Result<AST, Error> {
                 "or"    => eval_or(args, env),
                 "quote" => eval_quote(args),
                 "define" => eval_define(args, env),
+                "lambda" => eval_lambda(args, env),
                 fun     => apply(fun, args, env),
             },
         &AST::Bool(ref _b) =>
             Err(Error::UnappliableValue(fun.clone())),
         &AST::Integer(ref _i) =>
             Err(Error::UnappliableValue(fun.clone())),
+        &AST::Fn(ref name, ref args_names, ref body) =>
+            apply_lambda(name.clone(), args_names.clone(), args, *body.clone(), env),
         &AST::List(ref list) if list.head() == Some(&AST::Atom("quote".to_string())) =>
             Err(Error::UnappliableValue(fun.clone())),
         head => {
@@ -87,6 +92,12 @@ fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
             }
         }
     }
+}
+
+fn apply_lambda(name: Option<String>, args_names: Vec<String>, args:&[AST], body: AST, env: &mut Env) -> Result<AST, Error> {
+    let args = try!(eval_args(args, env));
+
+    eval_procedure(name, args_names, args, body, env)
 }
 
 fn eval_fun_plus(args: Vec<AST>) -> Result<AST, Error> {
@@ -299,6 +310,28 @@ fn eval_define_procedure(list: &[AST], args: &[AST], env: &mut Env) -> Result<AS
     env.set(procedure_name.clone(), procedure);
 
     Ok(AST::Atom(procedure_name))
+}
+
+fn eval_lambda(list: &[AST], _env: &Env) -> Result<AST, Error> {
+    if list.len() != 2 {
+        return Err(Error::BadArity(Some("lambda".to_string())));
+    }
+
+    let ref args = list[0];
+    let ref body = list[1];
+
+    match args {
+        &AST::List(ref args) if list.len() > 0 => {
+            let mut args_list: Vec<String> = Vec::with_capacity(args.len());
+            for arg in args.iter() {
+                let arg = try!(atom_or_error(arg));
+                args_list.push(arg);
+            }
+
+            Ok(AST::Fn(None, args_list, box body.clone()))
+        }
+        value => Err(Error::WrongArgumentType(value.clone()))
+    }
 }
 
 fn eval_variable(name: &String, env: &mut Env) -> Result<AST, Error> {
