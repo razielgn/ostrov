@@ -88,7 +88,7 @@ fn eval_fun_minus(args_: Vec<AST>) -> Result<AST, Error> {
     let args = try!(list_of_integers(args_));
 
     if args.len() == 0 {
-        return Err(Error::BadArity("-".to_string()))
+        return Err(Error::BadArity(Some("-".to_string())))
     }
 
     let head = args.head().unwrap();
@@ -106,7 +106,7 @@ fn eval_fun_division(args_: Vec<AST>) -> Result<AST, Error> {
     let args = try!(list_of_integers(args_));
 
     if args.len() == 0 {
-        return Err(Error::BadArity("/".to_string()))
+        return Err(Error::BadArity(Some("/".to_string())))
     }
 
     let head = args.head().unwrap();
@@ -168,7 +168,7 @@ fn eval_fun_ord(args_: Vec<AST>, cmp: |i64, i64| -> bool) -> Result<AST, Error> 
 
 fn eval_fun_not(args: Vec<AST>) -> Result<AST, Error> {
     if args.len() != 1 {
-        return Err(Error::BadArity("not".to_string()))
+        return Err(Error::BadArity(Some("not".to_string())))
     }
 
     let outcome = match args.head().unwrap() {
@@ -231,7 +231,7 @@ fn eval_or(args: &[AST], env: &mut Env) -> Result<AST, Error> {
 
 fn eval_if(args: &[AST], env: &mut Env) -> Result<AST, Error> {
     if args.len() < 1 || args.len() > 3 {
-        return Err(Error::BadArity("if".to_string()))
+        return Err(Error::BadArity(Some("if".to_string())))
     }
 
     let condition = try!(eval(&args[0], env));
@@ -251,7 +251,7 @@ fn eval_if(args: &[AST], env: &mut Env) -> Result<AST, Error> {
 
 fn eval_define(args: &[AST], env: &mut Env) -> Result<AST, Error> {
     if args.len() < 1 || args.len() > 2 {
-        return Err(Error::BadArity("define".to_string()))
+        return Err(Error::BadArity(Some("define".to_string())))
     }
 
     let ref atom = args[0];
@@ -284,7 +284,7 @@ fn eval_define_procedure(list: &[AST], args: &[AST], env: &mut Env) -> Result<AS
         args_list.push(arg);
     }
 
-    let procedure = AST::Fn(procedure_name.clone(), args_list, box args[1].clone());
+    let procedure = AST::Fn(Some(procedure_name.clone()), args_list, box args[1].clone());
     env.set(procedure_name.clone(), procedure);
 
     Ok(AST::Atom(procedure_name))
@@ -297,7 +297,7 @@ fn eval_variable(name: &String, env: &mut Env) -> Result<AST, Error> {
     }
 }
 
-fn eval_procedure(name: String, arg_names: Vec<String>, args: Vec<AST>, body: AST, env: &Env) -> Result<AST, Error> {
+fn eval_procedure(name: Option<String>, arg_names: Vec<String>, args: Vec<AST>, body: AST, env: &Env) -> Result<AST, Error> {
     if arg_names.len() != args.len() {
         return Err(Error::BadArity(name));
     }
