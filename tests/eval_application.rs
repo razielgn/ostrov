@@ -17,13 +17,47 @@ fn atoms() {
 }
 
 #[test]
-#[should_fail]
 fn lists() {
-    assert_eval_err("('(1))", unappliable_value_error(list(vec!(integer(1)))));
+    assert_eval_err("('(1))", unappliable_value_error(list(vec!(atom("quote"),
+                                                                list(vec!(integer(1)))))));
+}
+
+
+#[test]
+fn procedure_with_no_args() {
+    assert_eval("(define (x) 1)
+                 (x)", integer(1));
 }
 
 #[test]
-#[should_fail]
-fn dotted_lists() {
-    assert_eval_err("('(1 . 2))", unappliable_value_error(dotted_list(vec!(integer(1)), integer(2))));
+fn procedure_with_one_arg() {
+    assert_eval("(define (x y) y)
+                 (x (+ 2 9))", integer(11));
+}
+
+#[test]
+fn procedure_with_two_args() {
+    assert_eval("(define (sum x y) (+ x y))
+                 (sum 4 9)", integer(13));
+}
+
+#[test]
+fn procedure_with_two_args_scoping() {
+    assert_eval("(define x 10)
+                 (define (sum x y) (+ x y))
+                 (sum 4 9)", integer(13));
+}
+
+#[test]
+fn procedure_with_two_args_previous_scoping_is_kept() {
+    assert_eval("(define x 10)
+                 (define (sum x y) (+ x y))
+                 (sum 4 9)
+                 x", integer(10));
+}
+
+#[test]
+fn procedure_with_mismatched_arity() {
+    assert_eval_err("(define (sum x y) (+ x y))
+                     (sum 4)", bad_arity("sum"));
 }

@@ -2,14 +2,23 @@ use ast::AST;
 
 use std::collections::HashMap;
 
-pub struct Env {
+pub struct Env<'a> {
     defs: HashMap<String, AST>,
+    outer: Option<&'a Env<'a>>,
 }
 
-impl<'a> Env {
-    pub fn new() -> Env {
+impl<'a> Env<'a> {
+    pub fn new() -> Env<'a> {
         Env {
             defs: HashMap::new(),
+            outer: None,
+        }
+    }
+
+    pub fn wraps(outer: &'a Env) -> Env<'a> {
+        Env {
+            defs: HashMap::new(),
+            outer: Some(outer),
         }
     }
 
@@ -18,6 +27,14 @@ impl<'a> Env {
     }
 
     pub fn get(&'a self, name: &String) -> Option<&'a AST> {
-        self.defs.get(name)
+        self.defs.get(name).or_else(|| self.get_from_outer(name) )
+    }
+
+    fn get_from_outer(&'a self, name: &String) -> Option<&'a AST> {
+        self.outer.and_then(|env| env.get(name))
+    }
+
+    pub fn remove(&mut self, name: &String) {
+        self.defs.remove(name);
     }
 }

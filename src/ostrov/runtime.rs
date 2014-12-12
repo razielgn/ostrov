@@ -13,12 +13,12 @@ pub enum Error {
     WrongArgumentType(AST),
 }
 
-pub struct Runtime {
-    env: Env,
+pub struct Runtime<'a> {
+    env: Env<'a>,
 }
 
-impl Runtime {
-    pub fn new() -> Runtime {
+impl<'a> Runtime<'a> {
+    pub fn new() -> Runtime<'a> {
         Runtime {
             env: Env::new(),
         }

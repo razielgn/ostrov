@@ -20,6 +20,14 @@ fn define_with_two_args() {
 }
 
 #[test]
+fn define_procedure() {
+    assert_eval("(define (x) 3)", atom("x")); // unspecified behaviour
+
+    assert_eval("(define (x) 3)
+                 x", func("x", vec!(), integer(3)));
+}
+
+#[test]
 fn define_bad_arity() {
     assert_eval_err("(define)", bad_arity("define"));
     assert_eval_err("(define x 1 2)", bad_arity("define"));

@@ -35,3 +35,9 @@ fn dotted_lists() {
                                                            integer(2)))),
                                             atom("a")));
 }
+
+#[test]
+fn procedures() {
+    assert_fmt("<procedure foo (bar baz)>",
+               func("foo", vec!("bar", "baz"), integer(1)));
+}
