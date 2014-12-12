@@ -2,11 +2,11 @@
 name = "ostrov"
 version = "0.0.1"
 dependencies = [
- "peg 0.1.0 (git+https://github.com/kevinmehall/rust-peg)",
+ "peg 0.1.1 (git+https://github.com/kevinmehall/rust-peg)",
 ]
 
 [[package]]
 name = "peg"
-version = "0.1.0"
-source = "git+https://github.com/kevinmehall/rust-peg#aa2325df45978f7335dff7e52591b729c391ff67"
+version = "0.1.1"
+source = "git+https://github.com/kevinmehall/rust-peg#353b4b6ab87e606c4ecd05dd6522797f1cd1a272"
 
