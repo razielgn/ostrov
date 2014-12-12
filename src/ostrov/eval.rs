@@ -287,12 +287,17 @@ fn eval_define(args: &[AST], env: &mut Env) -> Result<AST, Error> {
 
 fn eval_define_variable(name: &String, args: &[AST], env: &mut Env) -> Result<AST, Error> {
     if args.len() == 2 {
-        let body = try!(eval(&args[1], env));
-        env.set(name.to_string(), body.clone());
+        let mut value = try!(eval(&args[1], env));
 
-        Ok(body)
+        if let AST::Fn(_name, args, box body) = value {
+            value = AST::Fn(Some(name.clone()), args, box body);
+        }
+
+        env.set(name.clone(), value.clone());
+
+        Ok(value)
     } else {
-        Ok(AST::Atom(name.to_string()))
+        Ok(AST::Atom(name.clone()))
     }
 }
 
