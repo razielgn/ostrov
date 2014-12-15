@@ -82,6 +82,7 @@ fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
         ">="  => eval_fun_greater_than_or_equal(args),
         "not" => eval_fun_not(args),
         "list" => eval_fun_list(args),
+        "length" => eval_fun_length(args),
         _     => {
             let res = try!(eval_variable(&fun.to_string(), env));
 
@@ -204,6 +205,18 @@ fn eval_fun_not(args: Vec<AST>) -> Result<AST, Error> {
 
 fn eval_fun_list(args: Vec<AST>) -> Result<AST, Error> {
     Ok(AST::List(args))
+}
+
+fn eval_fun_length(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("length".to_string())));
+    }
+
+    if let AST::List(ref list) = args[0] {
+        Ok(AST::Integer(list.len() as i64))
+    } else {
+        Err(Error::WrongArgumentType(args[0].clone()))
+    }
 }
 
 fn eval_quote(list: &[AST]) -> Result<AST, Error> {
