@@ -19,6 +19,7 @@ mod eval_conditionals;
 mod eval_definitions;
 mod eval_integer_procedures;
 mod eval_lambdas;
+mod eval_list_procedures;
 mod eval_quotation;
 
 mod ast_fmt;

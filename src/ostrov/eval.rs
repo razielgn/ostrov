@@ -81,6 +81,7 @@ fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
         ">"   => eval_fun_greater_than(args),
         ">="  => eval_fun_greater_than_or_equal(args),
         "not" => eval_fun_not(args),
+        "list" => eval_fun_list(args),
         _     => {
             let res = try!(eval_variable(&fun.to_string(), env));
 
@@ -199,6 +200,10 @@ fn eval_fun_not(args: Vec<AST>) -> Result<AST, Error> {
     };
 
     Ok(AST::Bool(outcome))
+}
+
+fn eval_fun_list(args: Vec<AST>) -> Result<AST, Error> {
+    Ok(AST::List(args))
 }
 
 fn eval_quote(list: &[AST]) -> Result<AST, Error> {
