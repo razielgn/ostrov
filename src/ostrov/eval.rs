@@ -87,6 +87,7 @@ fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
         "cons" => eval_fun_cons(args),
         "car" => eval_fun_car(args),
         "cdr" => eval_fun_cdr(args),
+        "null?" => eval_fun_null(args),
         _     => {
             let res = try!(eval_variable(&fun.to_string(), env));
 
@@ -289,6 +290,19 @@ fn eval_fun_cdr(args: Vec<AST>) -> Result<AST, Error> {
             Err(Error::WrongArgumentType(bad_arg.clone()))
         }
     }
+}
+
+fn eval_fun_null(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("null?".to_string())));
+    }
+
+    let out = match args[0] {
+        AST::List(ref l) if l.is_empty() => true,
+        _ => false
+    };
+
+    Ok(AST::Bool(out))
 }
 
 fn eval_quote(list: &[AST]) -> Result<AST, Error> {

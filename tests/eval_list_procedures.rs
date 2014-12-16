@@ -97,3 +97,17 @@ fn cdr_wrong_argument_type() {
     assert_eval_err("(cdr 12)", wrong_argument_type(integer(12)));
     assert_eval_err("(cdr '())", wrong_argument_type(empty_list()));
 }
+
+#[test]
+fn null() {
+    assert_eval("(null? '())", bool(true));
+    assert_eval("(null? 1)", bool(false));
+    assert_eval("(null? '(1 2 3))", bool(false));
+    assert_eval("(null? #t)", bool(false));
+}
+
+#[test]
+fn null_bad_arity() {
+    assert_eval_err("(null?)", bad_arity("null?"));
+    assert_eval_err("(null? '(a) '(b))", bad_arity("null?"));
+}
