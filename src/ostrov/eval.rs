@@ -81,6 +81,14 @@ fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
         ">"   => eval_fun_greater_than(args),
         ">="  => eval_fun_greater_than_or_equal(args),
         "not" => eval_fun_not(args),
+        "list" => eval_fun_list(args),
+        "length" => eval_fun_length(args),
+        "pair?" => eval_fun_pair(args),
+        "cons" => eval_fun_cons(args),
+        "car" => eval_fun_car(args),
+        "cdr" => eval_fun_cdr(args),
+        "null?" => eval_fun_null(args),
+        "list?" => eval_fun_list_question_mark(args),
         _     => {
             let res = try!(eval_variable(&fun.to_string(), env));
 
@@ -199,6 +207,117 @@ fn eval_fun_not(args: Vec<AST>) -> Result<AST, Error> {
     };
 
     Ok(AST::Bool(outcome))
+}
+
+fn eval_fun_list(args: Vec<AST>) -> Result<AST, Error> {
+    Ok(AST::List(args))
+}
+
+fn eval_fun_length(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("length".to_string())));
+    }
+
+    if let AST::List(ref list) = args[0] {
+        Ok(AST::Integer(list.len() as i64))
+    } else {
+        Err(Error::WrongArgumentType(args[0].clone()))
+    }
+}
+
+fn eval_fun_pair(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("pair?".to_string())));
+    }
+
+    if let AST::List(ref list) = args[0] {
+        Ok(AST::Bool(!list.is_empty()))
+    } else if let AST::DottedList(ref _list, ref _el) = args[0] {
+        Ok(AST::Bool(true))
+    } else {
+        Ok(AST::Bool(false))
+    }
+}
+
+fn eval_fun_cons(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 2 {
+        return Err(Error::BadArity(Some("cons".to_string())));
+    }
+
+    let mut list: Vec<AST> = Vec::new();
+
+    if let AST::List(ref l) = args[1] {
+        list.push(args[0].clone());
+        list.push_all(l.clone().as_slice());
+
+        Ok(AST::List(list))
+    } else {
+        list.push(args[0].clone());
+        Ok(AST::DottedList(list, box args[1].clone()))
+    }
+}
+
+fn eval_fun_car(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("car".to_string())));
+    }
+
+    match args[0] {
+        AST::List(ref l) if !l.is_empty() => {
+            Ok(l.head().unwrap().clone())
+        }
+        AST::DottedList(ref l, ref _t) => {
+            Ok(l.head().unwrap().clone())
+        }
+        ref bad_arg => {
+            Err(Error::WrongArgumentType(bad_arg.clone()))
+        }
+    }
+}
+
+fn eval_fun_cdr(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("cdr".to_string())));
+    }
+
+    match args[0] {
+        AST::List(ref l) if !l.is_empty() => {
+            Ok(AST::List(l.tail().to_vec()))
+        }
+        AST::DottedList(ref _l, ref t) => {
+            Ok(*t.clone())
+        }
+        ref bad_arg => {
+            Err(Error::WrongArgumentType(bad_arg.clone()))
+        }
+    }
+}
+
+fn eval_fun_null(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("null?".to_string())));
+    }
+
+    let out = match args[0] {
+        AST::List(ref l) if l.is_empty() => true,
+        _ => false
+    };
+
+    Ok(AST::Bool(out))
+}
+
+fn eval_fun_list_question_mark(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("list?".to_string())));
+    }
+
+    let out = if let AST::List(ref _l) = args[0] {
+        true
+    } else {
+        false
+    };
+
+    Ok(AST::Bool(out))
 }
 
 fn eval_quote(list: &[AST]) -> Result<AST, Error> {

@@ -46,9 +46,11 @@
 * Creation of variables (`(define pi ...)`).
 * Creation of procedures with arguments (`(define (fact n) ...)`).
 * Evaluation of lambdas with fixed number of arguments (`(lambda (x y z) ...)`).
+* Evaluation of list procedures `list`, `length`, `pair?`, `cons`, `car`, `cdr`, `null?`, `list?`.
 
 ## Missing
 
 * Creation of procedures with variable arguments (`(define (+ . addends) ..)`).
 * Evaluation of lambdas with any number of arguments (`(lambda args ...)`).
 * Evaluation of lambdas with variable number of arguments (`(lambda (h . t) ...)`).
+* Evaluation of list procedures `caar` .. `cddddr`, `append`, `reverse`, `list-tail`, `list-ref`, `map`, `for-each`.
