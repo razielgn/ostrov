@@ -85,6 +85,7 @@ fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
         "length" => eval_fun_length(args),
         "pair?" => eval_fun_pair(args),
         "cons" => eval_fun_cons(args),
+        "car" => eval_fun_car(args),
         _     => {
             let res = try!(eval_variable(&fun.to_string(), env));
 
@@ -252,6 +253,25 @@ fn eval_fun_cons(args: Vec<AST>) -> Result<AST, Error> {
         Ok(AST::DottedList(list, box args[1].clone()))
     }
 }
+
+fn eval_fun_car(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("car".to_string())));
+    }
+
+    match args[0] {
+        AST::List(ref l) if !l.is_empty() => {
+            Ok(l.head().unwrap().clone())
+        }
+        AST::DottedList(ref l, ref _t) => {
+            Ok(l.head().unwrap().clone())
+        }
+        ref bad_arg => {
+            Err(Error::WrongArgumentType(bad_arg.clone()))
+        }
+    }
+}
+
 
 fn eval_quote(list: &[AST]) -> Result<AST, Error> {
     Ok(list[0].clone())

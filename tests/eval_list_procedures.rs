@@ -61,3 +61,21 @@ fn cons_bad_arity() {
     assert_eval_err("(cons 1)", bad_arity("cons"));
     assert_eval_err("(cons 1 2 3)", bad_arity("cons"));
 }
+
+#[test]
+fn car() {
+    assert_eval("(car '(a b c))", atom("a"));
+    assert_eval("(car '(1 . 2))", integer(1));
+}
+
+#[test]
+fn car_bad_arity() {
+    assert_eval_err("(car)", bad_arity("car"));
+    assert_eval_err("(car '(a) '(b))", bad_arity("car"));
+}
+
+#[test]
+fn car_wrong_argument_type() {
+    assert_eval_err("(car 12)", wrong_argument_type(integer(12)));
+    assert_eval_err("(car '())", wrong_argument_type(empty_list()));
+}
