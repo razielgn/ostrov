@@ -86,6 +86,7 @@ fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
         "pair?" => eval_fun_pair(args),
         "cons" => eval_fun_cons(args),
         "car" => eval_fun_car(args),
+        "cdr" => eval_fun_cdr(args),
         _     => {
             let res = try!(eval_variable(&fun.to_string(), env));
 
@@ -272,6 +273,23 @@ fn eval_fun_car(args: Vec<AST>) -> Result<AST, Error> {
     }
 }
 
+fn eval_fun_cdr(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("cdr".to_string())));
+    }
+
+    match args[0] {
+        AST::List(ref l) if !l.is_empty() => {
+            Ok(AST::List(l.tail().to_vec()))
+        }
+        AST::DottedList(ref _l, ref t) => {
+            Ok(*t.clone())
+        }
+        ref bad_arg => {
+            Err(Error::WrongArgumentType(bad_arg.clone()))
+        }
+    }
+}
 
 fn eval_quote(list: &[AST]) -> Result<AST, Error> {
     Ok(list[0].clone())

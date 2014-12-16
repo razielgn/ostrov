@@ -79,3 +79,21 @@ fn car_wrong_argument_type() {
     assert_eval_err("(car 12)", wrong_argument_type(integer(12)));
     assert_eval_err("(car '())", wrong_argument_type(empty_list()));
 }
+
+#[test]
+fn cdr() {
+    assert_eval("(cdr '((a) b c d))", list(vec!(atom("b"), atom("c"), atom("d"))));
+    assert_eval("(cdr '(1 . 2))", integer(2));
+}
+
+#[test]
+fn cdr_bad_arity() {
+    assert_eval_err("(cdr)", bad_arity("cdr"));
+    assert_eval_err("(cdr '(a) '(b))", bad_arity("cdr"));
+}
+
+#[test]
+fn cdr_wrong_argument_type() {
+    assert_eval_err("(cdr 12)", wrong_argument_type(integer(12)));
+    assert_eval_err("(cdr '())", wrong_argument_type(empty_list()));
+}
