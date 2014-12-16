@@ -38,3 +38,26 @@ fn pair_bad_arity() {
     assert_eval_err("(pair?)", bad_arity("pair?"));
     assert_eval_err("(pair? 1 2)", bad_arity("pair?"));
 }
+
+#[test]
+fn cons() {
+    assert_eval("(cons 'a '())", list(vec!(atom("a"))));
+    assert_eval("(cons '(a) '(b c d))", list(vec!(list(vec!(atom("a"))),
+                                                  atom("b"),
+                                                  atom("c"),
+                                                  atom("d"))));
+    assert_eval("(cons 1 '(b c))", list(vec!(integer(1),
+                                             atom("b"),
+                                             atom("c"))));
+    assert_eval("(cons 'a 3)", dotted_list(vec!(atom("a")), integer(3)));
+    assert_eval("(cons '(a b) 'c)", dotted_list(vec!(list(vec!(atom("a"),
+                                                               atom("b")))),
+                                                atom("c")));
+}
+
+#[test]
+fn cons_bad_arity() {
+    assert_eval_err("(cons)", bad_arity("cons"));
+    assert_eval_err("(cons 1)", bad_arity("cons"));
+    assert_eval_err("(cons 1 2 3)", bad_arity("cons"));
+}

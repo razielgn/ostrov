@@ -84,6 +84,7 @@ fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
         "list" => eval_fun_list(args),
         "length" => eval_fun_length(args),
         "pair?" => eval_fun_pair(args),
+        "cons" => eval_fun_cons(args),
         _     => {
             let res = try!(eval_variable(&fun.to_string(), env));
 
@@ -231,6 +232,24 @@ fn eval_fun_pair(args: Vec<AST>) -> Result<AST, Error> {
         Ok(AST::Bool(true))
     } else {
         Ok(AST::Bool(false))
+    }
+}
+
+fn eval_fun_cons(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 2 {
+        return Err(Error::BadArity(Some("cons".to_string())));
+    }
+
+    let mut list: Vec<AST> = Vec::new();
+
+    if let AST::List(ref l) = args[1] {
+        list.push(args[0].clone());
+        list.push_all(l.clone().as_slice());
+
+        Ok(AST::List(list))
+    } else {
+        list.push(args[0].clone());
+        Ok(AST::DottedList(list, box args[1].clone()))
     }
 }
 
