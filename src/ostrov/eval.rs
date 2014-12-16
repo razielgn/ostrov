@@ -83,6 +83,7 @@ fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
         "not" => eval_fun_not(args),
         "list" => eval_fun_list(args),
         "length" => eval_fun_length(args),
+        "pair?" => eval_fun_pair(args),
         _     => {
             let res = try!(eval_variable(&fun.to_string(), env));
 
@@ -216,6 +217,20 @@ fn eval_fun_length(args: Vec<AST>) -> Result<AST, Error> {
         Ok(AST::Integer(list.len() as i64))
     } else {
         Err(Error::WrongArgumentType(args[0].clone()))
+    }
+}
+
+fn eval_fun_pair(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("pair?".to_string())));
+    }
+
+    if let AST::List(ref list) = args[0] {
+        Ok(AST::Bool(!list.is_empty()))
+    } else if let AST::DottedList(ref _list, ref _el) = args[0] {
+        Ok(AST::Bool(true))
+    } else {
+        Ok(AST::Bool(false))
     }
 }
 

@@ -22,3 +22,19 @@ fn length_bad_arity() {
 fn length_bad_arguments() {
     assert_eval_err("(length 1)", wrong_argument_type(integer(1)));
 }
+
+#[test]
+fn pair() {
+    assert_eval("(pair? 1)", bool(false));
+    assert_eval("(pair? #t)", bool(false));
+    assert_eval("(pair? '())", bool(false));
+    assert_eval("(pair? (lambda (x) 0))", bool(false));
+    assert_eval("(pair? '(1 2 3))", bool(true));
+    assert_eval("(pair? '(1 2 . 3))", bool(true));
+}
+
+#[test]
+fn pair_bad_arity() {
+    assert_eval_err("(pair?)", bad_arity("pair?"));
+    assert_eval_err("(pair? 1 2)", bad_arity("pair?"));
+}
