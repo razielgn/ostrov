@@ -88,6 +88,7 @@ fn apply(fun: &str, args_: &[AST], env: &mut Env) -> Result<AST, Error> {
         "car" => eval_fun_car(args),
         "cdr" => eval_fun_cdr(args),
         "null?" => eval_fun_null(args),
+        "list?" => eval_fun_list_question_mark(args),
         _     => {
             let res = try!(eval_variable(&fun.to_string(), env));
 
@@ -300,6 +301,20 @@ fn eval_fun_null(args: Vec<AST>) -> Result<AST, Error> {
     let out = match args[0] {
         AST::List(ref l) if l.is_empty() => true,
         _ => false
+    };
+
+    Ok(AST::Bool(out))
+}
+
+fn eval_fun_list_question_mark(args: Vec<AST>) -> Result<AST, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("list?".to_string())));
+    }
+
+    let out = if let AST::List(ref _l) = args[0] {
+        true
+    } else {
+        false
     };
 
     Ok(AST::Bool(out))

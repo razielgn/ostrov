@@ -111,3 +111,17 @@ fn null_bad_arity() {
     assert_eval_err("(null?)", bad_arity("null?"));
     assert_eval_err("(null? '(a) '(b))", bad_arity("null?"));
 }
+
+#[test]
+fn list_question_mark() {
+    assert_eval("(list? '(a b c))", bool(true));
+    assert_eval("(list? '())", bool(true));
+    assert_eval("(list? '(a . b))", bool(false));
+    assert_eval("(list? 1)", bool(false));
+}
+
+#[test]
+fn list_question_mark_bad_arity() {
+    assert_eval_err("(list?)", bad_arity("list?"));
+    assert_eval_err("(list? '() '())", bad_arity("list?"));
+}
