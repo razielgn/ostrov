@@ -3,6 +3,7 @@ use env::Env;
 use eval::eval;
 use parser::parse;
 use values::Value;
+use primitives;
 
 use std::io::BufferedReader;
 use std::io::File;
@@ -17,6 +18,7 @@ pub enum Error {
     UnboundVariable(String),
     WrongArgumentType(Value),
     LoadError(String),
+    PrimitiveFailed(String),
 }
 
 pub struct Runtime<'a> {
@@ -25,9 +27,13 @@ pub struct Runtime<'a> {
 
 impl<'a> Runtime<'a> {
     pub fn new() -> Runtime<'a> {
-        Runtime {
+        let mut runtime = Runtime {
             env: Env::new(),
-        }
+        };
+
+        runtime.init_primitives();
+
+        runtime
     }
 
     pub fn parse_str(&self, input: &str) -> Result<Vec<AST>, Error> {
@@ -65,6 +71,15 @@ impl<'a> Runtime<'a> {
                 let str_path = path.display().to_string();
                 Err(Error::LoadError(str_path))
             }
+        }
+    }
+
+    fn init_primitives(&mut self) {
+        for primitive in primitives::PRIMITIVES.iter() {
+            self.env.set(
+                primitive.to_string(),
+                Value::PrimitiveFn(primitive.to_string())
+            );
         }
     }
 }
