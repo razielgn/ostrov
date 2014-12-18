@@ -4,7 +4,7 @@ use std::fmt::Error;
 use std::fmt::Formatter;
 use std::fmt::Show;
 
-#[deriving(PartialEq)]
+#[deriving(PartialEq, Clone)]
 pub enum Value {
     Atom(String),
     Bool(bool),
@@ -74,6 +74,29 @@ impl Show for Value {
             &Value::Fn(ref name, ref args, ref _body) => fmt_procedure(name, args, f),
             &Value::Integer(ref i) => i.fmt(f),
             &Value::List(ref list) => fmt_list(list, f),
+        }
+    }
+}
+
+impl Value {
+    pub fn from_ast(ast: &AST) -> Value {
+        match ast {
+            &AST::Atom(ref string) =>
+                Value::Atom(string.clone()),
+            &AST::Bool(b) =>
+                Value::Bool(b),
+            &AST::Integer(i) =>
+                Value::Integer(i),
+            &AST::List(ref list) => {
+                let values = list.iter().map(|ast| Value::from_ast(ast)).collect();
+                Value::List(values)
+            }
+            &AST::DottedList(ref list, ref value) => {
+                let values = list.iter().map(|ast| Value::from_ast(ast)).collect();
+                Value::DottedList(values, box Value::from_ast(&*value.clone()))
+            }
+            &AST::Fn(ref name, ref args, ref body) =>
+                Value::Fn(name.clone(), args.clone(), *body.clone()),
         }
     }
 }

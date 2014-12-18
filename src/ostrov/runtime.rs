@@ -2,6 +2,7 @@ use ast::AST;
 use env::Env;
 use eval::eval;
 use parser::parse;
+use values::Value;
 
 use std::io::BufferedReader;
 use std::io::File;
@@ -10,11 +11,11 @@ use std::io::IoResult;
 #[deriving(Show, PartialEq)]
 pub enum Error {
     BadArity(Option<String>),
-    IrreducibleValue(AST),
+    IrreducibleValue(Value),
     ParseError(String),
-    UnappliableValue(AST),
+    UnappliableValue(Value),
     UnboundVariable(String),
-    WrongArgumentType(AST),
+    WrongArgumentType(Value),
     LoadError(String),
 }
 
@@ -33,7 +34,7 @@ impl<'a> Runtime<'a> {
         parse(input)
     }
 
-    pub fn eval_str(&mut self, input: &str) -> Result<Vec<AST>, Error> {
+    pub fn eval_str(&mut self, input: &str) -> Result<Vec<Value>, Error> {
         let exprs = try!(self.parse_str(input));
 
         let mut evalued_exprs = Vec::new();
@@ -45,7 +46,7 @@ impl<'a> Runtime<'a> {
         Ok(evalued_exprs)
     }
 
-    pub fn eval_file(&mut self, path: &Path) -> Result<Vec<AST>, Error> {
+    pub fn eval_file(&mut self, path: &Path) -> Result<Vec<Value>, Error> {
         let file = try!(Runtime::open_file(path));
         let mut reader = BufferedReader::new(file);
 

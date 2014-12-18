@@ -1,9 +1,9 @@
-use ast::AST;
+use values::Value;
 
 use std::collections::HashMap;
 
 pub struct Env<'a> {
-    defs: HashMap<String, AST>,
+    defs: HashMap<String, Value>,
     outer: Option<&'a Env<'a>>,
 }
 
@@ -22,15 +22,15 @@ impl<'a> Env<'a> {
         }
     }
 
-    pub fn set(&mut self, name: String, expr: AST) {
+    pub fn set(&mut self, name: String, expr: Value) {
         self.defs.insert(name, expr);
     }
 
-    pub fn get(&'a self, name: &String) -> Option<&'a AST> {
+    pub fn get(&'a self, name: &String) -> Option<&'a Value> {
         self.defs.get(name).or_else(|| self.get_from_outer(name) )
     }
 
-    fn get_from_outer(&'a self, name: &String) -> Option<&'a AST> {
+    fn get_from_outer(&'a self, name: &String) -> Option<&'a Value> {
         self.outer.and_then(|env| env.get(name))
     }
 

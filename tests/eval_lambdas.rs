@@ -1,10 +1,10 @@
 use helpers::*;
-use helpers::ast::*;
+use helpers::values::*;
 
 #[test]
 fn creation_with_fixed_arguments_number() {
     assert_eval("(lambda (x y z) 1)",
-                 lambda(vec!("x", "y", "z"), integer(1)));
+                 lambda(vec!("x", "y", "z"), ast::integer(1)));
 }
 
 #[test]

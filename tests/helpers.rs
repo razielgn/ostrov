@@ -1,6 +1,7 @@
 pub use ostrov::runtime::Runtime;
 use ostrov::ast::AST;
 use ostrov::runtime::Error;
+use ostrov::values::Value;
 
 use std::fmt::Show;
 
@@ -13,7 +14,7 @@ pub fn assert_parse(input: &str, expected: AST) {
     }
 }
 
-pub fn assert_eval(input: &str, expected: AST) {
+pub fn assert_eval(input: &str, expected: Value) {
     let mut runtime = Runtime::new();
 
     match runtime.eval_str(input) {
@@ -83,8 +84,8 @@ pub mod values {
 }
 
 pub fn unbound_variable_error(val: &str) -> Error { Error::UnboundVariable(val.to_string()) }
-pub fn unappliable_value_error(val: AST) -> Error { Error::UnappliableValue(val) }
-pub fn irreducible_value(val: AST) -> Error { Error::IrreducibleValue(val) }
-pub fn wrong_argument_type(val: AST) -> Error { Error::WrongArgumentType(val) }
+pub fn unappliable_value_error(val: Value) -> Error { Error::UnappliableValue(val) }
+pub fn irreducible_value(val: Value) -> Error { Error::IrreducibleValue(val) }
+pub fn wrong_argument_type(val: Value) -> Error { Error::WrongArgumentType(val) }
 pub fn bad_arity(val: &str) -> Error { Error::BadArity(Some(val.to_string())) }
 pub fn bad_arity_lambda() -> Error { Error::BadArity(None) }
