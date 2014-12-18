@@ -2,6 +2,8 @@ use ast::AST;
 use env::Env;
 use eval::eval;
 use parser::parse;
+use values::Value;
+use primitives;
 
 use std::io::BufferedReader;
 use std::io::File;
@@ -10,12 +12,13 @@ use std::io::IoResult;
 #[deriving(Show, PartialEq)]
 pub enum Error {
     BadArity(Option<String>),
-    IrreducibleValue(AST),
+    IrreducibleValue(Value),
     ParseError(String),
-    UnappliableValue(AST),
+    UnappliableValue(Value),
     UnboundVariable(String),
-    WrongArgumentType(AST),
+    WrongArgumentType(Value),
     LoadError(String),
+    PrimitiveFailed(String),
 }
 
 pub struct Runtime<'a> {
@@ -24,16 +27,20 @@ pub struct Runtime<'a> {
 
 impl<'a> Runtime<'a> {
     pub fn new() -> Runtime<'a> {
-        Runtime {
+        let mut runtime = Runtime {
             env: Env::new(),
-        }
+        };
+
+        runtime.init_primitives();
+
+        runtime
     }
 
     pub fn parse_str(&self, input: &str) -> Result<Vec<AST>, Error> {
         parse(input)
     }
 
-    pub fn eval_str(&mut self, input: &str) -> Result<Vec<AST>, Error> {
+    pub fn eval_str(&mut self, input: &str) -> Result<Vec<Value>, Error> {
         let exprs = try!(self.parse_str(input));
 
         let mut evalued_exprs = Vec::new();
@@ -45,7 +52,7 @@ impl<'a> Runtime<'a> {
         Ok(evalued_exprs)
     }
 
-    pub fn eval_file(&mut self, path: &Path) -> Result<Vec<AST>, Error> {
+    pub fn eval_file(&mut self, path: &Path) -> Result<Vec<Value>, Error> {
         let file = try!(Runtime::open_file(path));
         let mut reader = BufferedReader::new(file);
 
@@ -64,6 +71,15 @@ impl<'a> Runtime<'a> {
                 let str_path = path.display().to_string();
                 Err(Error::LoadError(str_path))
             }
+        }
+    }
+
+    fn init_primitives(&mut self) {
+        for primitive in primitives::PRIMITIVES.iter() {
+            self.env.set(
+                primitive.to_string(),
+                Value::PrimitiveFn(primitive.to_string())
+            );
         }
     }
 }

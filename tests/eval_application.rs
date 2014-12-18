@@ -1,4 +1,5 @@
 use helpers::*;
+use helpers::values::*;
 
 #[test]
 fn integers() {
@@ -11,7 +12,6 @@ fn booleans() {
 }
 
 #[test]
-#[should_fail]
 fn atoms() {
     assert_eval_err("(a b c)", unbound_variable_error("a"));
 }

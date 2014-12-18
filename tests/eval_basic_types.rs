@@ -1,4 +1,5 @@
 use helpers::*;
+use helpers::values::*;
 
 #[test]
 fn integers() {

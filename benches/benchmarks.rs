@@ -1,8 +1,8 @@
 extern crate ostrov;
 extern crate test;
 
-use ostrov::ast::AST;
 use ostrov::runtime::Runtime;
+use ostrov::values::Value;
 
 use test::Bencher;
 
@@ -40,7 +40,7 @@ fn nested_evaluation(b: &mut Bencher) {
         let mut runtime = Runtime::new();
 
         match runtime.eval_str(input) {
-            Ok(exprs)  => assert_eq!(AST::Integer(3), exprs[0]),
+            Ok(exprs)  => assert_eq!(Value::Integer(3), exprs[0]),
             Err(error) => panic!(format!("{}", error)),
         }
     })
@@ -54,13 +54,13 @@ fn procedure_evaluation(b: &mut Bencher) {
                 (if (= n 1)
                     1
                     (* n (fact (- n 1)))))
-            (fact 15)
+            (fact 5)
         ";
 
         let mut runtime = Runtime::new();
 
         match runtime.eval_str(input) {
-            Ok(exprs)  => assert_eq!(AST::Integer(1307674368000), exprs[1]),
+            Ok(exprs)  => assert_eq!(Value::Integer(120), exprs[1]),
             Err(error) => panic!(format!("{}", error)),
         }
     })

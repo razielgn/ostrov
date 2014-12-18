@@ -1,4 +1,5 @@
 use helpers::*;
+use helpers::values::*;
 
 #[test]
 fn define_with_one_arg() {
@@ -22,7 +23,7 @@ fn define_with_two_args() {
 #[test]
 fn define_with_one_arg_lambda() {
     assert_eval("(define f (lambda (x) 1))
-                 f", func("f", vec!("x"), integer(1)));
+                 f", func("f", vec!("x"), ast::integer(1)));
     assert_eval("(define f (lambda (x) 1))
                  (f 9)", integer(1));
 }
@@ -32,7 +33,7 @@ fn define_procedure() {
     assert_eval("(define (x) 3)", atom("x")); // unspecified behaviour
 
     assert_eval("(define (x) 3)
-                 x", func("x", vec!(), integer(3)));
+                 x", func("x", vec!(), ast::integer(3)));
 }
 
 #[test]

@@ -1,5 +1,5 @@
 use helpers::*;
-use helpers::ast::*;
+use helpers::values::*;
 
 #[test]
 fn integers() {
@@ -34,17 +34,22 @@ fn dotted_lists() {
     assert_fmt("(+ (1 2) . a)", dotted_list(vec!(atom("+"),
                                                  list(vec!(integer(1),
                                                            integer(2)))),
-                                            atom("a")));
+                                                 atom("a")));
 }
 
 #[test]
 fn procedures() {
     assert_fmt("<procedure foo (bar baz)>",
-               func("foo", vec!("bar", "baz"), integer(1)));
+               func("foo", vec!("bar", "baz"), ast::integer(1)));
 }
 
 #[test]
 fn lambdas() {
     assert_fmt("<lambda (bar baz)>",
-               lambda(vec!("bar", "baz"), integer(1)));
+               lambda(vec!("bar", "baz"), ast::integer(1)));
+}
+
+#[test]
+fn primitive() {
+    assert_fmt("<primitive procedure +>", primitive_func("+"));
 }
