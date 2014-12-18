@@ -1,49 +1,50 @@
 use helpers::*;
+use helpers::values::*;
 
 #[test]
 fn integers() {
-    assert_fmt("1", values::integer(1));
-    assert_fmt("-213", values::integer(-213));
+    assert_fmt("1", integer(1));
+    assert_fmt("-213", integer(-213));
 }
 
 #[test]
 fn booleans() {
-    assert_fmt("#t", values::bool(true));
-    assert_fmt("#f", values::bool(false));
+    assert_fmt("#t", bool(true));
+    assert_fmt("#f", bool(false));
 }
 
 #[test]
 fn atoms() {
-    assert_fmt("->", values::atom("->"));
+    assert_fmt("->", atom("->"));
 }
 
 #[test]
 fn lists() {
-    assert_fmt("()", values::empty_list());
-    assert_fmt("(+ 1 2 #f (1 2))", values::list(vec!(values::atom("+"),
-                                                     values::integer(1),
-                                                     values::integer(2),
-                                                     values::bool(false),
-                                                     values::list(vec!(values::integer(1),
-                                                                       values::integer(2))))));
+    assert_fmt("()", empty_list());
+    assert_fmt("(+ 1 2 #f (1 2))", list(vec!(atom("+"),
+                                             integer(1),
+                                             integer(2),
+                                             bool(false),
+                                             list(vec!(integer(1),
+                                                       integer(2))))));
 }
 
 #[test]
 fn dotted_lists() {
-    assert_fmt("(+ (1 2) . a)", values::dotted_list(vec!(values::atom("+"),
-                                                         values::list(vec!(values::integer(1),
-                                                                           values::integer(2)))),
-                                                         values::atom("a")));
+    assert_fmt("(+ (1 2) . a)", dotted_list(vec!(atom("+"),
+                                                 list(vec!(integer(1),
+                                                           integer(2)))),
+                                                 atom("a")));
 }
 
 #[test]
 fn procedures() {
     assert_fmt("<procedure foo (bar baz)>",
-               values::func("foo", vec!("bar", "baz"), integer(1)));
+               func("foo", vec!("bar", "baz"), ast::integer(1)));
 }
 
 #[test]
 fn lambdas() {
     assert_fmt("<lambda (bar baz)>",
-               values::lambda(vec!("bar", "baz"), integer(1)));
+               lambda(vec!("bar", "baz"), ast::integer(1)));
 }

@@ -1,4 +1,5 @@
 use helpers::*;
+use helpers::ast::*;
 
 #[test]
 fn plus() {

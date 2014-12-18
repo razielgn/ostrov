@@ -1,4 +1,5 @@
 use helpers::*;
+use helpers::ast::*;
 
 #[test]
 fn define_with_one_arg() {

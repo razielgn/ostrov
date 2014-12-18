@@ -1,4 +1,5 @@
 use helpers::*;
+use helpers::ast::*;
 
 #[test]
 fn creation_with_fixed_arguments_number() {
