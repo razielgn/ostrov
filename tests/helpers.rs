@@ -31,7 +31,7 @@ pub fn assert_eval_err(input: &str, expected: Error) {
     }
 }
 
-pub fn assert_fmt(input: &str, value: AST) {
+pub fn assert_fmt<T: Show>(input: &str, value: T) {
     assert_eq!(input, format!("{}", value));
 }
 
@@ -54,6 +54,28 @@ pub fn func(name: &str, args: Vec<&str>, body: AST) -> AST {
 pub fn lambda(args: Vec<&str>, body: AST) -> AST {
     let args = args.iter().map(|s| s.to_string()).collect();
     AST::Fn(None, args, box body)
+}
+
+pub mod values {
+    use ostrov::values::Value;
+    use ostrov::ast::AST;
+
+    pub fn integer(val: i64) -> Value { Value::Integer(val) }
+    pub fn atom(val: &str) -> Value { Value::Atom(val.to_string()) }
+    pub fn list(val: Vec<Value>) -> Value { Value::List(val) }
+    pub fn dotted_list(list: Vec<Value>, val: Value) -> Value {
+        Value::DottedList(list, box val)
+    }
+    pub fn empty_list() -> Value { Value::List(vec!()) }
+    pub fn bool(val: bool) -> Value { Value::Bool(val) }
+    pub fn func(name: &str, args: Vec<&str>, body: AST) -> Value {
+        let args = args.iter().map(|s| s.to_string()).collect();
+        Value::Fn(Some(name.to_string()), args, body)
+    }
+    pub fn lambda(args: Vec<&str>, body: AST) -> Value {
+        let args = args.iter().map(|s| s.to_string()).collect();
+        Value::Fn(None, args, body)
+    }
 }
 
 pub fn unbound_variable_error(val: &str) -> Error { Error::UnboundVariable(val.to_string()) }
