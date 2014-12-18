@@ -54,13 +54,13 @@ fn procedure_evaluation(b: &mut Bencher) {
                 (if (= n 1)
                     1
                     (* n (fact (- n 1)))))
-            (fact 15)
+            (fact 5)
         ";
 
         let mut runtime = Runtime::new();
 
         match runtime.eval_str(input) {
-            Ok(exprs)  => assert_eq!(Value::Integer(1307674368000), exprs[1]),
+            Ok(exprs)  => assert_eq!(Value::Integer(120), exprs[1]),
             Err(error) => panic!(format!("{}", error)),
         }
     })
