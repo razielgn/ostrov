@@ -10,6 +10,7 @@ pub enum Value {
     Bool(bool),
     DottedList(Vec<Value>, Box<Value>),
     Fn(Option<String>, Vec<String>, AST),
+    PrimitiveFn(String),
     Integer(i64),
     List(Vec<Value>),
 }
@@ -44,6 +45,14 @@ fn fmt_dotted_list(items: &Vec<Value>, right: &Value, f: &mut Formatter) -> Resu
     Ok(())
 }
 
+fn fmt_primitive(name: &String, f: &mut Formatter) -> Result<(), Error> {
+    try!("<primitive procedure ".fmt(f));
+    try!(name.fmt(f));
+    try!(">".fmt(f));
+
+    Ok(())
+}
+
 fn fmt_procedure(name: &Option<String>, args: &Vec<String>, f: &mut Formatter) -> Result<(), Error> {
     try!("<".fmt(f));
 
@@ -74,6 +83,7 @@ impl Show for Value {
             &Value::Fn(ref name, ref args, ref _body) => fmt_procedure(name, args, f),
             &Value::Integer(ref i) => i.fmt(f),
             &Value::List(ref list) => fmt_list(list, f),
+            &Value::PrimitiveFn(ref name) => fmt_primitive(name, f),
         }
     }
 }

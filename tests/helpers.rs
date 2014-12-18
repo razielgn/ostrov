@@ -81,6 +81,9 @@ pub mod values {
         let args = args.iter().map(|s| s.to_string()).collect();
         Value::Fn(None, args, body)
     }
+    pub fn primitive_func(name: &str) -> Value {
+        Value::PrimitiveFn(name.to_string())
+    }
 }
 
 pub fn unbound_variable_error(val: &str) -> Error { Error::UnboundVariable(val.to_string()) }

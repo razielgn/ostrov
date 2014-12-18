@@ -48,3 +48,8 @@ fn lambdas() {
     assert_fmt("<lambda (bar baz)>",
                lambda(vec!("bar", "baz"), ast::integer(1)));
 }
+
+#[test]
+fn primitive() {
+    assert_fmt("<primitive procedure +>", primitive_func("+"));
+}
