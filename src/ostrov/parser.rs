@@ -165,7 +165,7 @@ __ = (whitespace)*
 whitespace =
     [ \t\r\n]
 
-"#)
+"#);
 
 pub fn parse(input: &str) -> Result<Vec<AST>, Error> {
     match ast::grammar(input) {
