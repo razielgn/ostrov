@@ -5,12 +5,14 @@ use std::rc::Rc;
 
 pub struct Memory {
     heap: Vec<Rc<Value>>,
+    reserved: Vec<Rc<Value>>,
 }
 
 impl Memory {
     pub fn new() -> Memory {
         let mut memory = Memory {
             heap: Vec::new(),
+            reserved: Vec::new(),
         };
 
         memory.init();
@@ -25,11 +27,11 @@ impl Memory {
     }
 
     pub fn b_true(&self) -> Rc<Value> {
-        self.heap[0].clone()
+        self.reserved[0].clone()
     }
 
     pub fn b_false(&self) -> Rc<Value> {
-        self.heap[1].clone()
+        self.reserved[1].clone()
     }
 
     pub fn boolean(&self, b: bool) -> Rc<Value> {
@@ -41,7 +43,7 @@ impl Memory {
     }
 
     pub fn empty_list(&self) -> Rc<Value> {
-        self.heap[2].clone()
+        self.reserved[2].clone()
     }
 
     pub fn list(&mut self, values: Vec<Value>) -> Rc<Value> {
@@ -80,8 +82,12 @@ impl Memory {
     }
 
     fn init(&mut self) {
-        self.store(Value::Bool(true));
-        self.store(Value::Bool(false));
-        self.store(Value::List(vec!()));
+        self.store_reserved(Value::Bool(true));
+        self.store_reserved(Value::Bool(false));
+        self.store_reserved(Value::List(vec!()));
+    }
+
+    fn store_reserved(&mut self, value: Value) {
+        self.reserved.push(Rc::new(value));
     }
 }
