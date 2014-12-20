@@ -24,7 +24,7 @@ pub fn eval(value: &AST, env: &mut Env, memory: &mut Memory) -> Result<Rc<Value>
 
 fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if list.is_empty() {
-        return Ok(mem.new_list(vec!()));
+        return Ok(mem.empty_list());
     }
 
     let head = list.head().unwrap();
@@ -78,6 +78,8 @@ fn eval_quote(list: &[AST], mem: &mut Memory) -> Result<Rc<Value>, Error> {
     match Value::from_ast(&list[0]) {
         Value::Bool(b) =>
             Ok(mem.boolean(b)),
+        Value::List(ref l) if l.is_empty() =>
+            Ok(mem.empty_list()),
         value =>
             Ok(mem.store(value)),
     }

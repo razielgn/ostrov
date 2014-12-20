@@ -38,6 +38,10 @@ impl Memory {
         }
     }
 
+    pub fn empty_list(&self) -> Rc<Value> {
+        self.heap[2].clone()
+    }
+
     pub fn list(&mut self, values: Vec<Value>) -> Rc<Value> {
         let value = Value::List(values);
 
@@ -64,5 +68,6 @@ impl Memory {
     fn init(&mut self) {
         self.store(Value::Bool(true));
         self.store(Value::Bool(false));
+        self.store(Value::List(vec!()));
     }
 }

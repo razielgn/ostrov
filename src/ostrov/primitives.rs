@@ -215,7 +215,12 @@ fn cdr(args: Vec<Rc<Value>>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
 
     match args[0].deref() {
         &Value::List(ref l) if !l.is_empty() =>
-            Ok(mem.list(l.tail().to_vec())),
+            match l.tail() {
+                tail if tail.is_empty() =>
+                    Ok(mem.empty_list()),
+                tail =>
+                    Ok(mem.list(tail.to_vec())),
+            },
         &Value::DottedList(ref _l, ref t) =>
             Ok(mem.store(*t.clone())),
         value =>
