@@ -235,12 +235,8 @@ fn null(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
         return Err(Error::BadArity(Some("null?".to_string())));
     }
 
-    let out = match args[0] {
-        &Value::List(ref l) if l.is_empty() => true,
-        _ => false
-    };
-
-    Ok(mem.boolean(out))
+    let outcome = args[0] == mem.empty_list().deref();
+    Ok(mem.boolean(outcome))
 }
 
 fn list_question_mark(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
