@@ -1,5 +1,8 @@
 use runtime::Error;
 use values::Value;
+use memory::Memory;
+
+use std::rc::Rc;
 
 pub static PRIMITIVES: [&'static str, ..18] = [
     "*",
@@ -22,37 +25,40 @@ pub static PRIMITIVES: [&'static str, ..18] = [
     "pair?",
 ];
 
-pub fn apply(name: &str, args: Vec<Value>) -> Result<Value, Error> {
-    match name {
-        "*"      => product(args),
-        "+"      => plus(args),
-        "-"      => minus(args),
-        "/"      => division(args),
-        "<"      => less_than(args),
-        "<="     => less_than_or_equal(args),
-        "="      => equals(args),
-        ">"      => greater_than(args),
-        ">="     => greater_than_or_equal(args),
-        "car"    => car(args),
-        "cdr"    => cdr(args),
-        "cons"   => cons(args),
-        "length" => length(args),
-        "list"   => list(args),
-        "list?"  => list_question_mark(args),
-        "not"    => not(args),
-        "null?"  => null(args),
-        "pair?"  => pair(args),
+pub fn apply(name: &String, args_: Vec<Rc<Value>>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    let args = args_.iter().map(|a| a.deref()).collect();
+
+    match name.as_slice() {
+        "*"      => product(args, mem),
+        "+"      => plus(args, mem),
+        "-"      => minus(args, mem),
+        "/"      => division(args, mem),
+        "<"      => less_than(args, mem),
+        "<="     => less_than_or_equal(args, mem),
+        "="      => equals(args, mem),
+        ">"      => greater_than(args, mem),
+        ">="     => greater_than_or_equal(args, mem),
+        "car"    => car(args, mem),
+        "cdr"    => cdr(args, mem),
+        "cons"   => cons(args, mem),
+        "length" => length(args, mem),
+        "list"   => list(args, mem),
+        "list?"  => list_question_mark(args, mem),
+        "not"    => not(args, mem),
+        "null?"  => null(args, mem),
+        "pair?"  => pair(args, mem),
         _        => Err(Error::PrimitiveFailed(name.to_string()))
     }
 }
 
-fn plus(args: Vec<Value>) -> Result<Value, Error> {
+fn plus(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     let args_ = try!(list_of_integers(args));
     let sum = args_.iter().fold(0, |sum, n| sum + *n);
-    Ok(Value::Integer(sum))
+
+    Ok(mem.integer(sum))
 }
 
-fn minus(args_: Vec<Value>) -> Result<Value, Error> {
+fn minus(args_: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     let args = try!(list_of_integers(args_));
 
     if args.len() == 0 {
@@ -63,14 +69,14 @@ fn minus(args_: Vec<Value>) -> Result<Value, Error> {
     let tail = args.tail();
 
     if tail.is_empty() {
-        return Ok(Value::Integer(- *head))
+        return Ok(mem.integer(- *head))
     }
 
     let tail_sum = tail.iter().fold(0, |sum, n| sum + *n);
-    Ok(Value::Integer(*head - tail_sum))
+    Ok(mem.integer(*head - tail_sum))
 }
 
-fn division(args_: Vec<Value>) -> Result<Value, Error> {
+fn division(args_: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     let args = try!(list_of_integers(args_));
 
     if args.len() == 0 {
@@ -81,187 +87,194 @@ fn division(args_: Vec<Value>) -> Result<Value, Error> {
     let tail = args.tail();
 
     if tail.is_empty() {
-        return Ok(Value::Integer(1 / *head))
+        return Ok(mem.integer(1 / *head))
     }
 
     let div = tail.iter().fold(*head, |div, n| div / *n);
-    Ok(Value::Integer(div))
+    Ok(mem.integer(div))
 }
 
-fn product(args_: Vec<Value>) -> Result<Value, Error> {
+fn product(args_: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     let args = try!(list_of_integers(args_));
     let product = args.iter().fold(1, |product, n| product * *n);
-    Ok(Value::Integer(product))
+
+    Ok(mem.integer(product))
 }
 
-fn equals(args_: Vec<Value>) -> Result<Value, Error> {
+fn equals(args_: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if args_.len() < 2 {
-        return Ok(Value::Bool(true))
+        return Ok(mem.b_true());
     }
 
     let args = try!(list_of_integers(args_));
     let head = args.head().unwrap();
     let outcome = args.iter().skip(1).all(|n| *n == *head);
-    Ok(Value::Bool(outcome))
+
+    Ok(mem.boolean(outcome))
 }
 
-fn less_than(args: Vec<Value>) -> Result<Value, Error> {
-    ord(args, |a, b| a < b)
+fn less_than(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    ord(args, mem, |a, b| a < b)
 }
 
-fn less_than_or_equal(args: Vec<Value>) -> Result<Value, Error> {
-    ord(args, |a, b| a <= b)
+fn less_than_or_equal(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    ord(args, mem, |a, b| a <= b)
 }
 
-fn greater_than(args: Vec<Value>) -> Result<Value, Error> {
-    ord(args, |a, b| a > b)
+fn greater_than(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    ord(args, mem, |a, b| a > b)
 }
 
-fn greater_than_or_equal(args: Vec<Value>) -> Result<Value, Error> {
-    ord(args, |a, b| a >= b)
+fn greater_than_or_equal(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    ord(args, mem, |a, b| a >= b)
 }
 
-fn not(args: Vec<Value>) -> Result<Value, Error> {
+fn not(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("not".to_string())))
     }
 
-    let outcome = match args.head().unwrap() {
+    let outcome = match *args.head().unwrap() {
         &Value::Bool(false) => true,
-        _                 => false,
+        _                   => false,
     };
 
-    Ok(Value::Bool(outcome))
+    Ok(mem.boolean(outcome))
 }
 
-fn list(args: Vec<Value>) -> Result<Value, Error> {
-    Ok(Value::List(args))
+fn list(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    let list = args.iter().map(|a| a.deref().clone()).collect();
+
+    Ok(mem.list(list))
 }
 
-fn length(args: Vec<Value>) -> Result<Value, Error> {
+fn length(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("length".to_string())));
     }
 
-    if let Value::List(ref list) = args[0] {
-        Ok(Value::Integer(list.len() as i64))
-    } else {
-        Err(Error::WrongArgumentType(args[0].clone()))
+    match args[0] {
+        &Value::List(ref list) =>
+            Ok(mem.integer(list.len() as i64)),
+        value =>
+            Err(Error::WrongArgumentType(value.clone())),
     }
 }
 
-fn pair(args: Vec<Value>) -> Result<Value, Error> {
+fn pair(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("pair?".to_string())));
     }
 
-    if let Value::List(ref list) = args[0] {
-        Ok(Value::Bool(!list.is_empty()))
-    } else if let Value::DottedList(ref _list, ref _el) = args[0] {
-        Ok(Value::Bool(true))
+    let outcome = if let &Value::List(ref list) = args[0] {
+        !list.is_empty()
+    } else if let &Value::DottedList(ref _list, ref _el) = args[0] {
+        true
     } else {
-        Ok(Value::Bool(false))
-    }
+        false
+    };
+
+    Ok(mem.boolean(outcome))
 }
 
-fn cons(args: Vec<Value>) -> Result<Value, Error> {
+fn cons(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if args.len() != 2 {
         return Err(Error::BadArity(Some("cons".to_string())));
     }
 
     let mut list: Vec<Value> = Vec::new();
 
-    if let Value::List(ref l) = args[1] {
+    if let &Value::List(ref l) = args[1] {
         list.push(args[0].clone());
         list.push_all(l.clone().as_slice());
 
-        Ok(Value::List(list))
+        Ok(mem.list(list))
     } else {
         list.push(args[0].clone());
-        Ok(Value::DottedList(list, box args[1].clone()))
+        Ok(mem.dotted_list(list, args[1].clone()))
     }
 }
 
-fn car(args: Vec<Value>) -> Result<Value, Error> {
+fn car(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("car".to_string())));
     }
 
     match args[0] {
-        Value::List(ref l) if !l.is_empty() => {
-            Ok(l.head().unwrap().clone())
-        }
-        Value::DottedList(ref l, ref _t) => {
-            Ok(l.head().unwrap().clone())
-        }
-        ref bad_arg => {
-            Err(Error::WrongArgumentType(bad_arg.clone()))
-        }
+        &Value::List(ref l) if !l.is_empty() =>
+            Ok(mem.store(l.head().unwrap().clone())),
+        &Value::DottedList(ref l, ref _t) =>
+            Ok(mem.store(l.head().unwrap().clone())),
+        value =>
+            Err(Error::WrongArgumentType(value.clone())),
     }
 }
 
-fn cdr(args: Vec<Value>) -> Result<Value, Error> {
+fn cdr(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("cdr".to_string())));
     }
 
     match args[0] {
-        Value::List(ref l) if !l.is_empty() => {
-            Ok(Value::List(l.tail().to_vec()))
-        }
-        Value::DottedList(ref _l, ref t) => {
-            Ok(*t.clone())
-        }
-        ref bad_arg => {
-            Err(Error::WrongArgumentType(bad_arg.clone()))
-        }
+        &Value::List(ref l) if !l.is_empty() =>
+            match l.tail() {
+                tail if tail.is_empty() =>
+                    Ok(mem.empty_list()),
+                tail =>
+                    Ok(mem.list(tail.to_vec())),
+            },
+        &Value::DottedList(ref _l, ref t) =>
+            Ok(mem.store(*t.clone())),
+        value =>
+            Err(Error::WrongArgumentType(value.clone())),
     }
 }
 
-fn null(args: Vec<Value>) -> Result<Value, Error> {
+fn null(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("null?".to_string())));
     }
 
     let out = match args[0] {
-        Value::List(ref l) if l.is_empty() => true,
+        &Value::List(ref l) if l.is_empty() => true,
         _ => false
     };
 
-    Ok(Value::Bool(out))
+    Ok(mem.boolean(out))
 }
 
-fn list_question_mark(args: Vec<Value>) -> Result<Value, Error> {
+fn list_question_mark(args: Vec<&Value>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("list?".to_string())));
     }
 
-    let out = if let Value::List(ref _l) = args[0] {
+    let out = if let &Value::List(ref _l) = args[0] {
         true
     } else {
         false
     };
 
-    Ok(Value::Bool(out))
+    Ok(mem.boolean(out))
 }
 
-fn list_of_integers(list: Vec<Value>) -> Result<Vec<i64>, Error> {
+fn list_of_integers(list: Vec<&Value>) -> Result<Vec<i64>, Error> {
     let mut integers = Vec::with_capacity(list.len());
 
     for val in list.iter() {
-        if let &Value::Integer(n) = val {
-            integers.push(n);
-        } else {
-            return Err(Error::WrongArgumentType(val.clone()))
-        };
+        match *val {
+            &Value::Integer(n) =>
+                integers.push(n),
+            value =>
+                return Err(Error::WrongArgumentType(value.clone())),
+        }
     }
 
     Ok(integers)
 }
 
-fn ord(args_: Vec<Value>, cmp: |i64, i64| -> bool) -> Result<Value, Error> {
+fn ord(args_: Vec<&Value>, mem: &mut Memory, cmp: |i64, i64| -> bool) -> Result<Rc<Value>, Error> {
     if args_.len() < 2 {
-        return Ok(Value::Bool(true))
+        return Ok(mem.b_true())
     }
 
     let args = try!(list_of_integers(args_));
@@ -269,5 +282,5 @@ fn ord(args_: Vec<Value>, cmp: |i64, i64| -> bool) -> Result<Value, Error> {
         cmp(args[i], args[i + 1u])
     );
 
-    Ok(Value::Bool(outcome))
+    return Ok(mem.boolean(outcome))
 }

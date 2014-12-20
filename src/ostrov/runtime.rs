@@ -4,15 +4,17 @@ use eval::eval;
 use parser::parse;
 use values::Value;
 use primitives;
+use memory::Memory;
 
 use std::io::BufferedReader;
 use std::io::File;
 use std::io::IoResult;
+use std::rc::Rc;
 
 #[deriving(Show, PartialEq)]
 pub enum Error {
     BadArity(Option<String>),
-    IrreducibleValue(Value),
+    IrreducibleValue(AST),
     ParseError(String),
     UnappliableValue(Value),
     UnboundVariable(String),
@@ -23,12 +25,14 @@ pub enum Error {
 
 pub struct Runtime<'a> {
     env: Env<'a>,
+    memory: Memory,
 }
 
 impl<'a> Runtime<'a> {
     pub fn new() -> Runtime<'a> {
         let mut runtime = Runtime {
             env: Env::new(),
+            memory: Memory::new(),
         };
 
         runtime.init_primitives();
@@ -40,19 +44,19 @@ impl<'a> Runtime<'a> {
         parse(input)
     }
 
-    pub fn eval_str(&mut self, input: &str) -> Result<Vec<Value>, Error> {
+    pub fn eval_str(&mut self, input: &str) -> Result<Vec<Rc<Value>>, Error> {
         let exprs = try!(self.parse_str(input));
 
         let mut evalued_exprs = Vec::new();
         for expr in exprs.iter() {
-            let evalued_expr = try!(eval(expr, &mut self.env));
+            let evalued_expr = try!(eval(expr, &mut self.env, &mut self.memory));
             evalued_exprs.push(evalued_expr);
         }
 
         Ok(evalued_exprs)
     }
 
-    pub fn eval_file(&mut self, path: &Path) -> Result<Vec<Value>, Error> {
+    pub fn eval_file(&mut self, path: &Path) -> Result<Vec<Rc<Value>>, Error> {
         let file = try!(Runtime::open_file(path));
         let mut reader = BufferedReader::new(file);
 
@@ -75,11 +79,10 @@ impl<'a> Runtime<'a> {
     }
 
     fn init_primitives(&mut self) {
-        for primitive in primitives::PRIMITIVES.iter() {
-            self.env.set(
-                primitive.to_string(),
-                Value::PrimitiveFn(primitive.to_string())
-            );
+        for name in primitives::PRIMITIVES.iter() {
+            let primitive = Value::PrimitiveFn(name.to_string());
+
+            self.env.set(name.to_string(), Rc::new(primitive));
         }
     }
 }

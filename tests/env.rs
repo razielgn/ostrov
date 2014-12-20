@@ -2,14 +2,18 @@ use helpers::values::*;
 
 use ostrov::env::Env;
 
+use std::rc::Rc;
+
 #[test]
 fn set_and_get_ok() {
     let mut env = Env::new();
     let name = "foo".to_string();
 
-    env.set(name.clone(), integer(3));
+    let val = Rc::new(integer(3));
 
-    assert_eq!(Some(&integer(3)), env.get(&name));
+    env.set(name.clone(), val.clone());
+
+    assert_eq!(Some(val), env.get(&name));
 }
 
 #[test]
@@ -23,17 +27,17 @@ fn set_and_get_none() {
 #[test]
 fn wraps() {
     let mut outer = Env::new();
-    let outer_foo = integer(5);
-    let bar = atom("bar");
+    let outer_foo = Rc::new(integer(5));
+    let bar = Rc::new(atom("bar"));
 
-    outer.set("foo".to_string(), outer_foo);
-    outer.set("bar".to_string(), bar);
+    outer.set("foo".to_string(), outer_foo.clone());
+    outer.set("bar".to_string(), bar.clone());
 
     let mut inner = Env::wraps(&outer);
-    let inner_foo = integer(25);
+    let inner_foo = Rc::new(integer(25));
 
-    inner.set("foo".to_string(), inner_foo);
+    inner.set("foo".to_string(), inner_foo.clone());
 
-    assert_eq!(Some(&integer(25)), inner.get(&"foo".to_string()));
-    assert_eq!(Some(&atom("bar")), inner.get(&"bar".to_string()));
+    assert_eq!(Some(inner_foo), inner.get(&"foo".to_string()));
+    assert_eq!(Some(bar), inner.get(&"bar".to_string()));
 }

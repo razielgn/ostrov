@@ -40,7 +40,7 @@ fn nested_evaluation(b: &mut Bencher) {
         let mut runtime = Runtime::new();
 
         match runtime.eval_str(input) {
-            Ok(exprs)  => assert_eq!(Value::Integer(3), exprs[0]),
+            Ok(exprs)  => assert_eq!(&Value::Integer(3), exprs[0].deref()),
             Err(error) => panic!(format!("{}", error)),
         }
     })
@@ -60,7 +60,7 @@ fn procedure_evaluation(b: &mut Bencher) {
         let mut runtime = Runtime::new();
 
         match runtime.eval_str(input) {
-            Ok(exprs)  => assert_eq!(Value::Integer(120), exprs[1]),
+            Ok(exprs)  => assert_eq!(&Value::Integer(120), exprs[1].deref()),
             Err(error) => panic!(format!("{}", error)),
         }
     })

@@ -1,9 +1,10 @@
 use values::Value;
 
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub struct Env<'a> {
-    defs: HashMap<String, Value>,
+    defs: HashMap<String, Rc<Value>>,
     outer: Option<&'a Env<'a>>,
 }
 
@@ -22,15 +23,18 @@ impl<'a> Env<'a> {
         }
     }
 
-    pub fn set(&mut self, name: String, expr: Value) {
+    pub fn set(&mut self, name: String, expr: Rc<Value>) {
         self.defs.insert(name, expr);
     }
 
-    pub fn get(&'a self, name: &String) -> Option<&'a Value> {
-        self.defs.get(name).or_else(|| self.get_from_outer(name) )
+    pub fn get(&self, name: &String) -> Option<Rc<Value>> {
+        match self.defs.get(name) {
+            Some(value) => Some(value.clone()),
+            None        => self.get_from_outer(name),
+        }
     }
 
-    fn get_from_outer(&'a self, name: &String) -> Option<&'a Value> {
+    fn get_from_outer(&self, name: &String) -> Option<Rc<Value>> {
         self.outer.and_then(|env| env.get(name))
     }
 

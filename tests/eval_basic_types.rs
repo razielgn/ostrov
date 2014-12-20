@@ -23,5 +23,5 @@ fn atoms() {
 
 #[test]
 fn dotted_lists() {
-    assert_eval_err("(1 . 2)", irreducible_value(dotted_list(vec!(integer(1)), integer(2))));
+    assert_eval_err("(1 . 2)", irreducible_value(ast::dotted_list(vec!(ast::integer(1)), ast::integer(2))));
 }
