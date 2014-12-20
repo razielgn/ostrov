@@ -166,7 +166,7 @@ fn eval_define_variable(name: &String, args: &[AST], env: &mut Env, mem: &mut Me
 
         Ok(value)
     } else {
-        Ok(mem.store(Value::Atom(name.clone())))
+        Ok(mem.intern(name.clone()))
     }
 }
 
@@ -183,7 +183,7 @@ fn eval_define_procedure(list: &[AST], args: &[AST], env: &mut Env, mem: &mut Me
     let procedure = mem.store(Value::Fn(Some(procedure_name.clone()), args_list, args[1].clone()));
     env.set(procedure_name.clone(), procedure);
 
-    Ok(mem.store(Value::Atom(procedure_name)))
+    Ok(mem.intern(procedure_name))
 }
 
 fn eval_lambda(list: &[AST], _env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {

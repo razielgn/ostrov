@@ -48,6 +48,12 @@ impl Memory {
         self.store(value)
     }
 
+    pub fn intern(&mut self, atom: String) -> Rc<Value> {
+        let value = Value::Atom(atom);
+
+        self.store(value)
+    }
+
     pub fn dotted_list(&mut self, values: Vec<Value>, tail: Value) -> Rc<Value> {
         let value = Value::DottedList(values, box tail);
 
