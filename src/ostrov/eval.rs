@@ -12,9 +12,9 @@ pub fn eval(value: &AST, env: &mut Env, memory: &mut Memory) -> Result<Rc<Value>
         &AST::Atom(ref atom) =>
             eval_variable(atom, env),
         &AST::Bool(b) =>
-            Ok(memory.new_boolean(b)),
+            Ok(memory.boolean(b)),
         &AST::Integer(i) =>
-            Ok(memory.new_integer(i)),
+            Ok(memory.integer(i)),
         &AST::List(ref list) =>
             eval_list(list, env, memory),
         _ =>
@@ -75,16 +75,21 @@ fn eval_args(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Vec<Rc<Val
 }
 
 fn eval_quote(list: &[AST], mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    Ok(mem.store(Value::from_ast(&list[0])))
+    match Value::from_ast(&list[0]) {
+        Value::Bool(b) =>
+            Ok(mem.boolean(b)),
+        value =>
+            Ok(mem.store(value)),
+    }
 }
 
 fn eval_and(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    let mut last = mem.new_boolean(true);
+    let mut last = mem.b_true();
 
     for val in args.iter() {
         let val = try!(eval(val, env, mem));
 
-        if val.deref() == &Value::Bool(false) {
+        if val == mem.b_false() {
             return Ok(val)
         }
 
@@ -95,12 +100,12 @@ fn eval_and(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, 
 }
 
 fn eval_or(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    let mut last = mem.new_boolean(false);
+    let mut last = mem.b_false();
 
     for val in args.iter() {
         let val = try!(eval(val, env, mem));
 
-        if val.deref() != &Value::Bool(false) {
+        if val != mem.b_false() {
             return Ok(val)
         }
 
@@ -121,7 +126,7 @@ fn eval_if(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, E
         try!(eval(&args[1], env, mem))
     } else {
         if args.len() == 2 {
-            mem.new_boolean(false)
+            mem.b_false()
         } else {
             try!(eval(&args[2], env, mem))
         }

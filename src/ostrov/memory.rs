@@ -7,30 +7,44 @@ pub struct Memory {
 
 impl Memory {
     pub fn new() -> Memory {
-        Memory {
+        let mut memory = Memory {
             heap: Vec::new(),
-        }
+        };
+
+        memory.init();
+
+        memory
     }
 
-    pub fn new_integer(&mut self, n: i64) -> Rc<Value> {
+    pub fn integer(&mut self, n: i64) -> Rc<Value> {
         let value = Value::Integer(n);
 
         self.store(value)
     }
 
-    pub fn new_boolean(&mut self, b: bool) -> Rc<Value> {
-        let value = Value::Bool(b);
-
-        self.store(value)
+    pub fn b_true(&self) -> Rc<Value> {
+        self.heap[0].clone()
     }
 
-    pub fn new_list(&mut self, values: Vec<Value>) -> Rc<Value> {
+    pub fn b_false(&self) -> Rc<Value> {
+        self.heap[1].clone()
+    }
+
+    pub fn boolean(&self, b: bool) -> Rc<Value> {
+        if b {
+            self.b_true()
+        } else {
+            self.b_false()
+        }
+    }
+
+    pub fn list(&mut self, values: Vec<Value>) -> Rc<Value> {
         let value = Value::List(values);
 
         self.store(value)
     }
 
-    pub fn new_dotted_list(&mut self, values: Vec<Value>, tail: Value) -> Rc<Value> {
+    pub fn dotted_list(&mut self, values: Vec<Value>, tail: Value) -> Rc<Value> {
         let value = Value::DottedList(values, box tail);
 
         self.store(value)
@@ -45,5 +59,10 @@ impl Memory {
     pub fn store(&mut self, value: Value) -> Rc<Value> {
         self.heap.push(Rc::new(value));
         self.heap.last().unwrap().clone()
+    }
+
+    fn init(&mut self) {
+        self.store(Value::Bool(true));
+        self.store(Value::Bool(false));
     }
 }
