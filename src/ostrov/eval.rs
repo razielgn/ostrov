@@ -43,7 +43,7 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Valu
             "and"    => return eval_and(args, env, mem),
             "define" => return eval_define(args, env, mem),
             "if"     => return eval_if(args, env, mem),
-            "lambda" => return eval_lambda(args, env, mem),
+            "lambda" => return eval_lambda(args, None, mem),
             "or"     => return eval_or(args, env, mem),
             "quote"  => return eval_quote(args, mem),
             _        => (),
@@ -145,29 +145,30 @@ fn eval_define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value
     let ref atom = args[0];
 
     match atom {
-        &AST::Atom(ref name) => eval_define_variable(name, args, env, mem),
-        &AST::List(ref list) if list.len() > 0 => eval_define_procedure(list.as_slice(), args, env, mem),
-        _ => Err(Error::WrongArgumentType(Value::from_ast(atom)))
+        &AST::Atom(ref name) =>
+            eval_define_variable(name, args, env, mem),
+        &AST::List(ref list) if list.len() > 0 =>
+            eval_define_procedure(list.as_slice(), args, env, mem),
+        _ =>
+            Err(Error::WrongArgumentType(Value::from_ast(atom)))
     }
 }
 
 fn eval_define_variable(name: &String, args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    if args.len() == 2 {
-        let value = try!(eval(&args[1], env, mem));
-
-        if let &Value::Fn(ref _name, ref args, ref body) = value.deref() {
-            env.set(
-                name.clone(),
-                mem.store(Value::Fn(Some(name.clone()), args.clone(), body.clone()))
-            );
-        } else {
-            env.set(name.clone(), value.clone());
-        }
-
-        Ok(value)
-    } else {
-        Ok(mem.intern(name.clone()))
+    if args.len() == 1 {
+        return Ok(mem.intern(name.clone()));
     }
+
+    let value = match args[1] {
+        AST::List(ref l) if l[0] == AST::Atom("lambda".to_string()) =>
+            try!(eval_lambda(l.tail(), Some(name.clone()), mem)),
+        ref value =>
+            try!(eval(value, env, mem))
+    };
+
+    env.set(name.clone(), value.clone());
+
+    Ok(value)
 }
 
 fn eval_define_procedure(list: &[AST], args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
@@ -180,13 +181,13 @@ fn eval_define_procedure(list: &[AST], args: &[AST], env: &mut Env, mem: &mut Me
         args_list.push(arg);
     }
 
-    let procedure = mem.store(Value::Fn(Some(procedure_name.clone()), args_list, args[1].clone()));
+    let procedure = mem.lambda(Some(procedure_name.clone()), args_list, args[1].clone());
     env.set(procedure_name.clone(), procedure);
 
     Ok(mem.intern(procedure_name))
 }
 
-fn eval_lambda(list: &[AST], _env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn eval_lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if list.len() != 2 {
         return Err(Error::BadArity(Some("lambda".to_string())));
     }
@@ -202,7 +203,7 @@ fn eval_lambda(list: &[AST], _env: &Env, mem: &mut Memory) -> Result<Rc<Value>, 
                 args_list.push(arg);
             }
 
-            Ok(mem.store(Value::Fn(None, args_list, body.clone())))
+            Ok(mem.lambda(name, args_list, body.clone()))
         }
         value => Err(Error::WrongArgumentType(Value::from_ast(value)))
     }

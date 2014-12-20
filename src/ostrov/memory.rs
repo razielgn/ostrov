@@ -1,4 +1,6 @@
 use values::Value;
+use ast::AST;
+
 use std::rc::Rc;
 
 pub struct Memory {
@@ -56,6 +58,12 @@ impl Memory {
 
     pub fn dotted_list(&mut self, values: Vec<Value>, tail: Value) -> Rc<Value> {
         let value = Value::DottedList(values, box tail);
+
+        self.store(value)
+    }
+
+    pub fn lambda(&mut self, name: Option<String>, args: Vec<String>, body: AST) -> Rc<Value> {
+        let value = Value::Fn(name, args, body);
 
         self.store(value)
     }
