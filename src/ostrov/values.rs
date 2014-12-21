@@ -105,8 +105,6 @@ impl Value {
                 let values = list.iter().map(|ast| Value::from_ast(ast)).collect();
                 Value::DottedList(values, box Value::from_ast(&*value.clone()))
             }
-            &AST::Fn(ref name, ref args, ref body) =>
-                Value::Fn(name.clone(), args.clone(), *body.clone()),
         }
     }
 }

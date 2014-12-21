@@ -51,14 +51,6 @@ pub mod ast {
     }
     pub fn empty_list()        -> AST { AST::List(vec!()) }
     pub fn bool(val: bool)     -> AST { AST::Bool(val) }
-    pub fn func(name: &str, args: Vec<&str>, body: AST) -> AST {
-        let args = args.iter().map(|s| s.to_string()).collect();
-        AST::Fn(Some(name.to_string()), args, box body)
-    }
-    pub fn lambda(args: Vec<&str>, body: AST) -> AST {
-        let args = args.iter().map(|s| s.to_string()).collect();
-        AST::Fn(None, args, box body)
-    }
 }
 
 pub mod values {
