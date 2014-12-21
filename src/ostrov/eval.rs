@@ -3,6 +3,7 @@ use env::Env;
 use runtime::Error;
 use values::Value;
 use primitives;
+use special_forms;
 use memory::Memory;
 
 use std::rc::Rc;
@@ -40,12 +41,12 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Valu
         let args = tail;
 
         match special_form.as_slice() {
-            "and"    => return eval_and(args, env, mem),
-            "define" => return eval_define(args, env, mem),
-            "if"     => return eval_if(args, env, mem),
-            "lambda" => return eval_lambda(args, None, mem),
-            "or"     => return eval_or(args, env, mem),
-            "quote"  => return eval_quote(args, mem),
+            "and"    => return special_forms::and(args, env, mem),
+            "define" => return special_forms::define(args, env, mem),
+            "if"     => return special_forms::if_(args, env, mem),
+            "lambda" => return special_forms::lambda(args, None, mem),
+            "or"     => return special_forms::or(args, env, mem),
+            "quote"  => return special_forms::quote(args, mem),
             _        => (),
         }
     }
@@ -72,141 +73,6 @@ fn eval_args(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Vec<Rc<Val
     }
 
     Ok(out)
-}
-
-fn eval_quote(list: &[AST], mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    match Value::from_ast(&list[0]) {
-        Value::Bool(b) =>
-            Ok(mem.boolean(b)),
-        Value::List(ref l) if l.is_empty() =>
-            Ok(mem.empty_list()),
-        value =>
-            Ok(mem.store(value)),
-    }
-}
-
-fn eval_and(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    let mut last = mem.b_true();
-
-    for val in args.iter() {
-        let val = try!(eval(val, env, mem));
-
-        if val == mem.b_false() {
-            return Ok(val)
-        }
-
-        last = val;
-    }
-
-    Ok(last)
-}
-
-fn eval_or(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    let mut last = mem.b_false();
-
-    for val in args.iter() {
-        let val = try!(eval(val, env, mem));
-
-        if val != mem.b_false() {
-            return Ok(val)
-        }
-
-        last = val;
-    }
-
-    Ok(last)
-}
-
-fn eval_if(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    if args.len() < 1 || args.len() > 3 {
-        return Err(Error::BadArity(Some("if".to_string())))
-    }
-
-    let condition = try!(eval(&args[0], env, mem));
-
-    let result = if condition.deref() != &Value::Bool(false) {
-        try!(eval(&args[1], env, mem))
-    } else {
-        if args.len() == 2 {
-            mem.b_false()
-        } else {
-            try!(eval(&args[2], env, mem))
-        }
-    };
-
-    Ok(result)
-}
-
-fn eval_define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    if args.len() < 1 || args.len() > 2 {
-        return Err(Error::BadArity(Some("define".to_string())))
-    }
-
-    let ref atom = args[0];
-
-    match atom {
-        &AST::Atom(ref name) =>
-            eval_define_variable(name, args, env, mem),
-        &AST::List(ref list) if list.len() > 0 =>
-            eval_define_procedure(list.as_slice(), args, env, mem),
-        _ =>
-            Err(Error::WrongArgumentType(Value::from_ast(atom)))
-    }
-}
-
-fn eval_define_variable(name: &String, args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    if args.len() == 1 {
-        return Ok(mem.intern(name.clone()));
-    }
-
-    let value = match args[1] {
-        AST::List(ref l) if l[0] == AST::Atom("lambda".to_string()) =>
-            try!(eval_lambda(l.tail(), Some(name.clone()), mem)),
-        ref value =>
-            try!(eval(value, env, mem))
-    };
-
-    env.set(name.clone(), value.clone());
-
-    Ok(value)
-}
-
-fn eval_define_procedure(list: &[AST], args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    let procedure_name = try!(atom_or_error(&list[0]));
-
-    let tail = list.tail();
-    let mut args_list: Vec<String> = Vec::with_capacity(tail.len());
-    for arg in tail.iter() {
-        let arg = try!(atom_or_error(arg));
-        args_list.push(arg);
-    }
-
-    let procedure = mem.lambda(Some(procedure_name.clone()), args_list, args[1].clone());
-    env.set(procedure_name.clone(), procedure);
-
-    Ok(mem.intern(procedure_name))
-}
-
-fn eval_lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    if list.len() != 2 {
-        return Err(Error::BadArity(Some("lambda".to_string())));
-    }
-
-    let ref args = list[0];
-    let ref body = list[1];
-
-    match args {
-        &AST::List(ref args) if list.len() > 0 => {
-            let mut args_list: Vec<String> = Vec::with_capacity(args.len());
-            for arg in args.iter() {
-                let arg = try!(atom_or_error(arg));
-                args_list.push(arg);
-            }
-
-            Ok(mem.lambda(name, args_list, body.clone()))
-        }
-        value => Err(Error::WrongArgumentType(Value::from_ast(value)))
-    }
 }
 
 fn eval_variable(name: &String, env: &mut Env) -> Result<Rc<Value>, Error> {
