@@ -1,4 +1,5 @@
 use values::Value;
+use values::ArgumentsType;
 use ast::AST;
 
 use std::rc::Rc;
@@ -64,8 +65,8 @@ impl Memory {
         self.store(value)
     }
 
-    pub fn lambda(&mut self, name: Option<String>, args: Vec<String>, body: AST) -> Rc<Value> {
-        let value = Value::Fn(name, args, body);
+    pub fn lambda(&mut self, name: Option<String>, args_type: ArgumentsType, args: Vec<String>, body: AST) -> Rc<Value> {
+        let value = Value::Fn(name, args_type, args, body);
 
         self.store(value)
     }

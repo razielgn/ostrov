@@ -47,6 +47,10 @@ fn procedures() {
 fn lambdas() {
     assert_fmt("<lambda (bar baz)>",
                lambda(vec!("bar", "baz"), ast::integer(1)));
+    assert_fmt("<lambda (bar . baz)>",
+               lambda_var(vec!("bar", "baz"), ast::integer(1)));
+    assert_fmt("<lambda bar>",
+               lambda_any("bar", ast::integer(1)));
 }
 
 #[test]

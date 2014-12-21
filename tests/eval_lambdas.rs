@@ -2,9 +2,21 @@ use helpers::*;
 use helpers::values::*;
 
 #[test]
-fn creation_with_fixed_arguments_number() {
+fn fixed_arguments() {
+    assert_eval("(lambda () 1)", lambda(vec!(), ast::integer(1)));
     assert_eval("(lambda (x y z) 1)",
                  lambda(vec!("x", "y", "z"), ast::integer(1)));
+}
+
+#[test]
+fn variable_arguments() {
+    assert_eval("(lambda (h . t) 1)", lambda_var(vec!("h", "t"), ast::integer(1)));
+    assert_eval("(lambda (h g . t) 1)", lambda_var(vec!("h", "g", "t"), ast::integer(1)));
+}
+
+#[test]
+fn any_arguments() {
+    assert_eval("(lambda h 1)", lambda_any("h", ast::integer(1)));
 }
 
 #[test]

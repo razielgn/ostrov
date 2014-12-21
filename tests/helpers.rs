@@ -51,17 +51,10 @@ pub mod ast {
     }
     pub fn empty_list()        -> AST { AST::List(vec!()) }
     pub fn bool(val: bool)     -> AST { AST::Bool(val) }
-    pub fn func(name: &str, args: Vec<&str>, body: AST) -> AST {
-        let args = args.iter().map(|s| s.to_string()).collect();
-        AST::Fn(Some(name.to_string()), args, box body)
-    }
-    pub fn lambda(args: Vec<&str>, body: AST) -> AST {
-        let args = args.iter().map(|s| s.to_string()).collect();
-        AST::Fn(None, args, box body)
-    }
 }
 
 pub mod values {
+    use ostrov::values::ArgumentsType;
     use ostrov::values::Value;
     use ostrov::ast::AST;
 
@@ -75,11 +68,26 @@ pub mod values {
     pub fn bool(val: bool) -> Value { Value::Bool(val) }
     pub fn func(name: &str, args: Vec<&str>, body: AST) -> Value {
         let args = args.iter().map(|s| s.to_string()).collect();
-        Value::Fn(Some(name.to_string()), args, body)
+        Value::Fn(Some(name.to_string()), ArgumentsType::Fixed, args, body)
+    }
+    pub fn func_var(name: &str, args: Vec<&str>, body: AST) -> Value {
+        let args = args.iter().map(|s| s.to_string()).collect();
+        Value::Fn(Some(name.to_string()), ArgumentsType::Variable, args, body)
+    }
+    pub fn func_any(name: &str, arg: &str, body: AST) -> Value {
+        Value::Fn(Some(name.to_string()), ArgumentsType::Any, vec!(arg.to_string()), body)
     }
     pub fn lambda(args: Vec<&str>, body: AST) -> Value {
         let args = args.iter().map(|s| s.to_string()).collect();
-        Value::Fn(None, args, body)
+        Value::Fn(None, ArgumentsType::Fixed, args, body)
+    }
+    pub fn lambda_var(args: Vec<&str>, body: AST) -> Value {
+        let args = args.iter().map(|s| s.to_string()).collect();
+        Value::Fn(None, ArgumentsType::Variable, args, body)
+    }
+    pub fn lambda_any(arg: &str, body: AST) -> Value {
+        let args = vec!(arg).iter().map(|s| s.to_string()).collect();
+        Value::Fn(None, ArgumentsType::Any, args, body)
     }
     pub fn primitive_func(name: &str) -> Value {
         Value::PrimitiveFn(name.to_string())

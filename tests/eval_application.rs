@@ -47,6 +47,18 @@ fn procedure_with_two_args() {
 }
 
 #[test]
+fn procedure_with_var_args() {
+    assert_eval("(define (sum x . y) y)
+                 (sum 4 9)", list(vec!(integer(9))));
+}
+
+#[test]
+fn procedure_with_any_args() {
+    assert_eval("(define (sum . y) y)
+                 (sum 4 9)", list(vec!(integer(4), integer(9))));
+}
+
+#[test]
 fn procedure_with_two_args_scoping() {
     assert_eval("(define x 10)
                  (define (sum x y) (+ x y))
@@ -69,10 +81,31 @@ fn procedure_with_mismatched_arity() {
 
 #[test]
 fn lambda_with_fixed_arguments_number() {
+    assert_eval("((lambda () 1))", integer(1));
     assert_eval("((lambda (x y) (+ x y)) 6 8)", integer(14));
 }
 
 #[test]
 fn lambda_with_fixed_arguments_number_bad_arity() {
     assert_eval_err("((lambda (x y) (+ x y)) 6 8 9)", bad_arity_lambda());
+}
+
+#[test]
+fn lambda_with_any_arguments_number() {
+    assert_eval("((lambda x x))", empty_list());
+    assert_eval("((lambda x x) 1 2 3)", list(vec!(integer(1), integer(2), integer(3))));
+}
+
+#[test]
+fn lambda_with_variable_arguments_number() {
+    assert_eval("((lambda (x . y) x) 1)", integer(1));
+    assert_eval("((lambda (x . y) y) 1)", empty_list());
+    assert_eval("((lambda (x . y) y) 1 2 3)", list(vec!(integer(2), integer(3))));
+    assert_eval("((lambda (x y . z) z) 1 2 3)", list(vec!(integer(3))));
+}
+
+#[test]
+fn lambda_with_variable_arguments_number_bad_arity() {
+    assert_eval_err("((lambda (x . y) 1))", bad_arity_lambda());
+    assert_eval_err("((lambda (x y . z) 1) 1)", bad_arity_lambda());
 }

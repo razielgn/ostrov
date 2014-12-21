@@ -29,11 +29,27 @@ fn define_with_one_arg_lambda() {
 }
 
 #[test]
-fn define_procedure() {
+fn define_procedure_with_fixed_args() {
     assert_eval("(define (x) 3)", atom("x")); // unspecified behaviour
 
     assert_eval("(define (x) 3)
                  x", func("x", vec!(), ast::integer(3)));
+}
+
+#[test]
+fn define_procedure_with_varargs() {
+    assert_eval("(define (x a . b) 3)", atom("x")); // unspecified behaviour
+
+    assert_eval("(define (x a . b) 3)
+                 x", func_var("x", vec!("a", "b"), ast::integer(3)));
+}
+
+#[test]
+fn define_procedure_with_any() {
+    assert_eval("(define (x . b) 3)", atom("x")); // unspecified behaviour
+
+    assert_eval("(define (x . b) 3)
+                 x", func_any("x", "b", ast::integer(3)));
 }
 
 #[test]
