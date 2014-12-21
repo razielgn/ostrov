@@ -54,8 +54,12 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Valu
     let args = try!(eval_args(tail, env, mem));
 
     match fun.deref() {
-        &Value::Fn(ref name, ref args_type, ref args_names, ref body) =>
-            apply(name, args_type, args_names, args, body, env, mem),
+        &Value::Fn(ref _name, ArgumentsType::Any, ref args_names, ref body) =>
+            apply_any(&args_names[0], args, body, env, mem),
+        &Value::Fn(ref name, ArgumentsType::Fixed, ref args_names, ref body) =>
+            apply_fixed(name, args_names, args, body, env, mem),
+        &Value::Fn(ref name, ArgumentsType::Variable, ref args_names, ref body) =>
+            apply_var(name, args_names, args, body, env, mem),
         &Value::PrimitiveFn(ref name) =>
             primitives::apply(name, args, mem),
         fun =>
@@ -81,53 +85,51 @@ fn eval_variable(name: &String, env: &mut Env) -> Result<Rc<Value>, Error> {
     }
 }
 
-fn apply(name: &Option<String>, args_type: &ArgumentsType, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &AST, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    match args_type {
-        &ArgumentsType::Fixed => {
-            if arg_names.len() != arg_values.len() {
-                return Err(Error::BadArity(name.clone()));
-            }
-
-            let mut inner_env = Env::wraps(env);
-            for (name, value) in arg_names.iter().zip(arg_values.iter()) {
-                inner_env.set(name.clone(), value.clone());
-            }
-
-            eval(body, &mut inner_env, mem)
-        }
-        &ArgumentsType::Any => {
-            let args = arg_values.iter().map(|value| value.deref().clone()).collect();
-
-            let mut inner_env = Env::wraps(env);
-            inner_env.set(arg_names[0].clone(), mem.list(args));
-
-            eval(body, &mut inner_env, mem)
-        }
-        &ArgumentsType::Variable => {
-            let fixed_arg_names = arg_names.slice(0, arg_names.len() - 1);
-
-            if fixed_arg_names.len() > arg_values.len() {
-                return Err(Error::BadArity(name.clone()));
-            }
-
-            let mut inner_env = Env::wraps(env);
-            for (name, value) in fixed_arg_names.iter().zip(arg_values.iter()) {
-                inner_env.set(name.clone(), value.clone());
-            }
-
-            let var_args = arg_values.iter()
-                .skip(fixed_arg_names.len())
-                .map(|value| value.deref().clone())
-                .collect();
-
-            inner_env.set(
-                arg_names.last().unwrap().clone(),
-                mem.list(var_args)
-            );
-
-            eval(body, &mut inner_env, mem)
-        }
+fn apply_fixed(name: &Option<String>, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &AST, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    if arg_names.len() != arg_values.len() {
+        return Err(Error::BadArity(name.clone()));
     }
+
+    let mut inner_env = Env::wraps(env);
+    for (name, value) in arg_names.iter().zip(arg_values.iter()) {
+        inner_env.set(name.clone(), value.clone());
+    }
+
+    eval(body, &mut inner_env, mem)
+}
+
+fn apply_var(name: &Option<String>, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &AST, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    let fixed_arg_names = arg_names.slice(0, arg_names.len() - 1);
+
+    if fixed_arg_names.len() > arg_values.len() {
+        return Err(Error::BadArity(name.clone()));
+    }
+
+    let mut inner_env = Env::wraps(env);
+    for (name, value) in fixed_arg_names.iter().zip(arg_values.iter()) {
+        inner_env.set(name.clone(), value.clone());
+    }
+
+    let var_args = arg_values.iter()
+        .skip(fixed_arg_names.len())
+        .map(|value| value.deref().clone())
+        .collect();
+
+    inner_env.set(
+        arg_names.last().unwrap().clone(),
+        mem.list(var_args)
+    );
+
+    eval(body, &mut inner_env, mem)
+}
+
+fn apply_any(arg_name: &String, args: Vec<Rc<Value>>, body: &AST, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    let args = args.iter().map(|value| value.deref().clone()).collect();
+
+    let mut inner_env = Env::wraps(env);
+    inner_env.set(arg_name.clone(), mem.list(args));
+
+    eval(body, &mut inner_env, mem)
 }
 
 fn is_quoted(value: &AST) -> bool {
