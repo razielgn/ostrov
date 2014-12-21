@@ -70,6 +70,10 @@ pub mod values {
         let args = args.iter().map(|s| s.to_string()).collect();
         Value::Fn(Some(name.to_string()), ArgumentsType::Fixed, args, body)
     }
+    pub fn func_var(name: &str, args: Vec<&str>, body: AST) -> Value {
+        let args = args.iter().map(|s| s.to_string()).collect();
+        Value::Fn(Some(name.to_string()), ArgumentsType::Variable, args, body)
+    }
     pub fn lambda(args: Vec<&str>, body: AST) -> Value {
         let args = args.iter().map(|s| s.to_string()).collect();
         Value::Fn(None, ArgumentsType::Fixed, args, body)

@@ -83,6 +83,8 @@ pub fn define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>
             define_variable(name, args, env, mem),
         &AST::List(ref list) if list.len() > 0 =>
             define_procedure(list.as_slice(), args, env, mem),
+        &AST::DottedList(ref list, ref extra) =>
+            define_procedure_var(list.as_slice(), &**extra, args, env, mem),
         _ =>
             Err(Error::WrongArgumentType(Value::from_ast(atom)))
     }
@@ -152,6 +154,25 @@ fn define_procedure(list: &[AST], args: &[AST], env: &mut Env, mem: &mut Memory)
     }
 
     let procedure = mem.lambda(Some(procedure_name.clone()), ArgumentsType::Fixed, args_list, args[1].clone());
+    env.set(procedure_name.clone(), procedure);
+
+    Ok(mem.intern(procedure_name))
+}
+
+fn define_procedure_var(list: &[AST], extra: &AST, args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    let procedure_name = try!(atom_or_error(&list[0]));
+
+    let tail = list.tail();
+    let mut args_list: Vec<String> = Vec::with_capacity(tail.len() + 1);
+    for arg in tail.iter() {
+        let arg = try!(atom_or_error(arg));
+        args_list.push(arg);
+    }
+
+    let extra_arg = try!(atom_or_error(extra));
+    args_list.push(extra_arg);
+
+    let procedure = mem.lambda(Some(procedure_name.clone()), ArgumentsType::Variable, args_list, args[1].clone());
     env.set(procedure_name.clone(), procedure);
 
     Ok(mem.intern(procedure_name))

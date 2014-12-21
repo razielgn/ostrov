@@ -47,6 +47,12 @@ fn procedure_with_two_args() {
 }
 
 #[test]
+fn procedure_with_var_args() {
+    assert_eval("(define (sum x . y) y)
+                 (sum 4 9)", list(vec!(integer(9))));
+}
+
+#[test]
 fn procedure_with_two_args_scoping() {
     assert_eval("(define x 10)
                  (define (sum x y) (+ x y))
