@@ -103,8 +103,30 @@ fn apply(name: &Option<String>, args_type: &ArgumentsType, arg_names: &Vec<Strin
 
             eval(body, &mut inner_env, mem)
         }
-        _ =>
-            Err(Error::UnappliableValue(Value::Atom("lol".to_string()))),
+        &ArgumentsType::Variable => {
+            let fixed_arg_names = arg_names.slice(0, arg_names.len() - 1);
+
+            if fixed_arg_names.len() > arg_values.len() {
+                return Err(Error::BadArity(name.clone()));
+            }
+
+            let mut inner_env = Env::wraps(env);
+            for (name, value) in fixed_arg_names.iter().zip(arg_values.iter()) {
+                inner_env.set(name.clone(), value.clone());
+            }
+
+            let var_args = arg_values.iter()
+                .skip(fixed_arg_names.len())
+                .map(|value| value.deref().clone())
+                .collect();
+
+            inner_env.set(
+                arg_names.last().unwrap().clone(),
+                mem.list(var_args)
+            );
+
+            eval(body, &mut inner_env, mem)
+        }
     }
 }
 

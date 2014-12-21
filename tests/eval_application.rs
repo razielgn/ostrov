@@ -82,3 +82,17 @@ fn lambda_with_any_arguments_number() {
     assert_eval("((lambda x x))", empty_list());
     assert_eval("((lambda x x) 1 2 3)", list(vec!(integer(1), integer(2), integer(3))));
 }
+
+#[test]
+fn lambda_with_variable_arguments_number() {
+    assert_eval("((lambda (x . y) x) 1)", integer(1));
+    assert_eval("((lambda (x . y) y) 1)", empty_list());
+    assert_eval("((lambda (x . y) y) 1 2 3)", list(vec!(integer(2), integer(3))));
+    assert_eval("((lambda (x y . z) z) 1 2 3)", list(vec!(integer(3))));
+}
+
+#[test]
+fn lambda_with_variable_arguments_number_bad_arity() {
+    assert_eval_err("((lambda (x . y) 1))", bad_arity_lambda());
+    assert_eval_err("((lambda (x y . z) 1) 1)", bad_arity_lambda());
+}
