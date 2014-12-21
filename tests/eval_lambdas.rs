@@ -14,6 +14,11 @@ fn variable_arguments() {
 }
 
 #[test]
+fn any_arguments() {
+    assert_eval("(lambda h 1)", lambda_any("h", ast::integer(1)));
+}
+
+#[test]
 fn bad_arity_() {
     assert_eval_err("(lambda)", bad_arity("lambda"));
     assert_eval_err("(lambda 1)", bad_arity("lambda"));

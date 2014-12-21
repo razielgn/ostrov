@@ -118,6 +118,8 @@ pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<Rc
 
             Ok(mem.lambda(name, ArgumentsType::Variable, args_list, body.clone()))
         }
+        &AST::Atom(ref arg) =>
+            Ok(mem.lambda(name, ArgumentsType::Any, vec!(arg.clone()), body.clone())),
         value => Err(Error::WrongArgumentType(Value::from_ast(value)))
     }
 }
