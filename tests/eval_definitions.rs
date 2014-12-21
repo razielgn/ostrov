@@ -45,6 +45,14 @@ fn define_procedure_with_varargs() {
 }
 
 #[test]
+fn define_procedure_with_any() {
+    assert_eval("(define (x . b) 3)", atom("x")); // unspecified behaviour
+
+    assert_eval("(define (x . b) 3)
+                 x", func_any("x", "b", ast::integer(3)));
+}
+
+#[test]
 fn define_bad_arity() {
     assert_eval_err("(define)", bad_arity("define"));
     assert_eval_err("(define x 1 2)", bad_arity("define"));

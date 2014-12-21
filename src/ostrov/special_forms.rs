@@ -163,16 +163,24 @@ fn define_procedure_var(list: &[AST], extra: &AST, args: &[AST], env: &mut Env, 
     let procedure_name = try!(atom_or_error(&list[0]));
 
     let tail = list.tail();
-    let mut args_list: Vec<String> = Vec::with_capacity(tail.len() + 1);
-    for arg in tail.iter() {
-        let arg = try!(atom_or_error(arg));
-        args_list.push(arg);
-    }
 
-    let extra_arg = try!(atom_or_error(extra));
-    args_list.push(extra_arg);
+    let procedure = if tail.is_empty() {
+        let arg = try!(atom_or_error(extra));
 
-    let procedure = mem.lambda(Some(procedure_name.clone()), ArgumentsType::Variable, args_list, args[1].clone());
+        mem.lambda(Some(procedure_name.clone()), ArgumentsType::Any, vec!(arg), args[1].clone())
+    } else {
+        let mut args_list: Vec<String> = Vec::with_capacity(tail.len() + 1);
+        for arg in tail.iter() {
+            let arg = try!(atom_or_error(arg));
+            args_list.push(arg);
+        }
+
+        let extra_arg = try!(atom_or_error(extra));
+        args_list.push(extra_arg);
+
+        mem.lambda(Some(procedure_name.clone()), ArgumentsType::Variable, args_list, args[1].clone())
+    };
+
     env.set(procedure_name.clone(), procedure);
 
     Ok(mem.intern(procedure_name))
