@@ -9,10 +9,17 @@ pub enum Value {
     Atom(String),
     Bool(bool),
     DottedList(Vec<Value>, Box<Value>),
-    Fn(Option<String>, Vec<String>, AST),
+    Fn(Option<String>, ArgumentsType, Vec<String>, AST),
     PrimitiveFn(String),
     Integer(i64),
     List(Vec<Value>),
+}
+
+#[deriving(Copy, PartialEq, Clone)]
+pub enum ArgumentsType {
+    Fixed,
+    Variable,
+    Any,
 }
 
 fn fmt_join_with_spaces<T: Show>(items: &[T], f: &mut Formatter) -> Result<(), Error> {
@@ -27,7 +34,7 @@ fn fmt_join_with_spaces<T: Show>(items: &[T], f: &mut Formatter) -> Result<(), E
     Ok(())
 }
 
-fn fmt_list(items: &Vec<Value>, f: &mut Formatter) -> Result<(), Error> {
+fn fmt_list<T: Show>(items: &Vec<T>, f: &mut Formatter) -> Result<(), Error> {
     try!("(".fmt(f));
     try!(fmt_join_with_spaces(items.as_slice(), f));
     try!(")".fmt(f));
@@ -35,7 +42,7 @@ fn fmt_list(items: &Vec<Value>, f: &mut Formatter) -> Result<(), Error> {
     Ok(())
 }
 
-fn fmt_dotted_list(items: &Vec<Value>, right: &Value, f: &mut Formatter) -> Result<(), Error> {
+fn fmt_dotted_list<T: Show>(items: &[T], right: &T, f: &mut Formatter) -> Result<(), Error> {
     try!("(".fmt(f));
     try!(fmt_join_with_spaces(items.as_slice(), f));
     try!(" . ".fmt(f));
@@ -53,7 +60,7 @@ fn fmt_primitive(name: &String, f: &mut Formatter) -> Result<(), Error> {
     Ok(())
 }
 
-fn fmt_procedure(name: &Option<String>, args: &Vec<String>, f: &mut Formatter) -> Result<(), Error> {
+fn fmt_procedure(name: &Option<String>, args_type: &ArgumentsType, args: &Vec<String>, f: &mut Formatter) -> Result<(), Error> {
     try!("<".fmt(f));
 
     match name {
@@ -66,9 +73,21 @@ fn fmt_procedure(name: &Option<String>, args: &Vec<String>, f: &mut Formatter) -
         }
     };
 
-    try!(" (".fmt(f));
-    try!(fmt_join_with_spaces(args.as_slice(), f));
-    try!(")>".fmt(f));
+    try!(" ".fmt(f));
+
+    match args_type {
+        &ArgumentsType::Any =>
+            try!(args[0].fmt(f)),
+        &ArgumentsType::Fixed =>
+            try!(fmt_list(args, f)),
+        &ArgumentsType::Variable => {
+            let head = args.slice(0, args.len() - 1);
+            let tail = args.last().unwrap();
+            try!(fmt_dotted_list(head, tail, f));
+        }
+    }
+
+    try!(">".fmt(f));
 
     Ok(())
 }
@@ -79,8 +98,8 @@ impl Show for Value {
             &Value::Atom(ref string) => string.fmt(f),
             &Value::Bool(false) => "#f".fmt(f),
             &Value::Bool(true) => "#t".fmt(f),
-            &Value::DottedList(ref list, ref value) => fmt_dotted_list(list, &**value, f),
-            &Value::Fn(ref name, ref args, ref _body) => fmt_procedure(name, args, f),
+            &Value::DottedList(ref list, ref value) => fmt_dotted_list(list.as_slice(), &**value, f),
+            &Value::Fn(ref name, ref args_type, ref args, ref _body) => fmt_procedure(name, args_type, args, f),
             &Value::Integer(ref i) => i.fmt(f),
             &Value::List(ref list) => fmt_list(list, f),
             &Value::PrimitiveFn(ref name) => fmt_primitive(name, f),

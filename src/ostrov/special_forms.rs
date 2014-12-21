@@ -3,6 +3,7 @@ use env::Env;
 use memory::Memory;
 use runtime::Error;
 use values::Value;
+use values::ArgumentsType;
 use eval::eval;
 
 use std::rc::Rc;
@@ -103,7 +104,7 @@ pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<Rc
                 args_list.push(arg);
             }
 
-            Ok(mem.lambda(name, args_list, body.clone()))
+            Ok(mem.lambda(name, ArgumentsType::Fixed, args_list, body.clone()))
         }
         value => Err(Error::WrongArgumentType(Value::from_ast(value)))
     }
@@ -136,7 +137,7 @@ fn define_procedure(list: &[AST], args: &[AST], env: &mut Env, mem: &mut Memory)
         args_list.push(arg);
     }
 
-    let procedure = mem.lambda(Some(procedure_name.clone()), args_list, args[1].clone());
+    let procedure = mem.lambda(Some(procedure_name.clone()), ArgumentsType::Fixed, args_list, args[1].clone());
     env.set(procedure_name.clone(), procedure);
 
     Ok(mem.intern(procedure_name))

@@ -2,6 +2,7 @@ use ast::AST;
 use env::Env;
 use runtime::Error;
 use values::Value;
+use values::ArgumentsType;
 use primitives;
 use special_forms;
 use memory::Memory;
@@ -53,8 +54,8 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Valu
     let args = try!(eval_args(tail, env, mem));
 
     match fun.deref() {
-        &Value::Fn(ref name, ref args_names, ref body) =>
-            apply(name, args_names, args, body, env, mem),
+        &Value::Fn(ref name, ref args_type, ref args_names, ref body) =>
+            apply(name, args_type, args_names, args, body, env, mem),
         &Value::PrimitiveFn(ref name) =>
             primitives::apply(name, args, mem),
         fun =>
@@ -80,7 +81,7 @@ fn eval_variable(name: &String, env: &mut Env) -> Result<Rc<Value>, Error> {
     }
 }
 
-fn apply(name: &Option<String>, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &AST, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn apply(name: &Option<String>, _args_type: &ArgumentsType, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &AST, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if arg_names.len() != arg_values.len() {
         return Err(Error::BadArity(name.clone()));
     }
