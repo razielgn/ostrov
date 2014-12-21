@@ -105,6 +105,18 @@ pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<Rc
             }
 
             Ok(mem.lambda(name, ArgumentsType::Fixed, args_list, body.clone()))
+        },
+        &AST::DottedList(ref args, ref extra) => {
+            let mut args_list: Vec<String> = Vec::with_capacity(args.len());
+            for arg in args.iter() {
+                let arg = try!(atom_or_error(arg));
+                args_list.push(arg);
+            }
+
+            let extra_arg = try!(atom_or_error(&**extra));
+            args_list.push(extra_arg);
+
+            Ok(mem.lambda(name, ArgumentsType::Variable, args_list, body.clone()))
         }
         value => Err(Error::WrongArgumentType(Value::from_ast(value)))
     }
