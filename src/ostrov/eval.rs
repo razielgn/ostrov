@@ -31,10 +31,8 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Valu
     let head = list.head().unwrap();
     let tail = list.tail();
 
-    if let &AST::List(ref list) = head {
-        if list.head().unwrap() == &AST::Atom("quote".to_string()) {
-            return Err(Error::UnappliableValue(Value::from_ast(head)));
-        }
+    if is_quoted(head) {
+        return Err(Error::UnappliableValue(Value::from_ast(head)));
     }
 
     if let &AST::Atom(ref special_form) = head {
@@ -87,18 +85,30 @@ fn apply(name: &Option<String>, arg_names: &Vec<String>, arg_values: Vec<Rc<Valu
         return Err(Error::BadArity(name.clone()));
     }
 
-    let mut inner_env = Env::wraps(env);
-    for (name, value) in arg_names.iter().zip(arg_values.iter()) {
-        inner_env.set(name.clone(), value.clone());
-    }
-
+    let mut inner_env = wrap_env(arg_names, arg_values, env);
     eval(body, &mut inner_env, mem)
 }
 
-fn atom_or_error(value: &AST) -> Result<String, Error> {
-    if let &AST::Atom(ref atom) = value {
-        Ok(atom.to_string())
-    } else {
-        Err(Error::WrongArgumentType(Value::from_ast(value)))
+fn wrap_env<'a>(arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, outer_env: &'a Env) -> Env<'a> {
+    let mut env = Env::wraps(outer_env);
+
+    for (name, value) in arg_names.iter().zip(arg_values.iter()) {
+        env.set(name.clone(), value.clone());
+    }
+
+    env
+}
+
+fn is_quoted(value: &AST) -> bool {
+    match value {
+        &AST::List(ref list) =>
+            match list[0] {
+                AST::Atom(ref a) if a.as_slice() == "quote" =>
+                    true,
+                _ =>
+                    false
+            },
+        _ =>
+            false
     }
 }
