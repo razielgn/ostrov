@@ -99,7 +99,7 @@ pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<Rc
     let ref body = list[1];
 
     match args {
-        &AST::List(ref args) if list.len() > 0 => {
+        &AST::List(ref args) => {
             let mut args_list: Vec<String> = Vec::with_capacity(args.len());
             for arg in args.iter() {
                 let arg = try!(atom_or_error(arg));

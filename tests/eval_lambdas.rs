@@ -3,6 +3,7 @@ use helpers::values::*;
 
 #[test]
 fn fixed_arguments() {
+    assert_eval("(lambda () 1)", lambda(vec!(), ast::integer(1)));
     assert_eval("(lambda (x y z) 1)",
                  lambda(vec!("x", "y", "z"), ast::integer(1)));
 }
