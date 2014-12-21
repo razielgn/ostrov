@@ -76,3 +76,9 @@ fn lambda_with_fixed_arguments_number() {
 fn lambda_with_fixed_arguments_number_bad_arity() {
     assert_eval_err("((lambda (x y) (+ x y)) 6 8 9)", bad_arity_lambda());
 }
+
+#[test]
+fn lambda_with_any_arguments_number() {
+    assert_eval("((lambda x x))", empty_list());
+    assert_eval("((lambda x x) 1 2 3)", list(vec!(integer(1), integer(2), integer(3))));
+}

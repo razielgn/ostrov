@@ -81,23 +81,31 @@ fn eval_variable(name: &String, env: &mut Env) -> Result<Rc<Value>, Error> {
     }
 }
 
-fn apply(name: &Option<String>, _args_type: &ArgumentsType, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &AST, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    if arg_names.len() != arg_values.len() {
-        return Err(Error::BadArity(name.clone()));
+fn apply(name: &Option<String>, args_type: &ArgumentsType, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &AST, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    match args_type {
+        &ArgumentsType::Fixed => {
+            if arg_names.len() != arg_values.len() {
+                return Err(Error::BadArity(name.clone()));
+            }
+
+            let mut inner_env = Env::wraps(env);
+            for (name, value) in arg_names.iter().zip(arg_values.iter()) {
+                inner_env.set(name.clone(), value.clone());
+            }
+
+            eval(body, &mut inner_env, mem)
+        }
+        &ArgumentsType::Any => {
+            let args = arg_values.iter().map(|value| value.deref().clone()).collect();
+
+            let mut inner_env = Env::wraps(env);
+            inner_env.set(arg_names[0].clone(), mem.list(args));
+
+            eval(body, &mut inner_env, mem)
+        }
+        _ =>
+            Err(Error::UnappliableValue(Value::Atom("lol".to_string()))),
     }
-
-    let mut inner_env = wrap_env(arg_names, arg_values, env);
-    eval(body, &mut inner_env, mem)
-}
-
-fn wrap_env<'a>(arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, outer_env: &'a Env) -> Env<'a> {
-    let mut env = Env::wraps(outer_env);
-
-    for (name, value) in arg_names.iter().zip(arg_values.iter()) {
-        env.set(name.clone(), value.clone());
-    }
-
-    env
 }
 
 fn is_quoted(value: &AST) -> bool {
