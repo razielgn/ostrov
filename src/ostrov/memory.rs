@@ -65,7 +65,7 @@ impl Memory {
         self.store(value)
     }
 
-    pub fn lambda(&mut self, name: Option<String>, args_type: ArgumentsType, args: Vec<String>, body: AST) -> Rc<Value> {
+    pub fn lambda(&mut self, name: Option<String>, args_type: ArgumentsType, args: Vec<String>, body: Vec<AST>) -> Rc<Value> {
         let value = Value::Fn(name, args_type, args, body);
 
         self.store(value)

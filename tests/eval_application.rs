@@ -80,6 +80,17 @@ fn procedure_with_mismatched_arity() {
 }
 
 #[test]
+fn lambda_multiple_expressions_are_evaluated_sequentially() {
+    assert_eval("(define (foo)
+                    (define a 10)
+                    (define b (+ a 1))
+                    (define c (+ b 1))
+                    c)
+                  (foo)",
+                integer(12));
+}
+
+#[test]
 fn lambda_with_fixed_arguments_number() {
     assert_eval("((lambda () 1))", integer(1));
     assert_eval("((lambda (x y) (+ x y)) 6 8)", integer(14));
