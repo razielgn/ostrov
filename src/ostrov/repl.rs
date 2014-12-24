@@ -25,13 +25,18 @@ fn enter_repl(runtime: &mut Runtime) {
 
         match input.read_line() {
             Ok(line) => {
-                match runtime.eval_str(line.as_slice()) {
-                    Ok(exprs) => {
-                        for expr in exprs.iter() {
-                            println!("=> {}", expr);
+                match line.as_slice() {
+                    "exit\n" => break,
+                    line => {
+                        match runtime.eval_str(line) {
+                            Ok(exprs) => {
+                                for expr in exprs.iter() {
+                                    println!("=> {}", expr);
+                                }
+                            },
+                            Err(error) => println!("Error: {}", error),
                         }
-                    },
-                    Err(error) => println!("Error: {}", error),
+                    }
                 }
             },
             Err(error) => {
