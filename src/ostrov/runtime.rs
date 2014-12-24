@@ -64,6 +64,10 @@ impl<'a> Runtime<'a> {
         self.eval_str(content.as_slice())
     }
 
+    pub fn dump_heap(&self) {
+        self.memory.dump();
+    }
+
     fn open_file(path: &Path) -> Result<File, Error> {
         Runtime::handle_io_error(File::open(path), path)
     }

@@ -27,6 +27,9 @@ fn enter_repl(runtime: &mut Runtime) {
             Ok(line) => {
                 match line.as_slice() {
                     "exit\n" => break,
+                    "dump-heap\n" => {
+                        runtime.dump_heap();
+                    }
                     line => {
                         match runtime.eval_str(line) {
                             Ok(exprs) => {
