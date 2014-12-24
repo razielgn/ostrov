@@ -85,7 +85,7 @@ fn eval_variable(name: &String, env: &mut Env) -> Result<Rc<Value>, Error> {
     }
 }
 
-fn apply_fixed(name: &Option<String>, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &AST, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn apply_fixed(name: &Option<String>, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &Vec<AST>, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if arg_names.len() != arg_values.len() {
         return Err(Error::BadArity(name.clone()));
     }
@@ -95,10 +95,10 @@ fn apply_fixed(name: &Option<String>, arg_names: &Vec<String>, arg_values: Vec<R
         inner_env.set(name.clone(), value.clone());
     }
 
-    eval(body, &mut inner_env, mem)
+    eval_sequence(body, &mut inner_env, mem)
 }
 
-fn apply_var(name: &Option<String>, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &AST, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn apply_var(name: &Option<String>, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &Vec<AST>, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     let fixed_arg_names = arg_names.slice(0, arg_names.len() - 1);
 
     if fixed_arg_names.len() > arg_values.len() {
@@ -120,16 +120,26 @@ fn apply_var(name: &Option<String>, arg_names: &Vec<String>, arg_values: Vec<Rc<
         mem.list(var_args)
     );
 
-    eval(body, &mut inner_env, mem)
+    eval_sequence(body, &mut inner_env, mem)
 }
 
-fn apply_any(arg_name: &String, args: Vec<Rc<Value>>, body: &AST, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn apply_any(arg_name: &String, args: Vec<Rc<Value>>, body: &Vec<AST>, env: &Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     let args = args.iter().map(|value| value.deref().clone()).collect();
 
     let mut inner_env = Env::wraps(env);
     inner_env.set(arg_name.clone(), mem.list(args));
 
-    eval(body, &mut inner_env, mem)
+    eval_sequence(body, &mut inner_env, mem)
+}
+
+fn eval_sequence(seq: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    let mut result = mem.empty_list();
+
+    for expr in seq.iter() {
+        result = try!(eval(expr, env, mem));
+    }
+
+    Ok(result)
 }
 
 fn is_quoted(value: &AST) -> bool {

@@ -66,26 +66,26 @@ pub mod values {
     }
     pub fn empty_list() -> Value { Value::List(vec!()) }
     pub fn bool(val: bool) -> Value { Value::Bool(val) }
-    pub fn func(name: &str, args: Vec<&str>, body: AST) -> Value {
+    pub fn func(name: &str, args: Vec<&str>, body: Vec<AST>) -> Value {
         let args = args.iter().map(|s| s.to_string()).collect();
         Value::Fn(Some(name.to_string()), ArgumentsType::Fixed, args, body)
     }
-    pub fn func_var(name: &str, args: Vec<&str>, body: AST) -> Value {
+    pub fn func_var(name: &str, args: Vec<&str>, body: Vec<AST>) -> Value {
         let args = args.iter().map(|s| s.to_string()).collect();
         Value::Fn(Some(name.to_string()), ArgumentsType::Variable, args, body)
     }
-    pub fn func_any(name: &str, arg: &str, body: AST) -> Value {
+    pub fn func_any(name: &str, arg: &str, body: Vec<AST>) -> Value {
         Value::Fn(Some(name.to_string()), ArgumentsType::Any, vec!(arg.to_string()), body)
     }
-    pub fn lambda(args: Vec<&str>, body: AST) -> Value {
+    pub fn lambda(args: Vec<&str>, body: Vec<AST>) -> Value {
         let args = args.iter().map(|s| s.to_string()).collect();
         Value::Fn(None, ArgumentsType::Fixed, args, body)
     }
-    pub fn lambda_var(args: Vec<&str>, body: AST) -> Value {
+    pub fn lambda_var(args: Vec<&str>, body: Vec<AST>) -> Value {
         let args = args.iter().map(|s| s.to_string()).collect();
         Value::Fn(None, ArgumentsType::Variable, args, body)
     }
-    pub fn lambda_any(arg: &str, body: AST) -> Value {
+    pub fn lambda_any(arg: &str, body: Vec<AST>) -> Value {
         let args = vec!(arg).iter().map(|s| s.to_string()).collect();
         Value::Fn(None, ArgumentsType::Any, args, body)
     }

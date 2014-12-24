@@ -72,7 +72,7 @@ pub fn if_(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, E
 }
 
 pub fn define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    if args.len() < 1 || args.len() > 2 {
+    if args.len() < 1 {
         return Err(Error::BadArity(Some("define".to_string())))
     }
 
@@ -82,12 +82,12 @@ pub fn define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>
             define_variable(name, body, env, mem)
         }
         &AST::List(ref list) if list.len() > 0 => {
-            let ref body = args[1];
-            define_procedure(list.as_slice(), body, env, mem)
+            let body = args.tail().to_vec();
+            define_procedure(list.as_slice(), &body, env, mem)
         }
         &AST::DottedList(ref list, ref extra) => {
-            let ref body = args[1];
-            define_procedure_var(list.as_slice(), &**extra, body, env, mem)
+            let body = args.tail().to_vec();
+            define_procedure_var(list.as_slice(), &**extra, &body, env, mem)
         }
         value =>
             Err(Error::WrongArgumentType(Value::from_ast(value)))
@@ -95,12 +95,13 @@ pub fn define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>
 }
 
 pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
-    if list.len() != 2 {
+    if list.len() < 2 {
         return Err(Error::BadArity(Some("lambda".to_string())));
     }
 
-    let (args, body) = (&list[0], &list[1]);
-    create_fn(args, body, name, mem)
+    let args = list.head().unwrap();
+    let body = list.tail().to_vec();
+    create_fn(args, &body, name, mem)
 }
 
 fn define_variable(name: &String, body: Option<&AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
@@ -120,7 +121,7 @@ fn define_variable(name: &String, body: Option<&AST>, env: &mut Env, mem: &mut M
     Ok(value)
 }
 
-fn define_procedure(args: &[AST], body: &AST, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn define_procedure(args: &[AST], body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     let procedure_name = try!(atom_or_error(&args[0]));
 
     let args = AST::List(args.tail().to_vec());
@@ -130,7 +131,7 @@ fn define_procedure(args: &[AST], body: &AST, env: &mut Env, mem: &mut Memory) -
     Ok(mem.intern(procedure_name))
 }
 
-fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &AST, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     let procedure_name = try!(atom_or_error(&args[0]));
 
     let procedure = if args.len() == 1 {
@@ -144,7 +145,7 @@ fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &AST, env: &mut Env
     Ok(mem.intern(procedure_name))
 }
 
-fn create_fn(list: &AST, body: &AST, name: Option<String>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn create_fn(list: &AST, body: &Vec<AST>, name: Option<String>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     match list {
         &AST::List(ref args) => {
             let args_list = try!(compose_args_list(args.as_slice(), None));

@@ -9,7 +9,7 @@ pub enum Value {
     Atom(String),
     Bool(bool),
     DottedList(Vec<Value>, Box<Value>),
-    Fn(Option<String>, ArgumentsType, Vec<String>, AST),
+    Fn(Option<String>, ArgumentsType, Vec<String>, Vec<AST>),
     PrimitiveFn(String),
     Integer(i64),
     List(Vec<Value>),

@@ -40,17 +40,17 @@ fn dotted_lists() {
 #[test]
 fn procedures() {
     assert_fmt("<procedure foo (bar baz)>",
-               func("foo", vec!("bar", "baz"), ast::integer(1)));
+               func("foo", vec!("bar", "baz"), vec!()));
 }
 
 #[test]
 fn lambdas() {
     assert_fmt("<lambda (bar baz)>",
-               lambda(vec!("bar", "baz"), ast::integer(1)));
+               lambda(vec!("bar", "baz"), vec!()));
     assert_fmt("<lambda (bar . baz)>",
-               lambda_var(vec!("bar", "baz"), ast::integer(1)));
+               lambda_var(vec!("bar", "baz"), vec!()));
     assert_fmt("<lambda bar>",
-               lambda_any("bar", ast::integer(1)));
+               lambda_any("bar", vec!()));
 }
 
 #[test]
