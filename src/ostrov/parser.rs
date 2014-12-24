@@ -11,7 +11,7 @@ enum IntegerSign {
 }
 
 fn parse_decimal(str: &str, sign: &IntegerSign) -> AST {
-    let integer: i64 = from_str(str).unwrap();
+    let integer: i64 = str.parse().unwrap();
 
     AST::Integer(
         if *sign == IntegerSign::Negative {
