@@ -36,8 +36,4 @@ impl<'a> Env<'a> {
     fn get_from_outer(&self, name: &String) -> Option<RcValue> {
         self.outer.and_then(|env| env.get(name))
     }
-
-    pub fn remove(&mut self, name: &String) {
-        self.defs.remove(name);
-    }
 }
