@@ -104,6 +104,22 @@ pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<Rc
     create_fn(args, &body, name, mem)
 }
 
+pub fn set(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+    if args.len() != 2 {
+        return Err(Error::BadArity(Some("set!".to_string())));
+    }
+
+    let variable_name = try!(atom_or_error(&args[0]));
+    let expr = try!(eval(&args[1], env, mem));
+
+    match env.get(&variable_name) {
+        Some(_) => env.set(variable_name.clone(), expr.clone()),
+        None    => return Err(Error::UnboundVariable(variable_name)),
+    }
+
+    Ok(expr)
+}
+
 fn define_variable(name: &String, body: Option<&AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
     if body.is_none() {
         return Ok(mem.intern(name.clone()));
