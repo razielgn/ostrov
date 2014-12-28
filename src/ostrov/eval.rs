@@ -46,6 +46,7 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Valu
             "lambda" => return special_forms::lambda(args, None, mem),
             "or"     => return special_forms::or(args, env, mem),
             "quote"  => return special_forms::quote(args, mem),
+            "set!"   => return special_forms::set(args, env, mem),
             _        => (),
         }
     }

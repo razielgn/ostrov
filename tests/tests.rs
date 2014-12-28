@@ -13,6 +13,7 @@ mod parser_lists;
 mod parser_quoted;
 
 mod eval_application;
+mod eval_assignment;
 mod eval_basic_types;
 mod eval_boolean_procedures;
 mod eval_conditionals;
