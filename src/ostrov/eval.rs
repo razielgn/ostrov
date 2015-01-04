@@ -27,7 +27,7 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue
         return Ok(mem.empty_list());
     }
 
-    let head = list.head().unwrap();
+    let head = list.first().unwrap();
     let tail = list.tail();
 
     if is_quoted(head) {

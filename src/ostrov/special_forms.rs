@@ -97,7 +97,7 @@ pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<Rc
         return Err(Error::BadArity(Some("lambda".to_string())));
     }
 
-    let args = list.head().unwrap();
+    let args = list.first().unwrap();
     let body = list.tail().to_vec();
     create_fn(args, &body, name, mem)
 }

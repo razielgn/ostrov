@@ -61,7 +61,7 @@ fn minus(args_: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
         return Err(Error::BadArity(Some("-".to_string())))
     }
 
-    let head = args.head().unwrap();
+    let head = args.first().unwrap();
     let tail = args.tail();
 
     if tail.is_empty() {
@@ -79,7 +79,7 @@ fn division(args_: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
         return Err(Error::BadArity(Some("/".to_string())))
     }
 
-    let head = args.head().unwrap();
+    let head = args.first().unwrap();
     let tail = args.tail();
 
     if tail.is_empty() {
@@ -103,7 +103,7 @@ fn equals(args_: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     }
 
     let args = try!(list_of_integers(args_));
-    let head = args.head().unwrap();
+    let head = args.first().unwrap();
     let outcome = args.iter().skip(1).all(|n| *n == *head);
 
     Ok(mem.boolean(outcome))
@@ -130,7 +130,7 @@ fn not(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
         return Err(Error::BadArity(Some("not".to_string())))
     }
 
-    let outcome = match **args.head().unwrap() {
+    let outcome = match **args.first().unwrap() {
         Value::Bool(false) => true,
         _                  => false,
     };
@@ -197,9 +197,9 @@ fn car(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
 
     match *args[0] {
         Value::List(ref l) if !l.is_empty() =>
-            Ok(mem.store(l.head().unwrap().clone())),
+            Ok(mem.store(l.first().unwrap().clone())),
         Value::DottedList(ref l, ref _t) =>
-            Ok(mem.store(l.head().unwrap().clone())),
+            Ok(mem.store(l.first().unwrap().clone())),
         ref value =>
             Err(Error::WrongArgumentType(value.clone())),
     }
