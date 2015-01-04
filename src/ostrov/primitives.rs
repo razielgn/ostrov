@@ -4,7 +4,7 @@ use memory::Memory;
 
 use std::rc::Rc;
 
-pub static PRIMITIVES: [&'static str, ..18] = [
+pub static PRIMITIVES: [&'static str; 18] = [
     "*",
     "+",
     "-",
