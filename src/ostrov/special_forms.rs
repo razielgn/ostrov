@@ -1,14 +1,12 @@
 use ast::AST;
 use env::Env;
-use memory::Memory;
+use memory::{RcValue, Memory};
 use runtime::Error;
 use values::Value;
 use values::ArgumentsType;
 use eval::eval;
 
-use std::rc::Rc;
-
-pub fn quote(list: &[AST], mem: &mut Memory) -> Result<Rc<Value>, Error> {
+pub fn quote(list: &[AST], mem: &mut Memory) -> Result<RcValue, Error> {
     match Value::from_ast(&list[0]) {
         Value::Bool(b) =>
             Ok(mem.boolean(b)),
@@ -19,7 +17,7 @@ pub fn quote(list: &[AST], mem: &mut Memory) -> Result<Rc<Value>, Error> {
     }
 }
 
-pub fn and(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+pub fn and(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
     let mut last = mem.b_true();
 
     for val in args.iter() {
@@ -35,7 +33,7 @@ pub fn and(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, E
     Ok(last)
 }
 
-pub fn or(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+pub fn or(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
     let mut last = mem.b_false();
 
     for val in args.iter() {
@@ -51,7 +49,7 @@ pub fn or(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Er
     Ok(last)
 }
 
-pub fn if_(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+pub fn if_(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() < 1 || args.len() > 3 {
         return Err(Error::BadArity(Some("if".to_string())))
     }
@@ -71,7 +69,7 @@ pub fn if_(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, E
     Ok(result)
 }
 
-pub fn define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+pub fn define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() < 1 {
         return Err(Error::BadArity(Some("define".to_string())))
     }
@@ -94,7 +92,7 @@ pub fn define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>
     }
 }
 
-pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<RcValue, Error> {
     if list.len() < 2 {
         return Err(Error::BadArity(Some("lambda".to_string())));
     }
@@ -104,7 +102,7 @@ pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<Rc
     create_fn(args, &body, name, mem)
 }
 
-pub fn set(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+pub fn set(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() != 2 {
         return Err(Error::BadArity(Some("set!".to_string())));
     }
@@ -120,7 +118,7 @@ pub fn set(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, E
     Ok(expr)
 }
 
-fn define_variable(name: &String, body: Option<&AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn define_variable(name: &String, body: Option<&AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
     if body.is_none() {
         return Ok(mem.intern(name.clone()));
     }
@@ -137,7 +135,7 @@ fn define_variable(name: &String, body: Option<&AST>, env: &mut Env, mem: &mut M
     Ok(value)
 }
 
-fn define_procedure(args: &[AST], body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn define_procedure(args: &[AST], body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
     let procedure_name = try!(atom_or_error(&args[0]));
 
     let args = AST::List(args.tail().to_vec());
@@ -147,7 +145,7 @@ fn define_procedure(args: &[AST], body: &Vec<AST>, env: &mut Env, mem: &mut Memo
     Ok(mem.intern(procedure_name))
 }
 
-fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
     let procedure_name = try!(atom_or_error(&args[0]));
 
     let procedure = if args.len() == 1 {
@@ -161,7 +159,7 @@ fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: &mu
     Ok(mem.intern(procedure_name))
 }
 
-fn create_fn(list: &AST, body: &Vec<AST>, name: Option<String>, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn create_fn(list: &AST, body: &Vec<AST>, name: Option<String>, mem: &mut Memory) -> Result<RcValue, Error> {
     match list {
         &AST::List(ref args) => {
             let args_list = try!(compose_args_list(args.as_slice(), None));

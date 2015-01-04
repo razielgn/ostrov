@@ -5,11 +5,9 @@ use values::Value;
 use values::ArgumentsType;
 use primitives;
 use special_forms;
-use memory::Memory;
+use memory::{RcValue, Memory};
 
-use std::rc::Rc;
-
-pub fn eval(value: &AST, env: &mut Env, memory: &mut Memory) -> Result<Rc<Value>, Error> {
+pub fn eval(value: &AST, env: &mut Env, memory: &mut Memory) -> Result<RcValue, Error> {
     match value {
         &AST::Atom(ref atom) =>
             eval_variable(atom, env),
@@ -24,7 +22,7 @@ pub fn eval(value: &AST, env: &mut Env, memory: &mut Memory) -> Result<Rc<Value>
     }
 }
 
-fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
     if list.is_empty() {
         return Ok(mem.empty_list());
     }
@@ -64,7 +62,7 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Valu
     }
 }
 
-fn eval_args(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Vec<Rc<Value>>, Error> {
+fn eval_args(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Vec<RcValue>, Error> {
     let mut out = Vec::with_capacity(args.len());
 
     for arg in args.iter() {
@@ -75,14 +73,14 @@ fn eval_args(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Vec<Rc<Val
     Ok(out)
 }
 
-fn eval_variable(name: &String, env: &mut Env) -> Result<Rc<Value>, Error> {
+fn eval_variable(name: &String, env: &mut Env) -> Result<RcValue, Error> {
     match env.get(name) {
         Some(value) => Ok(value),
         None        => Err(Error::UnboundVariable(name.clone())),
     }
 }
 
-fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String>, arg_values: Vec<Rc<Value>>, body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String>, arg_values: Vec<RcValue>, body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
     let mut inner_env = Env::wraps(env);
 
     match args_type {
@@ -123,7 +121,7 @@ fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String
     eval_sequence(body, &mut inner_env, mem)
 }
 
-fn eval_sequence(seq: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, Error> {
+fn eval_sequence(seq: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
     let mut result = mem.empty_list();
 
     for expr in seq.iter() {

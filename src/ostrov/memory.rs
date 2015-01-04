@@ -4,9 +4,11 @@ use ast::AST;
 
 use std::rc::Rc;
 
+pub type RcValue = Rc<Value>;
+
 pub struct Memory {
-    heap: Vec<Rc<Value>>,
-    reserved: Vec<Rc<Value>>,
+    heap: Vec<RcValue>,
+    reserved: Vec<RcValue>,
 }
 
 impl Memory {
@@ -21,21 +23,21 @@ impl Memory {
         memory
     }
 
-    pub fn integer(&mut self, n: i64) -> Rc<Value> {
+    pub fn integer(&mut self, n: i64) -> RcValue {
         let value = Value::Integer(n);
 
         self.store(value)
     }
 
-    pub fn b_true(&self) -> Rc<Value> {
+    pub fn b_true(&self) -> RcValue {
         self.reserved[0].clone()
     }
 
-    pub fn b_false(&self) -> Rc<Value> {
+    pub fn b_false(&self) -> RcValue {
         self.reserved[1].clone()
     }
 
-    pub fn boolean(&self, b: bool) -> Rc<Value> {
+    pub fn boolean(&self, b: bool) -> RcValue {
         if b {
             self.b_true()
         } else {
@@ -43,37 +45,37 @@ impl Memory {
         }
     }
 
-    pub fn empty_list(&self) -> Rc<Value> {
+    pub fn empty_list(&self) -> RcValue {
         self.reserved[2].clone()
     }
 
-    pub fn list(&mut self, values: Vec<Rc<Value>>) -> Rc<Value> {
+    pub fn list(&mut self, values: Vec<RcValue>) -> RcValue {
         let values = values.into_iter().map(|v| (*v).clone()).collect();
         let value = Value::List(values);
 
         self.store(value)
     }
 
-    pub fn intern(&mut self, atom: String) -> Rc<Value> {
+    pub fn intern(&mut self, atom: String) -> RcValue {
         let value = Value::Atom(atom);
 
         self.store(value)
     }
 
-    pub fn dotted_list(&mut self, values: Vec<Rc<Value>>, tail: Value) -> Rc<Value> {
+    pub fn dotted_list(&mut self, values: Vec<RcValue>, tail: Value) -> RcValue {
         let values = values.into_iter().map(|v| (*v).clone()).collect();
         let value = Value::DottedList(values, box tail);
 
         self.store(value)
     }
 
-    pub fn lambda(&mut self, name: Option<String>, args_type: ArgumentsType, args: Vec<String>, body: Vec<AST>) -> Rc<Value> {
+    pub fn lambda(&mut self, name: Option<String>, args_type: ArgumentsType, args: Vec<String>, body: Vec<AST>) -> RcValue {
         let value = Value::Fn(name, args_type, args, body);
 
         self.store(value)
     }
 
-    pub fn primitive(&self, name: String) -> Rc<Value> {
+    pub fn primitive(&self, name: String) -> RcValue {
         Rc::new(Value::PrimitiveFn(name))
     }
 
@@ -83,7 +85,7 @@ impl Memory {
         }
     }
 
-    pub fn store(&mut self, value: Value) -> Rc<Value> {
+    pub fn store(&mut self, value: Value) -> RcValue {
         self.heap.push(Rc::new(value));
         self.heap.last().unwrap().clone()
     }

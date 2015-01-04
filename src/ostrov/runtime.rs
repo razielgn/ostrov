@@ -4,12 +4,11 @@ use eval::eval;
 use parser::parse;
 use values::Value;
 use primitives;
-use memory::Memory;
+use memory::{RcValue, Memory};
 
 use std::io::BufferedReader;
 use std::io::File;
 use std::io::IoResult;
-use std::rc::Rc;
 
 #[derive(Show, PartialEq)]
 pub enum Error {
@@ -44,7 +43,7 @@ impl<'a> Runtime<'a> {
         parse(input)
     }
 
-    pub fn eval_str(&mut self, input: &str) -> Result<Vec<Rc<Value>>, Error> {
+    pub fn eval_str(&mut self, input: &str) -> Result<Vec<RcValue>, Error> {
         let exprs = try!(self.parse_str(input));
 
         let mut evalued_exprs = Vec::new();
@@ -56,7 +55,7 @@ impl<'a> Runtime<'a> {
         Ok(evalued_exprs)
     }
 
-    pub fn eval_file(&mut self, path: &Path) -> Result<Vec<Rc<Value>>, Error> {
+    pub fn eval_file(&mut self, path: &Path) -> Result<Vec<RcValue>, Error> {
         let file = try!(Runtime::open_file(path));
         let mut reader = BufferedReader::new(file);
 
