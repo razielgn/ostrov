@@ -2,7 +2,7 @@ use std::fmt::Error;
 use std::fmt::Formatter;
 use std::fmt::Show;
 
-#[deriving(PartialEq, Clone)]
+#[derive(PartialEq, Clone)]
 pub enum AST {
     Atom(String),
     Bool(bool),

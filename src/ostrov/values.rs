@@ -4,7 +4,7 @@ use std::fmt::Error;
 use std::fmt::Formatter;
 use std::fmt::Show;
 
-#[deriving(PartialEq, Clone)]
+#[derive(PartialEq, Clone)]
 pub enum Value {
     Atom(String),
     Bool(bool),
@@ -15,7 +15,7 @@ pub enum Value {
     List(Vec<Value>),
 }
 
-#[deriving(Copy, PartialEq, Clone)]
+#[derive(Copy, PartialEq, Clone)]
 pub enum ArgumentsType {
     Fixed,
     Variable,

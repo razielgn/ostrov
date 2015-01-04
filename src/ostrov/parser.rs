@@ -4,7 +4,7 @@ extern crate peg_syntax_ext;
 use ast::AST;
 use runtime::Error;
 
-#[deriving(PartialEq)]
+#[derive(PartialEq)]
 enum IntegerSign {
     Positive,
     Negative,

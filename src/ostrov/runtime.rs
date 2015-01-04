@@ -11,7 +11,7 @@ use std::io::File;
 use std::io::IoResult;
 use std::rc::Rc;
 
-#[deriving(Show, PartialEq)]
+#[derive(Show, PartialEq)]
 pub enum Error {
     BadArity(Option<String>),
     IrreducibleValue(AST),
