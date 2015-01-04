@@ -48,65 +48,59 @@ pub fn apply(name: &String, args: Vec<RcValue>, mem: &mut Memory) -> Result<RcVa
 }
 
 fn plus(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
-    let args_ = try!(list_of_integers(args));
-    let sum = args_.iter().fold(0, |sum, n| sum + *n);
-
+    let integers = try!(list_of_integers(args));
+    let sum = integers.into_iter().fold(0, |sum, n| sum + n);
     Ok(mem.integer(sum))
 }
 
-fn minus(args_: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
-    let args = try!(list_of_integers(args_));
-
+fn minus(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() == 0 {
         return Err(Error::BadArity(Some("-".to_string())))
     }
 
-    let head = args.first().unwrap();
-    let tail = args.tail();
+    let integers = try!(list_of_integers(args));
+    let first = integers[0];
 
-    if tail.is_empty() {
-        return Ok(mem.integer(- *head))
+    if integers.len() == 1 {
+        Ok(mem.integer(-first))
+    } else {
+        let sum_of_the_rest = integers.into_iter().skip(1).fold(0, |sum, n| sum + n);
+        Ok(mem.integer(first - sum_of_the_rest))
     }
-
-    let tail_sum = tail.iter().fold(0, |sum, n| sum + *n);
-    Ok(mem.integer(*head - tail_sum))
 }
 
-fn division(args_: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
-    let args = try!(list_of_integers(args_));
-
+fn division(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() == 0 {
         return Err(Error::BadArity(Some("/".to_string())))
     }
 
-    let head = args.first().unwrap();
-    let tail = args.tail();
+    let integers = try!(list_of_integers(args));
+    let first = integers[0];
 
-    if tail.is_empty() {
-        return Ok(mem.integer(1 / *head))
+    if integers.len() == 1 {
+        Ok(mem.integer(1 / first))
+    } else {
+        let div = integers.into_iter().skip(1).fold(first, |div, n| div / n);
+        Ok(mem.integer(div))
     }
-
-    let div = tail.iter().fold(*head, |div, n| div / *n);
-    Ok(mem.integer(div))
 }
 
-fn product(args_: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
-    let args = try!(list_of_integers(args_));
-    let product = args.iter().fold(1, |product, n| product * *n);
-
+fn product(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+    let integers = try!(list_of_integers(args));
+    let product = integers.into_iter().fold(1, |product, n| product * n);
     Ok(mem.integer(product))
 }
 
-fn equals(args_: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
-    if args_.len() < 2 {
+fn equals(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+    if args.len() < 2 {
         return Ok(mem.b_true());
     }
 
-    let args = try!(list_of_integers(args_));
-    let head = args.first().unwrap();
-    let outcome = args.iter().skip(1).all(|n| *n == *head);
+    let integers = try!(list_of_integers(args));
+    let first = integers[0];
 
-    Ok(mem.boolean(outcome))
+    let equality = integers.into_iter().skip(1).all(|n| n == first);
+    Ok(mem.boolean(equality))
 }
 
 fn less_than(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
@@ -130,12 +124,7 @@ fn not(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
         return Err(Error::BadArity(Some("not".to_string())))
     }
 
-    let outcome = match **args.first().unwrap() {
-        Value::Bool(false) => true,
-        _                  => false,
-    };
-
-    Ok(mem.boolean(outcome))
+    Ok(mem.boolean(args[0] == mem.b_false()))
 }
 
 fn list(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
@@ -160,12 +149,13 @@ fn pair(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
         return Err(Error::BadArity(Some("pair?".to_string())));
     }
 
-    let outcome = if let Value::List(ref list) = *args[0] {
-        !list.is_empty()
-    } else if let Value::DottedList(ref _list, ref _el) = *args[0] {
-        true
-    } else {
-        false
+    let outcome = match *args[0] {
+        Value::List(ref list) =>
+            !list.is_empty(),
+        Value::DottedList(ref _list, ref _el) =>
+            true,
+        _ =>
+            false,
     };
 
     Ok(mem.boolean(outcome))
@@ -237,8 +227,7 @@ fn null(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
         return Err(Error::BadArity(Some("null?".to_string())));
     }
 
-    let outcome = *args[0] == *mem.empty_list();
-    Ok(mem.boolean(outcome))
+    Ok(mem.boolean(args[0] == mem.empty_list()))
 }
 
 fn list_question_mark(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
@@ -246,13 +235,13 @@ fn list_question_mark(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, E
         return Err(Error::BadArity(Some("list?".to_string())));
     }
 
-    let out = if let Value::List(ref _l) = *args[0] {
+    let outcome = if let Value::List(ref _l) = *args[0] {
         true
     } else {
         false
     };
 
-    Ok(mem.boolean(out))
+    Ok(mem.boolean(outcome))
 }
 
 fn list_of_integers(list: Vec<RcValue>) -> Result<Vec<i64>, Error> {
@@ -270,14 +259,14 @@ fn list_of_integers(list: Vec<RcValue>) -> Result<Vec<i64>, Error> {
     Ok(integers)
 }
 
-fn ord(args_: Vec<RcValue>, mem: &mut Memory, cmp: |i64, i64| -> bool) -> Result<RcValue, Error> {
-    if args_.len() < 2 {
+fn ord(args: Vec<RcValue>, mem: &mut Memory, cmp: |i64, i64| -> bool) -> Result<RcValue, Error> {
+    if args.len() < 2 {
         return Ok(mem.b_true())
     }
 
-    let args = try!(list_of_integers(args_));
-    let outcome = range(0, args.len() - 1).all(|i|
-        cmp(args[i], args[i + 1u])
+    let integers = try!(list_of_integers(args));
+    let outcome = range(0u, integers.len() - 1).all(|i|
+        cmp(integers[i], integers[i + 1])
     );
 
     return Ok(mem.boolean(outcome))
