@@ -47,7 +47,8 @@ impl Memory {
         self.reserved[2].clone()
     }
 
-    pub fn list(&mut self, values: Vec<Value>) -> Rc<Value> {
+    pub fn list(&mut self, values: Vec<Rc<Value>>) -> Rc<Value> {
+        let values = values.into_iter().map(|v| (*v).clone()).collect();
         let value = Value::List(values);
 
         self.store(value)
@@ -59,7 +60,8 @@ impl Memory {
         self.store(value)
     }
 
-    pub fn dotted_list(&mut self, values: Vec<Value>, tail: Value) -> Rc<Value> {
+    pub fn dotted_list(&mut self, values: Vec<Rc<Value>>, tail: Value) -> Rc<Value> {
+        let values = values.into_iter().map(|v| (*v).clone()).collect();
         let value = Value::DottedList(values, box tail);
 
         self.store(value)
@@ -69,6 +71,10 @@ impl Memory {
         let value = Value::Fn(name, args_type, args, body);
 
         self.store(value)
+    }
+
+    pub fn primitive(&self, name: String) -> Rc<Value> {
+        Rc::new(Value::PrimitiveFn(name))
     }
 
     pub fn dump(&self) {

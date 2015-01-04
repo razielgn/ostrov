@@ -1,16 +1,13 @@
-use helpers::values::*;
-
 use ostrov::env::Env;
-
-use std::rc::Rc;
+use ostrov::memory::Memory;
 
 #[test]
 fn set_and_get_ok() {
+    let mut mem = Memory::new();
     let mut env = Env::new();
     let name = "foo".to_string();
 
-    let val = Rc::new(integer(3));
-
+    let val = mem.integer(3);
     env.set(name.clone(), val.clone());
 
     assert_eq!(Some(val), env.get(&name));
@@ -19,22 +16,22 @@ fn set_and_get_ok() {
 #[test]
 fn set_and_get_none() {
     let env = Env::new();
-    let name = "foo".to_string();
 
-    assert_eq!(None, env.get(&name));
+    assert_eq!(None, env.get(&"foo".to_string()));
 }
 
 #[test]
 fn wraps() {
+    let mut mem = Memory::new();
     let mut outer = Env::new();
-    let outer_foo = Rc::new(integer(5));
-    let bar = Rc::new(atom("bar"));
+    let outer_foo = mem.integer(5);
+    let bar = mem.intern("bar".to_string());
 
     outer.set("foo".to_string(), outer_foo.clone());
     outer.set("bar".to_string(), bar.clone());
 
     let mut inner = Env::wraps(&outer);
-    let inner_foo = Rc::new(integer(25));
+    let inner_foo = mem.integer(25);
 
     inner.set("foo".to_string(), inner_foo.clone());
 

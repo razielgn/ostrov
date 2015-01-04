@@ -84,9 +84,8 @@ impl<'a> Runtime<'a> {
 
     fn init_primitives(&mut self) {
         for name in primitives::PRIMITIVES.iter() {
-            let primitive = Value::PrimitiveFn(name.to_string());
-
-            self.env.set(name.to_string(), Rc::new(primitive));
+            let primitive = self.memory.primitive(name.to_string());
+            self.env.set(name.to_string(), primitive);
         }
     }
 }

@@ -54,12 +54,12 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<Rc<Valu
     let fun  = try!(eval(head, env, mem));
     let args = try!(eval_args(tail, env, mem));
 
-    match fun.deref() {
-        &Value::Fn(ref name, args_type, ref args_names, ref body) =>
+    match *fun {
+        Value::Fn(ref name, args_type, ref args_names, ref body) =>
             apply(name, args_type, args_names, args, body, env, mem),
-        &Value::PrimitiveFn(ref name) =>
+        Value::PrimitiveFn(ref name) =>
             primitives::apply(name, args, mem),
-        fun =>
+        ref fun =>
             Err(Error::UnappliableValue(fun.clone()))
     }
 }
@@ -87,9 +87,7 @@ fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String
 
     match args_type {
         ArgumentsType::Any => {
-            let args = arg_values.iter().map(|value| value.deref().clone()).collect();
-
-            inner_env.set(arg_names[0].clone(), mem.list(args));
+            inner_env.set(arg_names[0].clone(), mem.list(arg_values));
         }
         ArgumentsType::Fixed => {
             if arg_names.len() != arg_values.len() {
@@ -111,9 +109,8 @@ fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String
                 inner_env.set(name.clone(), value.clone());
             }
 
-            let var_args = arg_values.iter()
+            let var_args = arg_values.into_iter()
                 .skip(fixed_arg_names.len())
-                .map(|value| value.deref().clone())
                 .collect();
 
             inner_env.set(

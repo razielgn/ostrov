@@ -38,11 +38,7 @@ fn nested_evaluation(b: &mut Bencher) {
         ";
 
         let mut runtime = Runtime::new();
-
-        match runtime.eval_str(input) {
-            Ok(exprs)  => assert_eq!(&Value::Integer(3), exprs[0].deref()),
-            Err(error) => panic!(format!("{}", error)),
-        }
+        assert_eq!(runtime.eval_str(input), runtime.eval_str("3"));
     })
 }
 
@@ -58,10 +54,6 @@ fn procedure_evaluation(b: &mut Bencher) {
         ";
 
         let mut runtime = Runtime::new();
-
-        match runtime.eval_str(input) {
-            Ok(exprs)  => assert_eq!(&Value::Integer(120), exprs[1].deref()),
-            Err(error) => panic!(format!("{}", error)),
-        }
+        assert_eq!(runtime.eval_str(input), runtime.eval_str("'fact 120"));
     })
 }

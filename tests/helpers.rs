@@ -18,7 +18,7 @@ pub fn assert_eval(input: &str, expected: Value) {
     let mut runtime = Runtime::new();
 
     match runtime.eval_str(input) {
-        Ok(exprs)  => assert_eq!(expected, *exprs.iter().last().unwrap().deref()),
+        Ok(exprs)  => assert_eq!(expected, **exprs.iter().last().unwrap()),
         Err(error) => panic_expected(input, &expected, &error),
     }
 }

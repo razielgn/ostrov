@@ -58,7 +58,7 @@ pub fn if_(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Rc<Value>, E
 
     let condition = try!(eval(&args[0], env, mem));
 
-    let result = if condition.deref() != &Value::Bool(false) {
+    let result = if condition != mem.b_false() {
         try!(eval(&args[1], env, mem))
     } else {
         if args.len() == 2 {
