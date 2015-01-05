@@ -4,14 +4,14 @@ use helpers::values::*;
 #[test]
 fn returns_expression() {
     assert_eval("(define x 0)
-                 (set! x (+ x 1))", integer(1)); // unspecified behaviour
+                 (set! x (+ x 1))", "1"); // unspecified behaviour
 }
 
 #[test]
 fn overwrites_variables() {
     assert_eval("(define x 0)
                  (set! x (+ x 1))
-                 x", integer(1));
+                 x", "1");
 }
 
 #[test]

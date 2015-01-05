@@ -1,4 +1,4 @@
-use memory::RcValue;
+use values::RcValue;
 
 use std::collections::HashMap;
 

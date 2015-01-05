@@ -2,9 +2,9 @@ use ast::AST;
 use env::Env;
 use eval::eval;
 use parser::parse;
-use values::Value;
 use primitives;
-use memory::{RcValue, Memory};
+use memory::Memory;
+use values::RcValue;
 
 use std::io::BufferedReader;
 use std::io::File;
@@ -15,9 +15,10 @@ pub enum Error {
     BadArity(Option<String>),
     IrreducibleValue(AST),
     ParseError(String),
-    UnappliableValue(Value),
+    UnappliableValue(RcValue),
+    MalformedExpression,
     UnboundVariable(String),
-    WrongArgumentType(Value),
+    WrongArgumentType(RcValue),
     LoadError(String),
     PrimitiveFailed(String),
 }

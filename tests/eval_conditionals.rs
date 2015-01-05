@@ -1,17 +1,16 @@
 use helpers::*;
-use helpers::values::*;
 
 #[test]
 fn if_with_one_arg() {
-    assert_eval("(if #t 3)", integer(3));
-    assert_eval("(if #f 3)", bool(false)); // unspecified behaviour
+    assert_eval("(if #t 3)", "3");
+    assert_eval("(if #f 3)", "#f"); // unspecified behaviour
 }
 
 #[test]
 fn if_with_two_args() {
-    assert_eval("(if #t (+ 1) a)", integer(1));
-    assert_eval("(if #f a (+ 1))", integer(1));
-    assert_eval("(if (and #t #f) a 1)", integer(1));
+    assert_eval("(if #t (+ 1) a)", "1");
+    assert_eval("(if #f a (+ 1))", "1");
+    assert_eval("(if (and #t #f) a 1)", "1");
 }
 
 #[test]

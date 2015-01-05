@@ -1,7 +1,7 @@
 pub use ostrov::runtime::Runtime;
 use ostrov::ast::AST;
 use ostrov::runtime::Error;
-use ostrov::values::Value;
+use ostrov::values::RcValue;
 
 use std::fmt::Show;
 
@@ -14,11 +14,20 @@ pub fn assert_parse(input: &str, expected: AST) {
     }
 }
 
-pub fn assert_eval(input: &str, expected: Value) {
+pub fn assert_eval(input: &str, expected: &str) {
+    let mut runtime = Runtime::new();
+
+    match (runtime.eval_str(input), runtime.eval_str(expected)) {
+        (Ok(got), Ok(expected)) => assert_eq!(expected.iter().last().unwrap(), got.iter().last().unwrap()),
+        error                   => panic_expected(input, &expected, &error),
+    }
+}
+
+pub fn assert_eval_val(input: &str, expected: RcValue) {
     let mut runtime = Runtime::new();
 
     match runtime.eval_str(input) {
-        Ok(exprs)  => assert_eq!(expected, **exprs.iter().last().unwrap()),
+        Ok(exprs)  => assert_eq!(expected, *exprs.iter().last().unwrap()),
         Err(error) => panic_expected(input, &expected, &error),
     }
 }
@@ -54,49 +63,50 @@ pub mod ast {
 }
 
 pub mod values {
-    use ostrov::values::ArgumentsType;
-    use ostrov::values::Value;
+    use ostrov::values::{ArgumentsType, Value, RcValue};
     use ostrov::ast::AST;
 
-    pub fn integer(val: i64) -> Value { Value::Integer(val) }
-    pub fn atom(val: &str) -> Value { Value::Atom(val.to_string()) }
-    pub fn list(val: Vec<Value>) -> Value { Value::List(val) }
-    pub fn dotted_list(list: Vec<Value>, val: Value) -> Value {
-        Value::DottedList(list, box val)
+    use std::rc::Rc;
+
+    pub fn integer(val: i64) -> RcValue { Rc::new(Value::Integer(val)) }
+    pub fn atom(val: &str) -> RcValue { Rc::new(Value::Atom(val.to_string())) }
+    pub fn list(val: Vec<RcValue>) -> RcValue { Rc::new(Value::List(val)) }
+    pub fn dotted_list(list: Vec<RcValue>, val: RcValue) -> RcValue {
+        Rc::new(Value::DottedList(list, val))
     }
-    pub fn empty_list() -> Value { Value::List(vec!()) }
-    pub fn bool(val: bool) -> Value { Value::Bool(val) }
-    pub fn func(name: &str, args: Vec<&str>, body: Vec<AST>) -> Value {
+    pub fn empty_list() -> RcValue { Rc::new(Value::List(vec!())) }
+    pub fn bool(val: bool) -> RcValue { Rc::new(Value::Bool(val)) }
+    pub fn func(name: &str, args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();
-        Value::Fn(Some(name.to_string()), ArgumentsType::Fixed, args, body)
+        Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Fixed, args, body))
     }
-    pub fn func_var(name: &str, args: Vec<&str>, body: Vec<AST>) -> Value {
+    pub fn func_var(name: &str, args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();
-        Value::Fn(Some(name.to_string()), ArgumentsType::Variable, args, body)
+        Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Variable, args, body))
     }
-    pub fn func_any(name: &str, arg: &str, body: Vec<AST>) -> Value {
-        Value::Fn(Some(name.to_string()), ArgumentsType::Any, vec!(arg.to_string()), body)
+    pub fn func_any(name: &str, arg: &str, body: Vec<AST>) -> RcValue {
+        Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Any, vec!(arg.to_string()), body))
     }
-    pub fn lambda(args: Vec<&str>, body: Vec<AST>) -> Value {
+    pub fn lambda(args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();
-        Value::Fn(None, ArgumentsType::Fixed, args, body)
+        Rc::new(Value::Fn(None, ArgumentsType::Fixed, args, body))
     }
-    pub fn lambda_var(args: Vec<&str>, body: Vec<AST>) -> Value {
+    pub fn lambda_var(args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();
-        Value::Fn(None, ArgumentsType::Variable, args, body)
+        Rc::new(Value::Fn(None, ArgumentsType::Variable, args, body))
     }
-    pub fn lambda_any(arg: &str, body: Vec<AST>) -> Value {
+    pub fn lambda_any(arg: &str, body: Vec<AST>) -> RcValue {
         let args = vec!(arg).iter().map(|s| s.to_string()).collect();
-        Value::Fn(None, ArgumentsType::Any, args, body)
+        Rc::new(Value::Fn(None, ArgumentsType::Any, args, body))
     }
-    pub fn primitive_func(name: &str) -> Value {
-        Value::PrimitiveFn(name.to_string())
+    pub fn primitive_func(name: &str) -> RcValue {
+        Rc::new(Value::PrimitiveFn(name.to_string()))
     }
 }
 
 pub fn unbound_variable_error(val: &str) -> Error { Error::UnboundVariable(val.to_string()) }
-pub fn unappliable_value_error(val: Value) -> Error { Error::UnappliableValue(val) }
+pub fn unappliable_value_error(val: RcValue) -> Error { Error::UnappliableValue(val) }
 pub fn irreducible_value(val: AST) -> Error { Error::IrreducibleValue(val) }
-pub fn wrong_argument_type(val: Value) -> Error { Error::WrongArgumentType(val) }
+pub fn wrong_argument_type(val: RcValue) -> Error { Error::WrongArgumentType(val) }
 pub fn bad_arity(val: &str) -> Error { Error::BadArity(Some(val.to_string())) }
 pub fn bad_arity_lambda() -> Error { Error::BadArity(None) }

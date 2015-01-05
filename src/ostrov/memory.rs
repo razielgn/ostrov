@@ -1,10 +1,7 @@
-use values::Value;
-use values::ArgumentsType;
 use ast::AST;
+use values::{RcValue, Value, ArgumentsType};
 
 use std::rc::Rc;
-
-pub type RcValue = Rc<Value>;
 
 pub struct Memory {
     heap: Vec<RcValue>,
@@ -50,9 +47,7 @@ impl Memory {
     }
 
     pub fn list(&mut self, values: Vec<RcValue>) -> RcValue {
-        let values = values.into_iter().map(|v| (*v).clone()).collect();
         let value = Value::List(values);
-
         self.store(value)
     }
 
@@ -62,9 +57,8 @@ impl Memory {
         self.store(value)
     }
 
-    pub fn dotted_list(&mut self, values: Vec<RcValue>, tail: Value) -> RcValue {
-        let values = values.into_iter().map(|v| (*v).clone()).collect();
-        let value = Value::DottedList(values, box tail);
+    pub fn dotted_list(&mut self, values: Vec<RcValue>, tail: RcValue) -> RcValue {
+        let value = Value::DottedList(values, tail);
 
         self.store(value)
     }

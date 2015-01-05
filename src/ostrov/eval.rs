@@ -1,11 +1,10 @@
 use ast::AST;
 use env::Env;
 use runtime::Error;
-use values::Value;
-use values::ArgumentsType;
 use primitives;
 use special_forms;
-use memory::{RcValue, Memory};
+use memory::Memory;
+use values::{Value, RcValue, ArgumentsType};
 
 pub fn eval(value: &AST, env: &mut Env, memory: &mut Memory) -> Result<RcValue, Error> {
     match value {
@@ -31,7 +30,8 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue
     let tail = list.tail();
 
     if is_quoted(head) {
-        return Err(Error::UnappliableValue(Value::from_ast(head)));
+        let value = Value::from_ast(head, mem);
+        return Err(Error::UnappliableValue(value));
     }
 
     if let &AST::Atom(ref special_form) = head {
@@ -57,7 +57,7 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue
             apply(name, args_type, args_names, args, body, env, mem),
         Value::PrimitiveFn(ref name) =>
             primitives::apply(name, args, mem),
-        ref fun =>
+        _ =>
             Err(Error::UnappliableValue(fun.clone()))
     }
 }

@@ -1,6 +1,6 @@
 use runtime::Error;
-use values::Value;
-use memory::{RcValue, Memory};
+use memory::Memory;
+use values::{RcValue, Value};
 
 pub static PRIMITIVES: [&'static str; 18] = [
     "*",
@@ -34,7 +34,7 @@ pub fn apply(name: &String, args: Vec<RcValue>, mem: &mut Memory) -> Result<RcVa
         "="      => equals(args, mem),
         ">"      => greater_than(args, mem),
         ">="     => greater_than_or_equal(args, mem),
-        "car"    => car(args, mem),
+        "car"    => car(args),
         "cdr"    => cdr(args, mem),
         "cons"   => cons(args, mem),
         "length" => length(args, mem),
@@ -139,8 +139,8 @@ fn length(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     match *args[0] {
         Value::List(ref list) =>
             Ok(mem.integer(list.len() as i64)),
-        ref value =>
-            Err(Error::WrongArgumentType(value.clone())),
+        _ =>
+            Err(Error::WrongArgumentType(args[0].clone())),
     }
 }
 
@@ -171,27 +171,27 @@ fn cons(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
 
     if let Value::List(ref l) = *args[1] {
         for item in l.iter() {
-            list.push(mem.store(item.clone()));
+            list.push(item.clone());
         }
 
         Ok(mem.list(list))
     } else {
-        Ok(mem.dotted_list(list, (*args[1]).clone()))
+        Ok(mem.dotted_list(list, args[1].clone()))
     }
 }
 
-fn car(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn car(args: Vec<RcValue>) -> Result<RcValue, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("car".to_string())));
     }
 
     match *args[0] {
         Value::List(ref l) if !l.is_empty() =>
-            Ok(mem.store(l.first().unwrap().clone())),
+            Ok(l[0].clone()),
         Value::DottedList(ref l, ref _t) =>
-            Ok(mem.store(l.first().unwrap().clone())),
-        ref value =>
-            Err(Error::WrongArgumentType(value.clone())),
+            Ok(l[0].clone()),
+        _ =>
+            Err(Error::WrongArgumentType(args[0].clone())),
     }
 }
 
@@ -206,19 +206,14 @@ fn cdr(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
                 tail if tail.is_empty() =>
                     Ok(mem.empty_list()),
                 tail => {
-                    let mut list = Vec::with_capacity(tail.len());
-
-                    for item in tail.iter() {
-                        list.push(mem.store(item.clone()));
-                    }
-
+                    let list = tail.iter().map(|v| v.clone()).collect();
                     Ok(mem.list(list))
                 }
             },
         Value::DottedList(ref _l, ref t) =>
-            Ok(mem.store(*t.clone())),
-        ref value =>
-            Err(Error::WrongArgumentType(value.clone())),
+            Ok(t.clone()),
+        _ =>
+            Err(Error::WrongArgumentType(args[0].clone())),
     }
 }
 
@@ -251,8 +246,8 @@ fn list_of_integers(list: Vec<RcValue>) -> Result<Vec<i64>, Error> {
         match *val {
             Value::Integer(n) =>
                 integers.push(n),
-            ref value =>
-                return Err(Error::WrongArgumentType(value.clone())),
+            _ =>
+                return Err(Error::WrongArgumentType(val.clone())),
         }
     }
 

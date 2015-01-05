@@ -14,14 +14,12 @@ mod parser_quoted;
 
 mod eval_application;
 mod eval_assignment;
-mod eval_basic_types;
 mod eval_boolean_procedures;
 mod eval_conditionals;
 mod eval_definitions;
 mod eval_integer_procedures;
 mod eval_lambdas;
 mod eval_list_procedures;
-mod eval_quotation;
 
 mod ast_fmt;
 mod values_fmt;

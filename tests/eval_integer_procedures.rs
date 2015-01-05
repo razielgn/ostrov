@@ -3,11 +3,11 @@ use helpers::values::*;
 
 #[test]
 fn plus() {
-    assert_eval("(+)", integer(0));
-    assert_eval("(+ 2)", integer(2));
-    assert_eval("(+ 2 3)", integer(5));
-    assert_eval("(+ 2 3 -9)", integer(-4));
-    assert_eval("(+ 2 3 -9 1)", integer(-3));
+    assert_eval("(+)", "0");
+    assert_eval("(+ 2)", "2");
+    assert_eval("(+ 2 3)", "5");
+    assert_eval("(+ 2 3 -9)", "-4");
+    assert_eval("(+ 2 3 -9 1)", "-3");
 }
 
 #[test]
@@ -17,10 +17,10 @@ fn plus_bad_arity() {
 
 #[test]
 fn minus() {
-    assert_eval("(- 2)", integer(-2));
-    assert_eval("(- 2 3)", integer(-1));
-    assert_eval("(- 2 3 -9)", integer(8));
-    assert_eval("(- 2 3 -9 1)", integer(7));
+    assert_eval("(- 2)", "-2");
+    assert_eval("(- 2 3)", "-1");
+    assert_eval("(- 2 3 -9)", "8");
+    assert_eval("(- 2 3 -9 1)", "7");
 }
 
 #[test]
@@ -35,11 +35,11 @@ fn minus_wrong_argument_type() {
 
 #[test]
 fn product() {
-    assert_eval("(*)", integer(1));
-    assert_eval("(* 2)", integer(2));
-    assert_eval("(* 2 3)", integer(6));
-    assert_eval("(* 2 3 -9)", integer(-54));
-    assert_eval("(* 2 3 -9 2)", integer(-108));
+    assert_eval("(*)", "1");
+    assert_eval("(* 2)", "2");
+    assert_eval("(* 2 3)", "6");
+    assert_eval("(* 2 3 -9)", "-54");
+    assert_eval("(* 2 3 -9 2)", "-108");
 }
 
 #[test]
@@ -49,10 +49,10 @@ fn product_wrong_argument_type() {
 
 #[test]
 fn division() {
-    assert_eval("(/ 2)", integer(0));
-    assert_eval("(/ 9 3)", integer(3));
-    assert_eval("(/ 9 3 3)", integer(1));
-    assert_eval("(/ 27 3 3 3)", integer(1));
+    assert_eval("(/ 2)", "0");
+    assert_eval("(/ 9 3)", "3");
+    assert_eval("(/ 9 3 3)", "1");
+    assert_eval("(/ 27 3 3 3)", "1");
 }
 
 #[test]
@@ -67,55 +67,55 @@ fn division_wrong_argument_type() {
 
 #[test]
 fn equal_sign() {
-    assert_eval("(=)", bool(true));
-    assert_eval("(= 1)", bool(true));
-    assert_eval("(= 23 23)", bool(true));
-    assert_eval("(= 23 42)", bool(false));
-    assert_eval("(= 23 23 42)", bool(false));
-    assert_eval("(= 23 23 23 42)", bool(false));
-    assert_eval("(= 23 23 23 23)", bool(true));
+    assert_eval("(=)", "#t");
+    assert_eval("(= 1)", "#t");
+    assert_eval("(= 23 23)", "#t");
+    assert_eval("(= 23 42)", "#f");
+    assert_eval("(= 23 23 42)", "#f");
+    assert_eval("(= 23 23 23 42)", "#f");
+    assert_eval("(= 23 23 23 23)", "#t");
 }
 
 #[test]
 fn less_than_sign() {
-    assert_eval("(<)", bool(true));
-    assert_eval("(< 1)", bool(true));
-    assert_eval("(< 1 2)", bool(true));
-    assert_eval("(< 1 1)", bool(false));
-    assert_eval("(< 1 2 1)", bool(false));
-    assert_eval("(< 1 2 3 1)", bool(false));
-    assert_eval("(< 1 2 3 4 5)", bool(true));
+    assert_eval("(<)", "#t");
+    assert_eval("(< 1)", "#t");
+    assert_eval("(< 1 2)", "#t");
+    assert_eval("(< 1 1)", "#f");
+    assert_eval("(< 1 2 1)", "#f");
+    assert_eval("(< 1 2 3 1)", "#f");
+    assert_eval("(< 1 2 3 4 5)", "#t");
 }
 
 #[test]
 fn less_than_or_equal_sign() {
-    assert_eval("(<=)", bool(true));
-    assert_eval("(<= 1)", bool(true));
-    assert_eval("(<= 1 2)", bool(true));
-    assert_eval("(<= 1 1)", bool(true));
-    assert_eval("(<= 1 2 1)", bool(false));
-    assert_eval("(<= 1 2 3 1)", bool(false));
-    assert_eval("(<= 1 3 3 4 5)", bool(true));
+    assert_eval("(<=)", "#t");
+    assert_eval("(<= 1)", "#t");
+    assert_eval("(<= 1 2)", "#t");
+    assert_eval("(<= 1 1)", "#t");
+    assert_eval("(<= 1 2 1)", "#f");
+    assert_eval("(<= 1 2 3 1)", "#f");
+    assert_eval("(<= 1 3 3 4 5)", "#t");
 }
 
 #[test]
 fn greater_than_sign() {
-    assert_eval("(>)", bool(true));
-    assert_eval("(> 1)", bool(true));
-    assert_eval("(> 2 1)", bool(true));
-    assert_eval("(> 1 1)", bool(false));
-    assert_eval("(> 1 2 1)", bool(false));
-    assert_eval("(> 1 3 2 1)", bool(false));
-    assert_eval("(> 5 4 3 2 1)", bool(true));
+    assert_eval("(>)", "#t");
+    assert_eval("(> 1)", "#t");
+    assert_eval("(> 2 1)", "#t");
+    assert_eval("(> 1 1)", "#f");
+    assert_eval("(> 1 2 1)", "#f");
+    assert_eval("(> 1 3 2 1)", "#f");
+    assert_eval("(> 5 4 3 2 1)", "#t");
 }
 
 #[test]
 fn greater_than_or_equal_sign() {
-    assert_eval("(>=)", bool(true));
-    assert_eval("(>= 1)", bool(true));
-    assert_eval("(>= 2 1)", bool(true));
-    assert_eval("(>= 1 1)", bool(true));
-    assert_eval("(>= 1 2 1)", bool(false));
-    assert_eval("(>= 1 3 2 1)", bool(false));
-    assert_eval("(>= 5 4 3 3 1)", bool(true));
+    assert_eval("(>=)", "#t");
+    assert_eval("(>= 1)", "#t");
+    assert_eval("(>= 2 1)", "#t");
+    assert_eval("(>= 1 1)", "#t");
+    assert_eval("(>= 1 2 1)", "#f");
+    assert_eval("(>= 1 3 2 1)", "#f");
+    assert_eval("(>= 5 4 3 3 1)", "#t");
 }

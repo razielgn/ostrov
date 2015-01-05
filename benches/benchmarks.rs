@@ -2,7 +2,6 @@ extern crate ostrov;
 extern crate test;
 
 use ostrov::runtime::Runtime;
-use ostrov::values::Value;
 
 use test::Bencher;
 

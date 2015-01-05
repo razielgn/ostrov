@@ -1,28 +1,27 @@
 use helpers::*;
-use helpers::values::*;
 
 #[test]
 fn and() {
-    assert_eval("(and)", bool(true));
-    assert_eval("(and (+ 2 3))", integer(5));
-    assert_eval("(and #t 2)", integer(2));
-    assert_eval("(and 1 #f a)", bool(false));
+    assert_eval("(and)", "#t");
+    assert_eval("(and (+ 2 3))", "5");
+    assert_eval("(and #t 2)", "2");
+    assert_eval("(and 1 #f a)", "#f");
 }
 
 #[test]
 fn or() {
-    assert_eval("(or)", bool(false));
-    assert_eval("(or (+ 2 3))", integer(5));
-    assert_eval("(or #f 2)", integer(2));
-    assert_eval("(or 1 a)", integer(1));
+    assert_eval("(or)", "#f");
+    assert_eval("(or (+ 2 3))", "5");
+    assert_eval("(or #f 2)", "2");
+    assert_eval("(or 1 a)", "1");
 }
 
 #[test]
 fn not() {
-    assert_eval("(not #f)", bool(true));
-    assert_eval("(not #t)", bool(false));
-    assert_eval("(not 2)", bool(false));
-    assert_eval("(not 'a)", bool(false));
+    assert_eval("(not #f)", "#t");
+    assert_eval("(not #t)", "#f");
+    assert_eval("(not 2)", "#f");
+    assert_eval("(not 'a)", "#f");
 }
 
 #[test]

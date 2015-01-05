@@ -1,18 +1,22 @@
 use ast::AST;
+use memory::Memory;
 
 use std::fmt::Error;
 use std::fmt::Formatter;
 use std::fmt::Show;
+use std::rc::Rc;
+
+pub type RcValue = Rc<Value>;
 
 #[derive(PartialEq, Clone)]
 pub enum Value {
     Atom(String),
     Bool(bool),
-    DottedList(Vec<Value>, Box<Value>),
+    DottedList(Vec<RcValue>, RcValue),
     Fn(Option<String>, ArgumentsType, Vec<String>, Vec<AST>),
     PrimitiveFn(String),
     Integer(i64),
-    List(Vec<Value>),
+    List(Vec<RcValue>),
 }
 
 #[derive(Copy, PartialEq, Clone)]
@@ -98,7 +102,7 @@ impl Show for Value {
             &Value::Atom(ref string) => string.fmt(f),
             &Value::Bool(false) => "#f".fmt(f),
             &Value::Bool(true) => "#t".fmt(f),
-            &Value::DottedList(ref list, ref value) => fmt_dotted_list(list.as_slice(), &**value, f),
+            &Value::DottedList(ref list, ref value) => fmt_dotted_list(list.as_slice(), &*value, f),
             &Value::Fn(ref name, ref args_type, ref args, ref _body) => fmt_procedure(name, args_type, args, f),
             &Value::Integer(ref i) => i.fmt(f),
             &Value::List(ref list) => fmt_list(list, f),
@@ -108,21 +112,22 @@ impl Show for Value {
 }
 
 impl Value {
-    pub fn from_ast(ast: &AST) -> Value {
+    pub fn from_ast(ast: &AST, mem: &mut Memory) -> RcValue {
         match ast {
             &AST::Atom(ref string) =>
-                Value::Atom(string.clone()),
+                mem.intern(string.to_string()),
             &AST::Bool(b) =>
-                Value::Bool(b),
+                mem.boolean(b),
             &AST::Integer(i) =>
-                Value::Integer(i),
+                mem.integer(i),
             &AST::List(ref list) => {
-                let values = list.iter().map(|ast| Value::from_ast(ast)).collect();
-                Value::List(values)
+                let values = list.iter().map(|ast| Value::from_ast(ast, mem)).collect();
+                mem.list(values)
             }
             &AST::DottedList(ref list, ref value) => {
-                let values = list.iter().map(|ast| Value::from_ast(ast)).collect();
-                Value::DottedList(values, box Value::from_ast(&*value.clone()))
+                let values = list.iter().map(|ast| Value::from_ast(ast, mem)).collect();
+                let value = Value::from_ast(&*value.clone(), mem);
+                mem.dotted_list(values, value)
             }
         }
     }

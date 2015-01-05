@@ -1,19 +1,20 @@
 use ast::AST;
 use env::Env;
-use memory::{RcValue, Memory};
+use memory::Memory;
+use values::{Value, RcValue, ArgumentsType};
 use runtime::Error;
-use values::Value;
-use values::ArgumentsType;
 use eval::eval;
 
 pub fn quote(list: &[AST], mem: &mut Memory) -> Result<RcValue, Error> {
-    match Value::from_ast(&list[0]) {
+    let value = Value::from_ast(&list[0], mem);
+
+    match *value {
         Value::Bool(b) =>
             Ok(mem.boolean(b)),
         Value::List(ref l) if l.is_empty() =>
             Ok(mem.empty_list()),
-        value =>
-            Ok(mem.store(value)),
+        _ =>
+            Ok(value.clone()),
     }
 }
 
@@ -74,21 +75,21 @@ pub fn define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, 
         return Err(Error::BadArity(Some("define".to_string())))
     }
 
-    match &args[0] {
-        &AST::Atom(ref name) => {
+    match args[0] {
+        AST::Atom(ref name) => {
             let body = if args.len() == 1 { None } else { Some(&args[1]) };
             define_variable(name, body, env, mem)
         }
-        &AST::List(ref list) if list.len() > 0 => {
+        AST::List(ref list) if list.len() > 0 => {
             let body = args.tail().to_vec();
             define_procedure(list.as_slice(), &body, env, mem)
         }
-        &AST::DottedList(ref list, ref extra) => {
+        AST::DottedList(ref list, ref extra) => {
             let body = args.tail().to_vec();
             define_procedure_var(list.as_slice(), &**extra, &body, env, mem)
         }
-        value =>
-            Err(Error::WrongArgumentType(Value::from_ast(value)))
+        _ =>
+            Err(Error::MalformedExpression),
     }
 }
 
@@ -107,7 +108,7 @@ pub fn set(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Err
         return Err(Error::BadArity(Some("set!".to_string())));
     }
 
-    let variable_name = try!(atom_or_error(&args[0]));
+    let variable_name = try!(atom_or_error(&args[0], mem));
     let expr = try!(eval(&args[1], env, mem));
 
     match env.get(&variable_name) {
@@ -136,7 +137,7 @@ fn define_variable(name: &String, body: Option<&AST>, env: &mut Env, mem: &mut M
 }
 
 fn define_procedure(args: &[AST], body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
-    let procedure_name = try!(atom_or_error(&args[0]));
+    let procedure_name = try!(atom_or_error(&args[0], mem));
 
     let args = AST::List(args.tail().to_vec());
     let procedure = try!(create_fn(&args, body, Some(procedure_name.clone()), mem));
@@ -146,7 +147,7 @@ fn define_procedure(args: &[AST], body: &Vec<AST>, env: &mut Env, mem: &mut Memo
 }
 
 fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
-    let procedure_name = try!(atom_or_error(&args[0]));
+    let procedure_name = try!(atom_or_error(&args[0], mem));
 
     let procedure = if args.len() == 1 {
         try!(create_fn(extra_arg, body, Some(procedure_name.clone()), mem))
@@ -159,44 +160,47 @@ fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: &mu
     Ok(mem.intern(procedure_name))
 }
 
-fn create_fn(list: &AST, body: &Vec<AST>, name: Option<String>, mem: &mut Memory) -> Result<RcValue, Error> {
-    match list {
-        &AST::List(ref args) => {
-            let args_list = try!(compose_args_list(args.as_slice(), None));
+fn create_fn(args: &AST, body: &Vec<AST>, name: Option<String>, mem: &mut Memory) -> Result<RcValue, Error> {
+    match args {
+        &AST::List(ref list) => {
+            let args_list = try!(compose_args_list(list.as_slice(), None, mem));
             Ok(mem.lambda(name, ArgumentsType::Fixed, args_list, body.clone()))
         },
-        &AST::DottedList(ref args, ref extra) => {
-            let args_list = try!(compose_args_list(args.as_slice(), Some(&**extra)));
+        &AST::DottedList(ref list, ref extra) => {
+            let args_list = try!(compose_args_list(list.as_slice(), Some(&**extra), mem));
             Ok(mem.lambda(name, ArgumentsType::Variable, args_list, body.clone()))
         }
-        &AST::Atom(ref arg) =>
-            Ok(mem.lambda(name, ArgumentsType::Any, vec!(arg.clone()), body.clone())),
-        value =>
-            Err(Error::WrongArgumentType(Value::from_ast(value)))
+        &AST::Atom(ref atom) =>
+            Ok(mem.lambda(name, ArgumentsType::Any, vec!(atom.clone()), body.clone())),
+        _ => {
+            let value = Value::from_ast(args, mem);
+            Err(Error::WrongArgumentType(value))
+        }
     }
 }
 
-fn compose_args_list(args: &[AST], extra: Option<&AST>) -> Result<Vec<String>, Error> {
+fn compose_args_list(args: &[AST], extra: Option<&AST>, mem: &mut Memory) -> Result<Vec<String>, Error> {
     let length = args.len() + if extra.is_some() { 1 } else { 0 };
     let mut list = Vec::with_capacity(length);
 
     for arg in args.iter() {
-        let arg = try!(atom_or_error(arg));
+        let arg = try!(atom_or_error(arg, mem));
         list.push(arg);
     }
 
     if extra.is_some() {
-        let arg = try!(atom_or_error(extra.unwrap()));
+        let arg = try!(atom_or_error(extra.unwrap(), mem));
         list.push(arg);
     }
 
     Ok(list)
 }
 
-fn atom_or_error(value: &AST) -> Result<String, Error> {
+fn atom_or_error(value: &AST, mem: &mut Memory) -> Result<String, Error> {
     if let &AST::Atom(ref atom) = value {
         Ok(atom.to_string())
     } else {
-        Err(Error::WrongArgumentType(Value::from_ast(value)))
+        let value = Value::from_ast(value, mem);
+        Err(Error::WrongArgumentType(value))
     }
 }
