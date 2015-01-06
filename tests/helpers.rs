@@ -65,6 +65,7 @@ pub mod ast {
 pub mod values {
     use ostrov::values::{ArgumentsType, Value, RcValue};
     use ostrov::ast::AST;
+    use ostrov::env::CellEnv;
 
     use std::rc::Rc;
 
@@ -78,26 +79,26 @@ pub mod values {
     pub fn bool(val: bool) -> RcValue { Rc::new(Value::Bool(val)) }
     pub fn func(name: &str, args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();
-        Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Fixed, args, body))
+        Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Fixed, args, CellEnv::new(), body))
     }
     pub fn func_var(name: &str, args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();
-        Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Variable, args, body))
+        Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Variable, args, CellEnv::new(), body))
     }
     pub fn func_any(name: &str, arg: &str, body: Vec<AST>) -> RcValue {
-        Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Any, vec!(arg.to_string()), body))
+        Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Any, vec!(arg.to_string()), CellEnv::new(), body))
     }
     pub fn lambda(args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();
-        Rc::new(Value::Fn(None, ArgumentsType::Fixed, args, body))
+        Rc::new(Value::Fn(None, ArgumentsType::Fixed, args, CellEnv::new(), body))
     }
     pub fn lambda_var(args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();
-        Rc::new(Value::Fn(None, ArgumentsType::Variable, args, body))
+        Rc::new(Value::Fn(None, ArgumentsType::Variable, args, CellEnv::new(), body))
     }
     pub fn lambda_any(arg: &str, body: Vec<AST>) -> RcValue {
         let args = vec!(arg).iter().map(|s| s.to_string()).collect();
-        Rc::new(Value::Fn(None, ArgumentsType::Any, args, body))
+        Rc::new(Value::Fn(None, ArgumentsType::Any, args, CellEnv::new(), body))
     }
     pub fn primitive_func(name: &str) -> RcValue {
         Rc::new(Value::PrimitiveFn(name.to_string()))

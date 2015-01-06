@@ -41,7 +41,7 @@ fn eval_list(list: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue,
             "and"    => return special_forms::and(args, env, mem),
             "define" => return special_forms::define(args, env, mem),
             "if"     => return special_forms::if_(args, env, mem),
-            "lambda" => return special_forms::lambda(args, None, mem),
+            "lambda" => return special_forms::lambda(args, None, env, mem),
             "or"     => return special_forms::or(args, env, mem),
             "quote"  => return special_forms::quote(args, mem),
             "set!"   => return special_forms::set(args, env, mem),
@@ -53,8 +53,8 @@ fn eval_list(list: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue,
     let args = try!(eval_args(tail, env.clone(), mem));
 
     match *fun {
-        Value::Fn(ref name, args_type, ref args_names, ref body) =>
-            apply(name, args_type, args_names, args, body, env.clone(), mem),
+        Value::Fn(ref name, args_type, ref args_names, ref closure, ref body) =>
+            apply(name, args_type, args_names, args, body, closure.clone(), mem),
         Value::PrimitiveFn(ref name) =>
             primitives::apply(name, args, mem),
         _ =>
@@ -80,8 +80,8 @@ fn eval_variable(name: &String, env: CellEnv) -> Result<RcValue, Error> {
     }
 }
 
-fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String>, arg_values: Vec<RcValue>, body: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
-    let inner_env = CellEnv::wraps(env);
+fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String>, arg_values: Vec<RcValue>, body: &Vec<AST>, closure: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
+    let inner_env = CellEnv::wraps(closure);
 
     match args_type {
         ArgumentsType::Any => {

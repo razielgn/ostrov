@@ -1,4 +1,5 @@
 use ast::AST;
+use env::CellEnv;
 use memory::Memory;
 
 use std::fmt::Error;
@@ -8,12 +9,12 @@ use std::rc::Rc;
 
 pub type RcValue = Rc<Value>;
 
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub enum Value {
     Atom(String),
     Bool(bool),
     DottedList(Vec<RcValue>, RcValue),
-    Fn(Option<String>, ArgumentsType, Vec<String>, Vec<AST>),
+    Fn(Option<String>, ArgumentsType, Vec<String>, CellEnv, Vec<AST>),
     PrimitiveFn(String),
     Integer(i64),
     List(Vec<RcValue>),
@@ -103,10 +104,31 @@ impl Show for Value {
             &Value::Bool(false) => "#f".fmt(f),
             &Value::Bool(true) => "#t".fmt(f),
             &Value::DottedList(ref list, ref value) => fmt_dotted_list(list.as_slice(), &*value, f),
-            &Value::Fn(ref name, ref args_type, ref args, ref _body) => fmt_procedure(name, args_type, args, f),
+            &Value::Fn(ref name, ref args_type, ref args, ref _closure, ref _body) => fmt_procedure(name, args_type, args, f),
             &Value::Integer(ref i) => i.fmt(f),
             &Value::List(ref list) => fmt_list(list, f),
             &Value::PrimitiveFn(ref name) => fmt_primitive(name, f),
+        }
+    }
+}
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Value) -> bool {
+        match self {
+            &Value::Atom(ref a) =>
+                if let &Value::Atom(ref b) = other { a == b } else { false },
+            &Value::Bool(ref a) =>
+                if let &Value::Bool(ref b) = other { a == b } else { false },
+            &Value::DottedList(ref a, ref a1) =>
+                if let &Value::DottedList(ref b, ref b1) = other { (a, a1) == (b, b1) } else { false },
+            &Value::Fn(ref a, ref a1, ref a2, ref _closure, ref a3) =>
+                if let &Value::Fn(ref b, ref b1, ref b2, ref _closure, ref b3) = other { (a, a1, a2, a3) == (b, b1, b2, b3) } else { false },
+            &Value::Integer(ref a) =>
+                if let &Value::Integer(ref b) = other { a == b } else { false },
+            &Value::List(ref a) =>
+                if let &Value::List(ref b) = other { a == b } else { false },
+            &Value::PrimitiveFn(ref a) =>
+                if let &Value::PrimitiveFn(ref b) = other { a == b } else { false },
         }
     }
 }

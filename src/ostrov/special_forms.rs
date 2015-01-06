@@ -93,14 +93,14 @@ pub fn define(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, E
     }
 }
 
-pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<RcValue, Error> {
+pub fn lambda(list: &[AST], name: Option<String>, closure: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     if list.len() < 2 {
         return Err(Error::BadArity(Some("lambda".to_string())));
     }
 
     let args = list.first().unwrap();
     let body = list.tail().to_vec();
-    create_fn(args, &body, name, mem)
+    create_fn(args, &body, name, closure, mem)
 }
 
 pub fn set(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
@@ -124,7 +124,7 @@ fn define_variable(name: &String, body: Option<&AST>, env: CellEnv, mem: &mut Me
 
     let value = match body.unwrap() {
         &AST::List(ref list) if list[0] == AST::Atom("lambda".to_string()) =>
-            try!(lambda(list.tail(), Some(name.clone()), mem)),
+            try!(lambda(list.tail(), Some(name.clone()), env.clone(), mem)),
         value =>
             try!(eval(value, env.clone(), mem))
     };
@@ -138,7 +138,7 @@ fn define_procedure(args: &[AST], body: &Vec<AST>, env: CellEnv, mem: &mut Memor
     let procedure_name = try!(atom_or_error(&args[0], mem));
 
     let args = AST::List(args.tail().to_vec());
-    let procedure = try!(create_fn(&args, body, Some(procedure_name.clone()), mem));
+    let procedure = try!(create_fn(&args, body, Some(procedure_name.clone()), env.clone(), mem));
     env.set(procedure_name.clone(), procedure);
 
     Ok(mem.intern(procedure_name))
@@ -148,28 +148,28 @@ fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: Cel
     let procedure_name = try!(atom_or_error(&args[0], mem));
 
     let procedure = if args.len() == 1 {
-        try!(create_fn(extra_arg, body, Some(procedure_name.clone()), mem))
+        try!(create_fn(extra_arg, body, Some(procedure_name.clone()), env.clone(), mem))
     } else {
         let args = AST::DottedList(args.tail().to_vec(), box extra_arg.clone());
-        try!(create_fn(&args, body, Some(procedure_name.clone()), mem))
+        try!(create_fn(&args, body, Some(procedure_name.clone()), env.clone(), mem))
     };
     env.set(procedure_name.clone(), procedure);
 
     Ok(mem.intern(procedure_name))
 }
 
-fn create_fn(args: &AST, body: &Vec<AST>, name: Option<String>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn create_fn(args: &AST, body: &Vec<AST>, name: Option<String>, closure: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     match args {
         &AST::List(ref list) => {
             let args_list = try!(compose_args_list(list.as_slice(), None, mem));
-            Ok(mem.lambda(name, ArgumentsType::Fixed, args_list, body.clone()))
+            Ok(mem.lambda(name, ArgumentsType::Fixed, args_list, closure, body.clone()))
         },
         &AST::DottedList(ref list, ref extra) => {
             let args_list = try!(compose_args_list(list.as_slice(), Some(&**extra), mem));
-            Ok(mem.lambda(name, ArgumentsType::Variable, args_list, body.clone()))
+            Ok(mem.lambda(name, ArgumentsType::Variable, args_list, closure, body.clone()))
         }
         &AST::Atom(ref atom) =>
-            Ok(mem.lambda(name, ArgumentsType::Any, vec!(atom.clone()), body.clone())),
+            Ok(mem.lambda(name, ArgumentsType::Any, vec!(atom.clone()), closure, body.clone())),
         _ => {
             let value = Value::from_ast(args, mem);
             Err(Error::WrongArgumentType(value))

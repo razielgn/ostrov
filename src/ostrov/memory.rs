@@ -1,4 +1,5 @@
 use ast::AST;
+use env::CellEnv;
 use values::{RcValue, Value, ArgumentsType};
 
 use std::rc::Rc;
@@ -63,8 +64,8 @@ impl Memory {
         self.store(value)
     }
 
-    pub fn lambda(&mut self, name: Option<String>, args_type: ArgumentsType, args: Vec<String>, body: Vec<AST>) -> RcValue {
-        let value = Value::Fn(name, args_type, args, body);
+    pub fn lambda(&mut self, name: Option<String>, args_type: ArgumentsType, args: Vec<String>, closure: CellEnv, body: Vec<AST>) -> RcValue {
+        let value = Value::Fn(name, args_type, args, closure, body);
 
         self.store(value)
     }
