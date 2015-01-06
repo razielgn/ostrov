@@ -21,6 +21,16 @@ pub fn eval(value: &AST, env: CellEnv, memory: &mut Memory) -> Result<RcValue, E
     }
 }
 
+pub fn eval_sequence(seq: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
+    let mut result = mem.empty_list();
+
+    for expr in seq.iter() {
+        result = try!(eval(expr, env.clone(), mem));
+    }
+
+    Ok(result)
+}
+
 fn eval_list(list: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     if list.is_empty() {
         return Ok(mem.empty_list());
@@ -118,17 +128,7 @@ fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String
         }
     };
 
-    eval_sequence(body, inner_env, mem)
-}
-
-fn eval_sequence(seq: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
-    let mut result = mem.empty_list();
-
-    for expr in seq.iter() {
-        result = try!(eval(expr, env.clone(), mem));
-    }
-
-    Ok(result)
+    eval_sequence(body.as_slice(), inner_env, mem)
 }
 
 fn is_quoted(value: &AST) -> bool {
