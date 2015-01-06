@@ -52,8 +52,8 @@
 * Evaluation of lambdas with any number of arguments (`(lambda args ...)`).
 * Evaluation of list procedures `list`, `length`, `pair?`, `cons`, `car`, `cdr`, `null?`, `list?`.
 * Multiple expressions in `lambda` bodies.
+* `lambda`s remember the environment in which they were created.
 
 ## Missing
 
 * Evaluation of list procedures `caar` .. `cddddr`, `append`, `reverse`, `list-tail`, `list-ref`, `map`, `for-each`.
-* `lambda`s remember the environment in which they were created.
