@@ -3,7 +3,7 @@ use env::CellEnv;
 use memory::Memory;
 use values::{Value, RcValue, ArgumentsType};
 use runtime::Error;
-use eval::eval;
+use eval::{eval, eval_sequence};
 
 pub fn quote(list: &[AST], mem: &mut Memory) -> Result<RcValue, Error> {
     let value = Value::from_ast(&list[0], mem);
@@ -115,6 +115,33 @@ pub fn set(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Erro
         Some(expr) => Ok(expr),
         None       => Err(Error::UnboundVariable(variable_name)),
     }
+}
+
+pub fn let_(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
+    if args.len() < 2 {
+        return Err(Error::BadArity(Some("let".to_string())));
+    }
+
+    let inner_env = CellEnv::wraps(env.clone());
+
+    if let &AST::List(ref bindings) = args.first().unwrap() {
+        for binding in bindings.iter() {
+            match binding {
+                &AST::List(ref binding) if binding.len() == 2 => {
+                    let name = try!(atom_or_error(&binding[0], mem));
+                    let expr = try!(eval(&binding[1], env.clone(), mem));
+                    inner_env.set(name, expr);
+                }
+                _ =>
+                    return Err(Error::MalformedExpression)
+            }
+        }
+    } else {
+        return Err(Error::MalformedExpression);
+    };
+
+    let body = args.tail();
+    eval_sequence(body, inner_env, mem)
 }
 
 fn define_variable(name: &String, body: Option<&AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
