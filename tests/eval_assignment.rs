@@ -15,6 +15,28 @@ fn overwrites_variables() {
 }
 
 #[test]
+fn overwrites_variables_on_upper_scopes() {
+    assert_eval("(define x 0)
+                 (define (f) (set! x (+ x 1)))
+                 (f)
+                 x", "1");
+}
+
+#[test]
+fn overwrites_variables_in_captured_scopes() {
+    assert_eval("(define incr 1)
+                 (define (f)
+                   (define x 0)
+                   (lambda ()
+                     (set! x (+ x incr))
+                     x))
+                 (define a (f))
+                 (a)
+                 (a)
+                 (a)", "3");
+}
+
+#[test]
 fn malformed_variable_name() {
     assert_eval_err("(set! 3 3)", wrong_argument_type(integer(3)));
 }

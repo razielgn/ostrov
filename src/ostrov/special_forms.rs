@@ -1,5 +1,5 @@
 use ast::AST;
-use env::Env;
+use env::CellEnv;
 use memory::Memory;
 use values::{Value, RcValue, ArgumentsType};
 use runtime::Error;
@@ -18,11 +18,11 @@ pub fn quote(list: &[AST], mem: &mut Memory) -> Result<RcValue, Error> {
     }
 }
 
-pub fn and(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
+pub fn and(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     let mut last = mem.b_true();
 
     for val in args.iter() {
-        let val = try!(eval(val, env, mem));
+        let val = try!(eval(val, env.clone(), mem));
 
         if val == mem.b_false() {
             return Ok(val)
@@ -34,11 +34,11 @@ pub fn and(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Err
     Ok(last)
 }
 
-pub fn or(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
+pub fn or(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     let mut last = mem.b_false();
 
     for val in args.iter() {
-        let val = try!(eval(val, env, mem));
+        let val = try!(eval(val, env.clone(), mem));
 
         if val != mem.b_false() {
             return Ok(val)
@@ -50,27 +50,27 @@ pub fn or(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Erro
     Ok(last)
 }
 
-pub fn if_(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
+pub fn if_(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() < 1 || args.len() > 3 {
         return Err(Error::BadArity(Some("if".to_string())))
     }
 
-    let condition = try!(eval(&args[0], env, mem));
+    let condition = try!(eval(&args[0], env.clone(), mem));
 
     let result = if condition != mem.b_false() {
-        try!(eval(&args[1], env, mem))
+        try!(eval(&args[1], env.clone(), mem))
     } else {
         if args.len() == 2 {
             mem.b_false()
         } else {
-            try!(eval(&args[2], env, mem))
+            try!(eval(&args[2], env.clone(), mem))
         }
     };
 
     Ok(result)
 }
 
-pub fn define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
+pub fn define(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() < 1 {
         return Err(Error::BadArity(Some("define".to_string())))
     }
@@ -93,42 +93,40 @@ pub fn define(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, 
     }
 }
 
-pub fn lambda(list: &[AST], name: Option<String>, mem: &mut Memory) -> Result<RcValue, Error> {
+pub fn lambda(list: &[AST], name: Option<String>, closure: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     if list.len() < 2 {
         return Err(Error::BadArity(Some("lambda".to_string())));
     }
 
     let args = list.first().unwrap();
     let body = list.tail().to_vec();
-    create_fn(args, &body, name, mem)
+    create_fn(args, &body, name, closure, mem)
 }
 
-pub fn set(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
+pub fn set(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() != 2 {
         return Err(Error::BadArity(Some("set!".to_string())));
     }
 
     let variable_name = try!(atom_or_error(&args[0], mem));
-    let expr = try!(eval(&args[1], env, mem));
+    let expr = try!(eval(&args[1], env.clone(), mem));
 
-    match env.get(&variable_name) {
-        Some(_) => env.set(variable_name.clone(), expr.clone()),
-        None    => return Err(Error::UnboundVariable(variable_name)),
+    match env.replace(variable_name.clone(), expr.clone()) {
+        Some(expr) => Ok(expr),
+        None       => Err(Error::UnboundVariable(variable_name)),
     }
-
-    Ok(expr)
 }
 
-fn define_variable(name: &String, body: Option<&AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
+fn define_variable(name: &String, body: Option<&AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     if body.is_none() {
         return Ok(mem.intern(name.clone()));
     }
 
     let value = match body.unwrap() {
         &AST::List(ref list) if list[0] == AST::Atom("lambda".to_string()) =>
-            try!(lambda(list.tail(), Some(name.clone()), mem)),
+            try!(lambda(list.tail(), Some(name.clone()), env.clone(), mem)),
         value =>
-            try!(eval(value, env, mem))
+            try!(eval(value, env.clone(), mem))
     };
 
     env.set(name.clone(), value.clone());
@@ -136,42 +134,42 @@ fn define_variable(name: &String, body: Option<&AST>, env: &mut Env, mem: &mut M
     Ok(value)
 }
 
-fn define_procedure(args: &[AST], body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
+fn define_procedure(args: &[AST], body: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     let procedure_name = try!(atom_or_error(&args[0], mem));
 
     let args = AST::List(args.tail().to_vec());
-    let procedure = try!(create_fn(&args, body, Some(procedure_name.clone()), mem));
+    let procedure = try!(create_fn(&args, body, Some(procedure_name.clone()), env.clone(), mem));
     env.set(procedure_name.clone(), procedure);
 
     Ok(mem.intern(procedure_name))
 }
 
-fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
+fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     let procedure_name = try!(atom_or_error(&args[0], mem));
 
     let procedure = if args.len() == 1 {
-        try!(create_fn(extra_arg, body, Some(procedure_name.clone()), mem))
+        try!(create_fn(extra_arg, body, Some(procedure_name.clone()), env.clone(), mem))
     } else {
         let args = AST::DottedList(args.tail().to_vec(), box extra_arg.clone());
-        try!(create_fn(&args, body, Some(procedure_name.clone()), mem))
+        try!(create_fn(&args, body, Some(procedure_name.clone()), env.clone(), mem))
     };
     env.set(procedure_name.clone(), procedure);
 
     Ok(mem.intern(procedure_name))
 }
 
-fn create_fn(args: &AST, body: &Vec<AST>, name: Option<String>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn create_fn(args: &AST, body: &Vec<AST>, name: Option<String>, closure: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     match args {
         &AST::List(ref list) => {
             let args_list = try!(compose_args_list(list.as_slice(), None, mem));
-            Ok(mem.lambda(name, ArgumentsType::Fixed, args_list, body.clone()))
+            Ok(mem.lambda(name, ArgumentsType::Fixed, args_list, closure, body.clone()))
         },
         &AST::DottedList(ref list, ref extra) => {
             let args_list = try!(compose_args_list(list.as_slice(), Some(&**extra), mem));
-            Ok(mem.lambda(name, ArgumentsType::Variable, args_list, body.clone()))
+            Ok(mem.lambda(name, ArgumentsType::Variable, args_list, closure, body.clone()))
         }
         &AST::Atom(ref atom) =>
-            Ok(mem.lambda(name, ArgumentsType::Any, vec!(atom.clone()), body.clone())),
+            Ok(mem.lambda(name, ArgumentsType::Any, vec!(atom.clone()), closure, body.clone())),
         _ => {
             let value = Value::from_ast(args, mem);
             Err(Error::WrongArgumentType(value))

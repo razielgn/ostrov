@@ -1,12 +1,12 @@
 use ast::AST;
-use env::Env;
+use env::CellEnv;
 use runtime::Error;
 use primitives;
 use special_forms;
 use memory::Memory;
 use values::{Value, RcValue, ArgumentsType};
 
-pub fn eval(value: &AST, env: &mut Env, memory: &mut Memory) -> Result<RcValue, Error> {
+pub fn eval(value: &AST, env: CellEnv, memory: &mut Memory) -> Result<RcValue, Error> {
     match value {
         &AST::Atom(ref atom) =>
             eval_variable(atom, env),
@@ -21,7 +21,7 @@ pub fn eval(value: &AST, env: &mut Env, memory: &mut Memory) -> Result<RcValue, 
     }
 }
 
-fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
+fn eval_list(list: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     if list.is_empty() {
         return Ok(mem.empty_list());
     }
@@ -41,7 +41,7 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue
             "and"    => return special_forms::and(args, env, mem),
             "define" => return special_forms::define(args, env, mem),
             "if"     => return special_forms::if_(args, env, mem),
-            "lambda" => return special_forms::lambda(args, None, mem),
+            "lambda" => return special_forms::lambda(args, None, env, mem),
             "or"     => return special_forms::or(args, env, mem),
             "quote"  => return special_forms::quote(args, mem),
             "set!"   => return special_forms::set(args, env, mem),
@@ -49,12 +49,12 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue
         }
     }
 
-    let fun  = try!(eval(head, env, mem));
-    let args = try!(eval_args(tail, env, mem));
+    let fun  = try!(eval(head, env.clone(), mem));
+    let args = try!(eval_args(tail, env.clone(), mem));
 
     match *fun {
-        Value::Fn(ref name, args_type, ref args_names, ref body) =>
-            apply(name, args_type, args_names, args, body, env, mem),
+        Value::Fn(ref name, args_type, ref args_names, ref closure, ref body) =>
+            apply(name, args_type, args_names, args, body, closure.clone(), mem),
         Value::PrimitiveFn(ref name) =>
             primitives::apply(name, args, mem),
         _ =>
@@ -62,26 +62,26 @@ fn eval_list(list: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue
     }
 }
 
-fn eval_args(args: &[AST], env: &mut Env, mem: &mut Memory) -> Result<Vec<RcValue>, Error> {
+fn eval_args(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<Vec<RcValue>, Error> {
     let mut out = Vec::with_capacity(args.len());
 
     for arg in args.iter() {
-        let evald_arg = try!(eval(arg, env, mem));
+        let evald_arg = try!(eval(arg, env.clone(), mem));
         out.push(evald_arg);
     }
 
     Ok(out)
 }
 
-fn eval_variable(name: &String, env: &mut Env) -> Result<RcValue, Error> {
+fn eval_variable(name: &String, env: CellEnv) -> Result<RcValue, Error> {
     match env.get(name) {
         Some(value) => Ok(value),
         None        => Err(Error::UnboundVariable(name.clone())),
     }
 }
 
-fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String>, arg_values: Vec<RcValue>, body: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
-    let mut inner_env = Env::wraps(env);
+fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String>, arg_values: Vec<RcValue>, body: &Vec<AST>, closure: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
+    let inner_env = CellEnv::wraps(closure);
 
     match args_type {
         ArgumentsType::Any => {
@@ -118,14 +118,14 @@ fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String
         }
     };
 
-    eval_sequence(body, &mut inner_env, mem)
+    eval_sequence(body, inner_env, mem)
 }
 
-fn eval_sequence(seq: &Vec<AST>, env: &mut Env, mem: &mut Memory) -> Result<RcValue, Error> {
+fn eval_sequence(seq: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     let mut result = mem.empty_list();
 
     for expr in seq.iter() {
-        result = try!(eval(expr, env, mem));
+        result = try!(eval(expr, env.clone(), mem));
     }
 
     Ok(result)

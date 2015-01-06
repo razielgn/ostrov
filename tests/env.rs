@@ -1,10 +1,10 @@
-use ostrov::env::Env;
 use ostrov::memory::Memory;
+use ostrov::env::CellEnv;
 
 #[test]
 fn set_and_get_ok() {
     let mut mem = Memory::new();
-    let mut env = Env::new();
+    let env = CellEnv::new();
     let name = "foo".to_string();
 
     let val = mem.integer(3);
@@ -15,7 +15,7 @@ fn set_and_get_ok() {
 
 #[test]
 fn set_and_get_none() {
-    let env = Env::new();
+    let env = CellEnv::new();
 
     assert_eq!(None, env.get(&"foo".to_string()));
 }
@@ -23,14 +23,14 @@ fn set_and_get_none() {
 #[test]
 fn wraps() {
     let mut mem = Memory::new();
-    let mut outer = Env::new();
+    let outer = CellEnv::new();
     let outer_foo = mem.integer(5);
     let bar = mem.intern("bar".to_string());
 
     outer.set("foo".to_string(), outer_foo.clone());
     outer.set("bar".to_string(), bar.clone());
 
-    let mut inner = Env::wraps(&outer);
+    let inner = CellEnv::wraps(outer);
     let inner_foo = mem.integer(25);
 
     inner.set("foo".to_string(), inner_foo.clone());
