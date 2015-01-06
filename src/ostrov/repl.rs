@@ -9,7 +9,7 @@ pub fn repl(args: Vec<String>) {
         let path = Path::new(&args[1]);
 
         match runtime.eval_file(&path) {
-            Ok(expr) => println!("{}", expr),
+            Ok(_)      => (),
             Err(error) => println!("{}", error),
         }
     } else {
