@@ -111,8 +111,7 @@ pub fn set(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Erro
     let variable_name = try!(atom_or_error(&args[0], mem));
     let expr = try!(eval(&args[1], env.clone(), mem));
 
-    let mut env_ = env.borrow_mut();
-    match env_.replace(variable_name.clone(), expr.clone()) {
+    match env.replace(variable_name.clone(), expr.clone()) {
         Some(expr) => Ok(expr),
         None       => Err(Error::UnboundVariable(variable_name)),
     }
@@ -130,7 +129,7 @@ fn define_variable(name: &String, body: Option<&AST>, env: CellEnv, mem: &mut Me
             try!(eval(value, env.clone(), mem))
     };
 
-    env.borrow_mut().set(name.clone(), value.clone());
+    env.set(name.clone(), value.clone());
 
     Ok(value)
 }
@@ -140,7 +139,7 @@ fn define_procedure(args: &[AST], body: &Vec<AST>, env: CellEnv, mem: &mut Memor
 
     let args = AST::List(args.tail().to_vec());
     let procedure = try!(create_fn(&args, body, Some(procedure_name.clone()), mem));
-    env.borrow_mut().set(procedure_name.clone(), procedure);
+    env.set(procedure_name.clone(), procedure);
 
     Ok(mem.intern(procedure_name))
 }
@@ -154,7 +153,7 @@ fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: Cel
         let args = AST::DottedList(args.tail().to_vec(), box extra_arg.clone());
         try!(create_fn(&args, body, Some(procedure_name.clone()), mem))
     };
-    env.borrow_mut().set(procedure_name.clone(), procedure);
+    env.set(procedure_name.clone(), procedure);
 
     Ok(mem.intern(procedure_name))
 }

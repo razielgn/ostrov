@@ -1,5 +1,5 @@
 use ast::AST;
-use env::{CellEnv, Env};
+use env::CellEnv;
 use eval::eval;
 use parser::parse;
 use primitives;
@@ -31,7 +31,7 @@ pub struct Runtime {
 impl Runtime {
     pub fn new() -> Runtime {
         let mut runtime = Runtime {
-            env: Env::new(),
+            env: CellEnv::new(),
             memory: Memory::new(),
         };
 
@@ -85,7 +85,7 @@ impl Runtime {
     fn init_primitives(&mut self) {
         for name in primitives::PRIMITIVES.iter() {
             let primitive = self.memory.primitive(name.to_string());
-            self.env.borrow_mut().set(name.to_string(), primitive);
+            self.env.set(name.to_string(), primitive);
         }
     }
 }

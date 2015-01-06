@@ -1,5 +1,5 @@
 use ast::AST;
-use env::{CellEnv, Env};
+use env::CellEnv;
 use runtime::Error;
 use primitives;
 use special_forms;
@@ -74,18 +74,18 @@ fn eval_args(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<Vec<RcValue
 }
 
 fn eval_variable(name: &String, env: CellEnv) -> Result<RcValue, Error> {
-    match env.borrow().get(name) {
+    match env.get(name) {
         Some(value) => Ok(value),
         None        => Err(Error::UnboundVariable(name.clone())),
     }
 }
 
 fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String>, arg_values: Vec<RcValue>, body: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
-    let inner_env = Env::wraps(env);
+    let inner_env = CellEnv::wraps(env);
 
     match args_type {
         ArgumentsType::Any => {
-            inner_env.borrow_mut().set(arg_names[0].clone(), mem.list(arg_values));
+            inner_env.set(arg_names[0].clone(), mem.list(arg_values));
         }
         ArgumentsType::Fixed => {
             if arg_names.len() != arg_values.len() {
@@ -93,7 +93,7 @@ fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String
             }
 
             for (name, value) in arg_names.iter().zip(arg_values.iter()) {
-                inner_env.borrow_mut().set(name.clone(), value.clone());
+                inner_env.set(name.clone(), value.clone());
             }
         }
         ArgumentsType::Variable => {
@@ -104,14 +104,14 @@ fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String
             }
 
             for (name, value) in fixed_arg_names.iter().zip(arg_values.iter()) {
-                inner_env.borrow_mut().set(name.clone(), value.clone());
+                inner_env.set(name.clone(), value.clone());
             }
 
             let var_args = arg_values.into_iter()
                 .skip(fixed_arg_names.len())
                 .collect();
 
-            inner_env.borrow_mut().set(
+            inner_env.set(
                 arg_names.last().unwrap().clone(),
                 mem.list(var_args)
             );
