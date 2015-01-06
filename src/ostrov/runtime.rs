@@ -1,5 +1,5 @@
 use ast::AST;
-use env::Env;
+use env::{CellEnv, Env};
 use eval::eval;
 use parser::parse;
 use primitives;
@@ -23,13 +23,13 @@ pub enum Error {
     PrimitiveFailed(String),
 }
 
-pub struct Runtime<'a> {
-    env: Env<'a>,
+pub struct Runtime {
+    env: CellEnv,
     memory: Memory,
 }
 
-impl<'a> Runtime<'a> {
-    pub fn new() -> Runtime<'a> {
+impl Runtime {
+    pub fn new() -> Runtime {
         let mut runtime = Runtime {
             env: Env::new(),
             memory: Memory::new(),
@@ -49,7 +49,7 @@ impl<'a> Runtime<'a> {
 
         let mut evalued_exprs = Vec::new();
         for expr in exprs.iter() {
-            let evalued_expr = try!(eval(expr, &mut self.env, &mut self.memory));
+            let evalued_expr = try!(eval(expr, self.env.clone(), &mut self.memory));
             evalued_exprs.push(evalued_expr);
         }
 
@@ -85,7 +85,7 @@ impl<'a> Runtime<'a> {
     fn init_primitives(&mut self) {
         for name in primitives::PRIMITIVES.iter() {
             let primitive = self.memory.primitive(name.to_string());
-            self.env.set(name.to_string(), primitive);
+            self.env.borrow_mut().set(name.to_string(), primitive);
         }
     }
 }

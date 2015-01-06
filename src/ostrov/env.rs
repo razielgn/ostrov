@@ -1,25 +1,33 @@
 use values::RcValue;
 
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
-pub struct Env<'a> {
+pub type CellEnv = Rc<RefCell<Env>>;
+
+pub struct Env {
     defs: HashMap<String, RcValue>,
-    outer: Option<&'a Env<'a>>,
+    outer: Option<CellEnv>,
 }
 
-impl<'a> Env<'a> {
-    pub fn new() -> Env<'a> {
-        Env {
+impl Env {
+    pub fn new() -> CellEnv {
+        let env = Env {
             defs: HashMap::new(),
             outer: None,
-        }
+        };
+
+        Rc::new(RefCell::new(env))
     }
 
-    pub fn wraps(outer: &'a Env) -> Env<'a> {
-        Env {
+    pub fn wraps(outer: CellEnv) -> CellEnv {
+        let env = Env {
             defs: HashMap::new(),
             outer: Some(outer),
-        }
+        };
+
+        Rc::new(RefCell::new(env))
     }
 
     pub fn set(&mut self, name: String, expr: RcValue) {
@@ -33,7 +41,24 @@ impl<'a> Env<'a> {
         }
     }
 
+    pub fn replace(&mut self, name: String, expr: RcValue) -> Option<RcValue> {
+        match self.defs.get(&name) {
+            Some(_) => {
+                self.set(name, expr.clone());
+                Some(expr)
+            }
+            None => self.replace_on_outer(name, expr),
+        }
+    }
+
     fn get_from_outer(&self, name: &String) -> Option<RcValue> {
-        self.outer.and_then(|env| env.get(name))
+        self.outer.clone().and_then(|env| env.borrow().get(name))
+    }
+
+    fn replace_on_outer(&self, name: String, expr: RcValue) -> Option<RcValue> {
+        match self.outer.clone() {
+            Some(outer) => outer.borrow_mut().replace(name, expr),
+            None        => None,
+        }
     }
 }
