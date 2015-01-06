@@ -2,7 +2,7 @@ use runtime::Error;
 use memory::Memory;
 use values::{RcValue, Value};
 
-pub static PRIMITIVES: [&'static str; 18] = [
+pub static PRIMITIVES: [&'static str; 19] = [
     "*",
     "+",
     "-",
@@ -21,6 +21,7 @@ pub static PRIMITIVES: [&'static str; 18] = [
     "not",
     "null?",
     "pair?",
+    "display",
 ];
 
 pub fn apply(name: &String, args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
@@ -43,6 +44,7 @@ pub fn apply(name: &String, args: Vec<RcValue>, mem: &mut Memory) -> Result<RcVa
         "not"    => not(args, mem),
         "null?"  => null(args, mem),
         "pair?"  => pair(args, mem),
+        "display"  => display(args, mem),
         _        => Err(Error::PrimitiveFailed(name.to_string()))
     }
 }
@@ -265,4 +267,14 @@ fn ord(args: Vec<RcValue>, mem: &mut Memory, cmp: |i64, i64| -> bool) -> Result<
     );
 
     return Ok(mem.boolean(outcome))
+}
+
+fn display(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+    if args.len() != 1 {
+        return Err(Error::BadArity(Some("display".to_string())));
+    }
+
+    print!("{}", args.first().unwrap());
+
+    Ok(mem.b_true())
 }
