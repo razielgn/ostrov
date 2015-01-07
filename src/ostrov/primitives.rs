@@ -258,7 +258,7 @@ fn list_of_integers(list: Vec<RcValue>) -> Result<Vec<i64>, Error> {
     Ok(integers)
 }
 
-fn ord(args: Vec<RcValue>, mem: &mut Memory, cmp: |i64, i64| -> bool) -> Result<RcValue, Error> {
+fn ord<F>(args: Vec<RcValue>, mem: &mut Memory, cmp: F) -> Result<RcValue, Error> where F: Fn(i64, i64) -> bool {
     if args.len() < 2 {
         return Ok(mem.b_true())
     }
