@@ -1,4 +1,4 @@
-#![feature(phase)]
+#![feature(plugin)]
 
 pub mod ast;
 mod parser;

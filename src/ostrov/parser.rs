@@ -1,4 +1,4 @@
-#[phase(plugin)]
+#[plugin]
 extern crate peg_syntax_ext;
 
 use ast::AST;
