@@ -8,5 +8,5 @@ dependencies = [
 [[package]]
 name = "peg"
 version = "0.1.2"
-source = "git+https://github.com/kevinmehall/rust-peg#1f053b397df14df9e9cd8fcfa59efc866a1d5c9a"
+source = "git+https://github.com/kevinmehall/rust-peg#b0321826565c189a39a7ec4e0cbf5d3448f0b295"
 
