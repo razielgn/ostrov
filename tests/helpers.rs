@@ -3,7 +3,8 @@ use ostrov::ast::AST;
 use ostrov::runtime::Error;
 use ostrov::values::RcValue;
 
-use std::fmt::Show;
+use std::fmt::Debug;
+use std::fmt::Display;
 
 pub fn assert_parse(input: &str, expected: AST) {
     let runtime = Runtime::new();
@@ -41,12 +42,12 @@ pub fn assert_eval_err(input: &str, expected: Error) {
     }
 }
 
-pub fn assert_fmt<T: Show>(input: &str, value: T) {
+pub fn assert_fmt<T: Display>(input: &str, value: T) {
     assert_eq!(input, format!("{}", value));
 }
 
-fn panic_expected<A: Show, B: Show>(input: &str, expected: &A, actual: &B) {
-    panic!("Expected {} from input \"{}\" , got {}", expected, input, actual);
+fn panic_expected<A: Debug, B: Debug>(input: &str, expected: &A, actual: &B) {
+    panic!("Expected {:?} from input \"{:?}\" , got {:?}", expected, input, actual);
 }
 
 pub mod ast {
@@ -56,7 +57,7 @@ pub mod ast {
     pub fn atom(val: &str)     -> AST { AST::Atom(val.to_string()) }
     pub fn list(val: Vec<AST>) -> AST { AST::List(val) }
     pub fn dotted_list(list: Vec<AST>, val: AST) -> AST {
-        AST::DottedList(list, box val)
+        AST::DottedList(list, Box::new(val))
     }
     pub fn empty_list()        -> AST { AST::List(vec!()) }
     pub fn bool(val: bool)     -> AST { AST::Bool(val) }

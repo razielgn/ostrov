@@ -1,3 +1,5 @@
+#![feature(collections)]
+
 extern crate ostrov;
 
 mod helpers;

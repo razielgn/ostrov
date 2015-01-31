@@ -1,8 +1,8 @@
 use std::fmt::Error;
 use std::fmt::Formatter;
-use std::fmt::Show;
+use std::fmt::Display;
 
-#[derive(PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum AST {
     Atom(String),
     Bool(bool),
@@ -11,45 +11,45 @@ pub enum AST {
     List(Vec<AST>),
 }
 
-fn fmt_join_with_spaces<T: Show>(items: &[T], f: &mut Formatter) -> Result<(), Error> {
+fn fmt_join_with_spaces<T: Display>(items: &[T], f: &mut Formatter) -> Result<(), Error> {
     for (i, item) in items.iter().enumerate() {
-        try!(item.fmt(f));
+        try!(write!(f, "{}", item));
 
         if i + 1 != items.len() {
-            try!(" ".fmt(f));
+            try!(write!(f, " "));
         }
     }
 
     Ok(())
 }
 
-fn fmt_list(items: &Vec<AST>, f: &mut Formatter) -> Result<(), Error> {
-    try!("(".fmt(f));
+fn fmt_list<T: Display>(items: &Vec<T>, f: &mut Formatter) -> Result<(), Error> {
+    try!(write!(f, "("));
     try!(fmt_join_with_spaces(items.as_slice(), f));
-    try!(")".fmt(f));
-
-    Ok(())
+    write!(f, ")")
 }
 
-fn fmt_dotted_list(items: &Vec<AST>, right: &AST, f: &mut Formatter) -> Result<(), Error> {
-    try!("(".fmt(f));
+fn fmt_dotted_list<T: Display>(items: &[T], right: &T, f: &mut Formatter) -> Result<(), Error> {
+    try!(write!(f, "("));
     try!(fmt_join_with_spaces(items.as_slice(), f));
-    try!(" . ".fmt(f));
-    try!(right.fmt(f));
-    try!(")".fmt(f));
-
-    Ok(())
+    write!(f, " . {})", right)
 }
 
-impl Show for AST {
+impl Display for AST {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
-            &AST::Atom(ref string) => string.fmt(f),
-            &AST::Bool(false)      => "#f".fmt(f),
-            &AST::Bool(true)       => "#t".fmt(f),
-            &AST::Integer(ref i)   => i.fmt(f),
-            &AST::List(ref list)   => fmt_list(list, f),
-            &AST::DottedList(ref list, ref value) => fmt_dotted_list(list, &**value, f),
+            &AST::Atom(ref string) =>
+                write!(f, "{}", string),
+            &AST::Bool(false) =>
+                write!(f, "#f"),
+            &AST::Bool(true) =>
+                write!(f, "#t"),
+            &AST::Integer(ref i) =>
+                write!(f, "{}", i),
+            &AST::List(ref list) =>
+                fmt_list(list, f),
+            &AST::DottedList(ref list, ref value) =>
+                fmt_dotted_list(list.as_slice(), &**value, f),
         }
     }
 }

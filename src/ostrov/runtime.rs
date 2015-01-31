@@ -6,11 +6,11 @@ use primitives;
 use memory::Memory;
 use values::RcValue;
 
-use std::io::BufferedReader;
-use std::io::File;
-use std::io::IoResult;
+use std::old_io::BufferedReader;
+use std::old_io::File;
+use std::old_io::IoResult;
 
-#[derive(Show, PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Error {
     BadArity(Option<String>),
     IrreducibleValue(AST),

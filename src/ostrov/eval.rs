@@ -108,7 +108,7 @@ fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String
             }
         }
         ArgumentsType::Variable => {
-            let fixed_arg_names = arg_names.slice(0, arg_names.len() - 1);
+            let fixed_arg_names = &arg_names[0 .. arg_names.len() - 1];
 
             if fixed_arg_names.len() > arg_values.len() {
                 return Err(Error::BadArity(name.clone()));

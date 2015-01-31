@@ -1,3 +1,7 @@
+#![feature(collections)]
+#![feature(core)]
+#![feature(io)]
+#![feature(path)]
 #![feature(plugin)]
 
 pub mod ast;

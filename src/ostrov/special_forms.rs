@@ -177,7 +177,7 @@ fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: Cel
     let procedure = if args.len() == 1 {
         try!(create_fn(extra_arg, body, Some(procedure_name.clone()), env.clone(), mem))
     } else {
-        let args = AST::DottedList(args.tail().to_vec(), box extra_arg.clone());
+        let args = AST::DottedList(args.tail().to_vec(), Box::new(extra_arg.clone()));
         try!(create_fn(&args, body, Some(procedure_name.clone()), env.clone(), mem))
     };
     env.set(procedure_name.clone(), procedure);

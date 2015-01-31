@@ -1,3 +1,5 @@
+#![feature(os)]
+
 extern crate ostrov;
 
 use ostrov::repl::repl;

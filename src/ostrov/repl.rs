@@ -1,6 +1,6 @@
 use runtime::Runtime;
 
-use std::io;
+use std::old_io;
 
 pub fn repl(args: Vec<String>) {
     let mut runtime = Runtime::new();
@@ -10,7 +10,7 @@ pub fn repl(args: Vec<String>) {
 
         match runtime.eval_file(&path) {
             Ok(_)      => (),
-            Err(error) => println!("{}", error),
+            Err(error) => println!("{:?}", error),
         }
     } else {
         enter_repl(&mut runtime);
@@ -18,7 +18,7 @@ pub fn repl(args: Vec<String>) {
 }
 
 fn enter_repl(runtime: &mut Runtime) {
-    let mut input = io::stdin();
+    let mut input = old_io::stdin();
 
     loop {
         print!("> ");
@@ -37,15 +37,15 @@ fn enter_repl(runtime: &mut Runtime) {
                                     println!("=> {}", expr);
                                 }
                             },
-                            Err(error) => println!("Error: {}", error),
+                            Err(error) => println!("Error: {:?}", error),
                         }
                     }
                 }
             },
             Err(error) => {
                 match error.kind {
-                    io::IoErrorKind::EndOfFile => break,
-                    _ => panic!("{}", error),
+                    old_io::IoErrorKind::EndOfFile => break,
+                    _ => panic!("{:?}", error),
                 }
             },
         }
