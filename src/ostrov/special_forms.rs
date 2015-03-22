@@ -6,16 +6,7 @@ use runtime::Error;
 use eval::{eval, eval_sequence};
 
 pub fn quote(list: &[AST], mem: &mut Memory) -> Result<RcValue, Error> {
-    let value = Value::from_ast(&list[0], mem);
-
-    match *value {
-        Value::Bool(b) =>
-            Ok(mem.boolean(b)),
-        Value::Nil =>
-            Ok(mem.nil()),
-        _ =>
-            Ok(value.clone()),
-    }
+    Ok(Value::from_ast(&list[0], mem))
 }
 
 pub fn and(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
