@@ -22,7 +22,7 @@ pub fn eval(value: &AST, env: CellEnv, memory: &mut Memory) -> Result<RcValue, E
 }
 
 pub fn eval_sequence(seq: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
-    let mut result = mem.empty_list();
+    let mut result = mem.nil();
 
     for expr in seq.iter() {
         result = try!(eval(expr, env.clone(), mem));
@@ -33,7 +33,7 @@ pub fn eval_sequence(seq: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcVa
 
 fn eval_list(list: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     if list.is_empty() {
-        return Ok(mem.empty_list());
+        return Ok(mem.nil());
     }
 
     let head = list.first().unwrap();

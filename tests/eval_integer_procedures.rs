@@ -12,7 +12,7 @@ fn plus() {
 
 #[test]
 fn plus_bad_arity() {
-    assert_eval_err("(+ ())", wrong_argument_type(empty_list()));
+    assert_eval_err("(+ ())", wrong_argument_type(nil()));
 }
 
 #[test]
@@ -30,7 +30,7 @@ fn minus_bad_arity() {
 
 #[test]
 fn minus_wrong_argument_type() {
-    assert_eval_err("(- ())", wrong_argument_type(empty_list()));
+    assert_eval_err("(- ())", wrong_argument_type(nil()));
 }
 
 #[test]
@@ -44,7 +44,7 @@ fn product() {
 
 #[test]
 fn product_wrong_argument_type() {
-    assert_eval_err("(* ())", wrong_argument_type(empty_list()));
+    assert_eval_err("(* ())", wrong_argument_type(nil()));
 }
 
 #[test]
@@ -62,7 +62,7 @@ fn division_bad_arity() {
 
 #[test]
 fn division_wrong_argument_type() {
-    assert_eval_err("(/ ())", wrong_argument_type(empty_list()));
+    assert_eval_err("(/ ())", wrong_argument_type(nil()));
 }
 
 #[test]

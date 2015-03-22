@@ -14,11 +14,11 @@ pub type RcValue = Rc<Value>;
 pub enum Value {
     Atom(String),
     Bool(bool),
-    DottedList(Vec<RcValue>, RcValue),
+    Nil,
+    Pair(RcValue, RcValue),
     Fn(Option<String>, ArgumentsType, Vec<String>, CellEnv, Vec<AST>),
     PrimitiveFn(String),
     Integer(i64),
-    List(Vec<RcValue>),
 }
 
 #[derive(Copy, PartialEq, Clone)]
@@ -26,6 +26,41 @@ pub enum ArgumentsType {
     Fixed,
     Variable,
     Any,
+}
+
+impl Value {
+    pub fn is_list(&self) -> bool {
+        match self {
+            &Value::Nil =>
+                true,
+            &Value::Pair(ref _left, ref right) =>
+                right.is_list(),
+            _ =>
+                false,
+        }
+    }
+
+    pub fn is_pair(&self) -> bool {
+        match self {
+            &Value::Pair(..) => true,
+            _                => false,
+        }
+    }
+
+    pub fn pair_len(&self) -> Option<i64> {
+        fn pair_len_rec(val: &Value, acc: i64) -> Option<i64> {
+            match val {
+                &Value::Nil =>
+                    Some(acc),
+                &Value::Pair(ref _left, ref right) =>
+                    pair_len_rec(right, acc + 1),
+                _ =>
+                    None,
+            }
+        }
+
+        pair_len_rec(self, 0)
+    }
 }
 
 fn fmt_join_with_spaces<T: Display>(items: &[T], f: &mut Formatter) -> Result<(), Error> {
@@ -44,6 +79,21 @@ fn fmt_list<T: Display>(items: &Vec<T>, f: &mut Formatter) -> Result<(), Error> 
     try!(write!(f, "("));
     try!(fmt_join_with_spaces(items.as_slice(), f));
     write!(f, ")")
+}
+
+fn fmt_pair(left: &RcValue, right: &RcValue, f: &mut Formatter) -> Result<(), Error> {
+    try!(write!(f, "{}", left));
+
+    match **right {
+        Value::Nil =>
+            Ok(()),
+        Value::Pair(ref left, ref right) => {
+            try!(write!(f, " "));
+            fmt_pair(left, right, f)
+        }
+        _ =>
+            write!(f, " . {}", right),
+    }
 }
 
 fn fmt_dotted_list<T: Display>(items: &[T], right: &T, f: &mut Formatter) -> Result<(), Error> {
@@ -94,14 +144,17 @@ impl Display for Value {
                 write!(f, "#f"),
             &Value::Bool(true) =>
                 write!(f, "#t"),
-            &Value::DottedList(ref list, ref value) =>
-                fmt_dotted_list(list.as_slice(), &*value, f),
+            &Value::Nil(..) =>
+                write!(f, "()"),
+            &Value::Pair(ref left, ref right) => {
+                try!(write!(f, "("));
+                try!(fmt_pair(left, right, f));
+                write!(f, ")")
+            }
             &Value::Fn(ref name, ref args_type, ref args, ref _closure, ref _body) =>
                 fmt_procedure(name, args_type, args, f),
             &Value::Integer(ref i) =>
                 write!(f, "{}", i),
-            &Value::List(ref list) =>
-                fmt_list(list, f),
             &Value::PrimitiveFn(ref name) =>
                 fmt_primitive(name, f),
         }
@@ -113,10 +166,10 @@ impl Debug for Value {
         let t = match self {
             &Value::Atom(..)        => "Atom",
             &Value::Bool(..)        => "Bool",
-            &Value::DottedList(..)  => "DottedList",
             &Value::Fn(..)          => "Fn",
             &Value::Integer(..)     => "Integer",
-            &Value::List(..)        => "List",
+            &Value::Nil(..)         => "Nil",
+            &Value::Pair(..)        => "Pair",
             &Value::PrimitiveFn(..) => "PrimitiveFn"
         };
 
@@ -131,14 +184,14 @@ impl PartialEq for Value {
                 if let &Value::Atom(ref b) = other { a == b } else { false },
             &Value::Bool(ref a) =>
                 if let &Value::Bool(ref b) = other { a == b } else { false },
-            &Value::DottedList(ref a, ref a1) =>
-                if let &Value::DottedList(ref b, ref b1) = other { (a, a1) == (b, b1) } else { false },
             &Value::Fn(ref a, ref a1, ref a2, ref _closure, ref a3) =>
                 if let &Value::Fn(ref b, ref b1, ref b2, ref _closure, ref b3) = other { (a, a1, a2, a3) == (b, b1, b2, b3) } else { false },
             &Value::Integer(ref a) =>
                 if let &Value::Integer(ref b) = other { a == b } else { false },
-            &Value::List(ref a) =>
-                if let &Value::List(ref b) = other { a == b } else { false },
+            &Value::Nil =>
+                if let &Value::Nil = other { true } else { false },
+            &Value::Pair(ref left, ref right) =>
+                if let &Value::Pair(ref left2, ref right2) = other { (left, right) == (left2, right2) } else { false },
             &Value::PrimitiveFn(ref a) =>
                 if let &Value::PrimitiveFn(ref b) = other { a == b } else { false },
         }
@@ -159,9 +212,14 @@ impl Value {
                 mem.list(values)
             }
             &AST::DottedList(ref list, ref value) => {
-                let values = list.iter().map(|ast| Value::from_ast(ast, mem)).collect();
+                let values: Vec<RcValue> = list.iter().map(|ast| Value::from_ast(ast, mem)).collect();
                 let value = Value::from_ast(&*value.clone(), mem);
-                mem.dotted_list(values, value)
+                values
+                    .iter()
+                    .rev()
+                    .fold(value, |cdr, car| {
+                        mem.pair(car.clone(), cdr)
+                    })
             }
         }
     }

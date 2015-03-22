@@ -20,21 +20,39 @@ fn atoms() {
 
 #[test]
 fn lists() {
-    assert_fmt("()", empty_list());
-    assert_fmt("(+ 1 2 #f (1 2))", list(vec!(atom("+"),
-                                             integer(1),
-                                             integer(2),
-                                             bool(false),
-                                             list(vec!(integer(1),
-                                                       integer(2))))));
+    assert_fmt("()", nil());
+    assert_fmt(
+        "(+ 1 2 #f (1 2))",
+        pair(
+            atom("+"),
+            pair(
+                integer(1),
+                pair(
+                    integer(2),
+                    pair(bool(false),
+                         pair(
+                             pair(
+                                 integer(1),
+                                 pair(
+                                     integer(2),
+                                     nil())),
+                             nil()))))));
 }
 
 #[test]
 fn dotted_lists() {
-    assert_fmt("(+ (1 2) . a)", dotted_list(vec!(atom("+"),
-                                                 list(vec!(integer(1),
-                                                           integer(2)))),
-                                                 atom("a")));
+    assert_fmt(
+        "(+ (1 2) . a)",
+        pair(
+            atom("+"),
+            pair(
+                pair(
+                    integer(1),
+                    pair(
+                        integer(2),
+                        nil())
+                ),
+                atom("a"))));
 }
 
 #[test]

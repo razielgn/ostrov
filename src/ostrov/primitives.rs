@@ -37,11 +37,11 @@ pub fn apply(name: &String, args: Vec<RcValue>, mem: &mut Memory) -> Result<RcVa
         ">"      => greater_than(args, mem),
         ">="     => greater_than_or_equal(args, mem),
         "car"    => car(args),
-        "cdr"    => cdr(args, mem),
+        "cdr"    => cdr(args),
         "cons"   => cons(args, mem),
         "length" => length(args, mem),
         "list"   => list(args, mem),
-        "list?"  => list_question_mark(args, mem),
+        "list?"  => is_list(args, mem),
         "not"    => not(args, mem),
         "null?"  => null(args, mem),
         "pair?"  => pair(args, mem),
@@ -140,12 +140,10 @@ fn length(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
         return Err(Error::BadArity(Some("length".to_string())));
     }
 
-    match *args[0] {
-        Value::List(ref list) =>
-            Ok(mem.integer(list.len() as i64)),
-        _ =>
-            Err(Error::WrongArgumentType(args[0].clone())),
-    }
+    args[0].pair_len().map_or_else(
+        || Err(Error::WrongArgumentType(args[0].clone())),
+        |length| Ok(mem.integer(length)),
+    )
 }
 
 fn pair(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
@@ -153,15 +151,7 @@ fn pair(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
         return Err(Error::BadArity(Some("pair?".to_string())));
     }
 
-    let outcome = match *args[0] {
-        Value::List(ref list) =>
-            !list.is_empty(),
-        Value::DottedList(ref _list, ref _el) =>
-            true,
-        _ =>
-            false,
-    };
-
+    let outcome = args[0].is_pair();
     Ok(mem.boolean(outcome))
 }
 
@@ -170,18 +160,9 @@ fn cons(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
         return Err(Error::BadArity(Some("cons".to_string())));
     }
 
-    let mut list: Vec<RcValue> = Vec::new();
-    list.push(args[0].clone());
-
-    if let Value::List(ref l) = *args[1] {
-        for item in l.iter() {
-            list.push(item.clone());
-        }
-
-        Ok(mem.list(list))
-    } else {
-        Ok(mem.dotted_list(list, args[1].clone()))
-    }
+    let left = args[0].clone();
+    let right = args[1].clone();
+    Ok(mem.pair(left, right))
 }
 
 fn car(args: Vec<RcValue>) -> Result<RcValue, Error> {
@@ -190,32 +171,21 @@ fn car(args: Vec<RcValue>) -> Result<RcValue, Error> {
     }
 
     match *args[0] {
-        Value::List(ref l) if !l.is_empty() =>
-            Ok(l[0].clone()),
-        Value::DottedList(ref l, ref _t) =>
-            Ok(l[0].clone()),
+        Value::Pair(ref left, ref _right) =>
+            Ok(left.clone()),
         _ =>
             Err(Error::WrongArgumentType(args[0].clone())),
     }
 }
 
-fn cdr(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn cdr(args: Vec<RcValue>) -> Result<RcValue, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("cdr".to_string())));
     }
 
     match *args[0] {
-        Value::List(ref l) if !l.is_empty() =>
-            match l.tail() {
-                tail if tail.is_empty() =>
-                    Ok(mem.empty_list()),
-                tail => {
-                    let list = tail.iter().map(|v| v.clone()).collect();
-                    Ok(mem.list(list))
-                }
-            },
-        Value::DottedList(ref _l, ref t) =>
-            Ok(t.clone()),
+        Value::Pair(ref _left, ref right) =>
+            Ok(right.clone()),
         _ =>
             Err(Error::WrongArgumentType(args[0].clone())),
     }
@@ -226,20 +196,15 @@ fn null(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
         return Err(Error::BadArity(Some("null?".to_string())));
     }
 
-    Ok(mem.boolean(args[0] == mem.empty_list()))
+    Ok(mem.boolean(args[0] == mem.nil()))
 }
 
-fn list_question_mark(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn is_list(args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("list?".to_string())));
     }
 
-    let outcome = if let Value::List(ref _l) = *args[0] {
-        true
-    } else {
-        false
-    };
-
+    let outcome = args[0].is_list();
     Ok(mem.boolean(outcome))
 }
 

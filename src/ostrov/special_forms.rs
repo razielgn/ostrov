@@ -11,8 +11,8 @@ pub fn quote(list: &[AST], mem: &mut Memory) -> Result<RcValue, Error> {
     match *value {
         Value::Bool(b) =>
             Ok(mem.boolean(b)),
-        Value::List(ref l) if l.is_empty() =>
-            Ok(mem.empty_list()),
+        Value::Nil =>
+            Ok(mem.nil()),
         _ =>
             Ok(value.clone()),
     }

@@ -43,23 +43,26 @@ impl Memory {
         }
     }
 
-    pub fn empty_list(&self) -> RcValue {
+    pub fn nil(&self) -> RcValue {
         self.reserved[2].clone()
     }
 
-    pub fn list(&mut self, values: Vec<RcValue>) -> RcValue {
-        let value = Value::List(values);
+    pub fn pair(&mut self, left: RcValue, right: RcValue) -> RcValue {
+        let value = Value::Pair(left, right);
         self.store(value)
+    }
+
+    pub fn list(&mut self, elems: Vec<RcValue>) -> RcValue {
+        elems
+            .iter()
+            .rev()
+            .fold(self.nil(), |cdr, car| {
+                self.pair(car.clone(), cdr)
+            })
     }
 
     pub fn intern(&mut self, atom: String) -> RcValue {
         let value = Value::Atom(atom);
-
-        self.store(value)
-    }
-
-    pub fn dotted_list(&mut self, values: Vec<RcValue>, tail: RcValue) -> RcValue {
-        let value = Value::DottedList(values, tail);
 
         self.store(value)
     }
@@ -88,7 +91,7 @@ impl Memory {
     fn init(&mut self) {
         self.store_reserved(Value::Bool(true));
         self.store_reserved(Value::Bool(false));
-        self.store_reserved(Value::List(vec!()));
+        self.store_reserved(Value::Nil);
     }
 
     fn store_reserved(&mut self, value: Value) {

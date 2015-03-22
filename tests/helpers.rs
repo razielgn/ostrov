@@ -72,11 +72,18 @@ pub mod values {
 
     pub fn integer(val: i64) -> RcValue { Rc::new(Value::Integer(val)) }
     pub fn atom(val: &str) -> RcValue { Rc::new(Value::Atom(val.to_string())) }
-    pub fn list(val: Vec<RcValue>) -> RcValue { Rc::new(Value::List(val)) }
-    pub fn dotted_list(list: Vec<RcValue>, val: RcValue) -> RcValue {
-        Rc::new(Value::DottedList(list, val))
+    pub fn pair(left: RcValue, right: RcValue) -> RcValue {
+        Rc::new(Value::Pair(left, right))
     }
-    pub fn empty_list() -> RcValue { Rc::new(Value::List(vec!())) }
+    pub fn list(values: Vec<RcValue>) -> RcValue {
+        values
+            .iter()
+            .rev()
+            .fold(Rc::new(Value::Nil), |cdr, car| {
+                Rc::new(Value::Pair(car.clone(), cdr))
+            })
+    }
+    pub fn nil() -> RcValue { Rc::new(Value::Nil) }
     pub fn bool(val: bool) -> RcValue { Rc::new(Value::Bool(val)) }
     pub fn func(name: &str, args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();

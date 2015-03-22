@@ -25,7 +25,7 @@ fn length_bad_arguments() {
 }
 
 #[test]
-fn pair() {
+fn pair_() {
     assert_eval("(pair? 1)", "#f");
     assert_eval("(pair? #t)", "#f");
     assert_eval("(pair? '())", "#f");
@@ -71,7 +71,7 @@ fn car_bad_arity() {
 #[test]
 fn car_wrong_argument_type() {
     assert_eval_err("(car 12)", wrong_argument_type(integer(12)));
-    assert_eval_err("(car '())", wrong_argument_type(empty_list()));
+    assert_eval_err("(car '())", wrong_argument_type(nil()));
 }
 
 #[test]
@@ -89,7 +89,7 @@ fn cdr_bad_arity() {
 #[test]
 fn cdr_wrong_argument_type() {
     assert_eval_err("(cdr 12)", wrong_argument_type(integer(12)));
-    assert_eval_err("(cdr '())", wrong_argument_type(empty_list()));
+    assert_eval_err("(cdr '())", wrong_argument_type(nil()));
 }
 
 #[test]
