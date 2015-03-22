@@ -33,5 +33,5 @@ name = "benchmarks"
 doc = false
 test = false
 
-[dependencies]
-peg = "~0.1.5"
+[dependencies.peg]
+git = "https://github.com/kevinmehall/rust-peg"

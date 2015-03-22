@@ -264,7 +264,7 @@ fn ord<F>(args: Vec<RcValue>, mem: &mut Memory, cmp: F) -> Result<RcValue, Error
     }
 
     let integers = try!(list_of_integers(args));
-    let outcome = range(0us, integers.len() - 1).all(|i|
+    let outcome = (0..integers.len() - 1).all(|i|
         cmp(integers[i], integers[i + 1])
     );
 

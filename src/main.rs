@@ -1,11 +1,10 @@
-#![feature(os)]
-
 extern crate ostrov;
 
 use ostrov::repl::repl;
 
-use std::os;
+use std::env;
+use std::iter::FromIterator;
 
 fn main() {
-    repl(os::args())
+    repl(Vec::from_iter(env::args()))
 }

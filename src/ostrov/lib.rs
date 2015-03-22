@@ -1,8 +1,5 @@
-#![feature(collections)]
-#![feature(core)]
-#![feature(io)]
-#![feature(path)]
-#![feature(plugin)]
+#![feature(collections, core, plugin, str_char)]
+#![plugin(peg_syntax_ext)]
 
 pub mod ast;
 mod parser;

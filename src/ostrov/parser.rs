@@ -1,8 +1,7 @@
-#[plugin]
-extern crate peg_syntax_ext;
-
 use ast::AST;
 use runtime::Error;
+
+pub type ParseError = ast::ParseError;
 
 #[derive(PartialEq)]
 enum IntegerSign {

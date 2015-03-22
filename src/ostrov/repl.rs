@@ -1,6 +1,8 @@
 use runtime::Runtime;
 
-use std::old_io;
+use std::io;
+use std::io::Write;
+use std::path::Path;
 
 pub fn repl(args: Vec<String>) {
     let mut runtime = Runtime::new();
@@ -18,13 +20,16 @@ pub fn repl(args: Vec<String>) {
 }
 
 fn enter_repl(runtime: &mut Runtime) {
-    let mut input = old_io::stdin();
+    let mut input = io::stdin();
 
     loop {
         print!("> ");
+        let _ = io::stdout().flush();
 
-        match input.read_line() {
-            Ok(line) => {
+        let mut line = String::new();
+        match input.read_line(&mut line) {
+            Ok(0) => break,
+            Ok(_) => {
                 match line.as_slice() {
                     "exit\n" => break,
                     "dump-heap\n" => {
@@ -42,12 +47,8 @@ fn enter_repl(runtime: &mut Runtime) {
                     }
                 }
             },
-            Err(error) => {
-                match error.kind {
-                    old_io::IoErrorKind::EndOfFile => break,
-                    _ => panic!("{:?}", error),
-                }
-            },
+            Err(error) =>
+                panic!("{:?}", error),
         }
     }
 }

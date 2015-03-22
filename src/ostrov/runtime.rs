@@ -1,20 +1,21 @@
 use ast::AST;
 use env::CellEnv;
 use eval::eval;
-use parser::parse;
+use parser::{parse, ParseError};
 use primitives;
 use memory::Memory;
 use values::RcValue;
 
-use std::old_io::BufferedReader;
-use std::old_io::File;
-use std::old_io::IoResult;
+use std::io;
+use std::io::Read;
+use std::fs::File;
+use std::path::Path;
 
 #[derive(PartialEq, Debug)]
 pub enum Error {
     BadArity(Option<String>),
     IrreducibleValue(AST),
-    ParseError(String),
+    ParseError(ParseError),
     UnappliableValue(RcValue),
     MalformedExpression,
     UnboundVariable(String),
@@ -57,10 +58,10 @@ impl Runtime {
     }
 
     pub fn eval_file(&mut self, path: &Path) -> Result<Vec<RcValue>, Error> {
-        let file = try!(Runtime::open_file(path));
-        let mut reader = BufferedReader::new(file);
+        let mut file = try!(Runtime::open_file(path));
+        let mut content = String::new();
+        try!(Runtime::handle_io_error(file.read_to_string(&mut content), path));
 
-        let content = try!(Runtime::handle_io_error(reader.read_to_string(), path));
         self.eval_str(content.as_slice())
     }
 
@@ -72,7 +73,7 @@ impl Runtime {
         Runtime::handle_io_error(File::open(path), path)
     }
 
-    fn handle_io_error<T>(result: IoResult<T>, path: &Path) -> Result<T, Error> {
+    fn handle_io_error<T>(result: io::Result<T>, path: &Path) -> Result<T, Error> {
         match result {
             Ok(value) => Ok(value),
             Err(_err) => {
