@@ -3,8 +3,8 @@ use helpers::values::*;
 
 #[test]
 fn returns_expression() {
-    assert_eval("(define x 0)
-                 (set! x (+ x 1))", "1"); // unspecified behaviour
+    assert_eval_val("(define x 0)
+                     (set! x (+ x 1))", unspecified());
 }
 
 #[test]

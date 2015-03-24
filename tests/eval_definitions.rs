@@ -3,12 +3,14 @@ use helpers::values::*;
 
 #[test]
 fn define_with_one_arg() {
-    assert_eval("(define x)", "'x"); // unspecified behaviour
+    assert_eval_val("(define x)", unspecified());
+    assert_eval_val("(define x)
+                     x", unspecified());
 }
 
 #[test]
 fn define_with_two_args() {
-    assert_eval("(define x 2)", "2"); // unspecified behaviour
+    assert_eval_val("(define x 2)", unspecified());
 
     assert_eval("(define x 2)
                  (= x 2)", "#t");
@@ -30,7 +32,7 @@ fn define_with_one_arg_lambda() {
 
 #[test]
 fn define_procedure_with_fixed_args() {
-    assert_eval("(define (x) 3)", "'x"); // unspecified behaviour
+    assert_eval_val("(define (x) 3)", unspecified());
 
     assert_eval_val("(define (x) 3)
                      x", func("x", vec!(), vec!(ast::integer(3))));
@@ -38,7 +40,7 @@ fn define_procedure_with_fixed_args() {
 
 #[test]
 fn define_procedure_with_varargs() {
-    assert_eval("(define (x a . b) 3)", "'x"); // unspecified behaviour
+    assert_eval_val("(define (x a . b) 3)", unspecified());
 
     assert_eval_val("(define (x a . b) 3)
                      x", func_var("x", vec!("a", "b"), vec!(ast::integer(3))));
@@ -46,7 +48,7 @@ fn define_procedure_with_varargs() {
 
 #[test]
 fn define_procedure_with_any() {
-    assert_eval("(define (x . b) 3)", "'x"); // unspecified behaviour
+    assert_eval_val("(define (x . b) 3)", unspecified());
 
     assert_eval_val("(define (x . b) 3)
                      x", func_any("x", "b", vec!(ast::integer(3))));

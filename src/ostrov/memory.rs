@@ -35,6 +35,10 @@ impl Memory {
         self.reserved[1].clone()
     }
 
+    pub fn unspecified(&self) -> RcValue {
+        self.reserved[3].clone()
+    }
+
     pub fn boolean(&self, b: bool) -> RcValue {
         if b {
             self.b_true()
@@ -92,6 +96,7 @@ impl Memory {
         self.store_reserved(Value::Bool(true));
         self.store_reserved(Value::Bool(false));
         self.store_reserved(Value::Nil);
+        self.store_reserved(Value::Unspecified);
     }
 
     fn store_reserved(&mut self, value: Value) {

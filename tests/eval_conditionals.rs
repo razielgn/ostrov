@@ -3,7 +3,7 @@ use helpers::*;
 #[test]
 fn if_with_one_arg() {
     assert_eval("(if #t 3)", "3");
-    assert_eval("(if #f 3)", "#f"); // unspecified behaviour
+    assert_eval_val("(if #f 3)", values::unspecified());
 }
 
 #[test]

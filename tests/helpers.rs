@@ -84,6 +84,7 @@ pub mod values {
             })
     }
     pub fn nil() -> RcValue { Rc::new(Value::Nil) }
+    pub fn unspecified() -> RcValue { Rc::new(Value::Unspecified) }
     pub fn bool(val: bool) -> RcValue { Rc::new(Value::Bool(val)) }
     pub fn func(name: &str, args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();

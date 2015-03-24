@@ -15,6 +15,7 @@ pub enum Value {
     Atom(String),
     Bool(bool),
     Nil,
+    Unspecified,
     Pair(RcValue, RcValue),
     Fn(Option<String>, ArgumentsType, Vec<String>, CellEnv, Vec<AST>),
     PrimitiveFn(String),
@@ -146,6 +147,8 @@ impl Display for Value {
                 write!(f, "#t"),
             &Value::Nil(..) =>
                 write!(f, "()"),
+            &Value::Unspecified(..) =>
+                write!(f, "<unspecified>"),
             &Value::Pair(ref left, ref right) => {
                 try!(write!(f, "("));
                 try!(fmt_pair(left, right, f));
@@ -169,6 +172,7 @@ impl Debug for Value {
             &Value::Fn(..)          => "Fn",
             &Value::Integer(..)     => "Integer",
             &Value::Nil(..)         => "Nil",
+            &Value::Unspecified     => "Unspecified",
             &Value::Pair(..)        => "Pair",
             &Value::PrimitiveFn(..) => "PrimitiveFn"
         };
@@ -190,6 +194,8 @@ impl PartialEq for Value {
                 if let &Value::Integer(ref b) = other { a == b } else { false },
             &Value::Nil =>
                 if let &Value::Nil = other { true } else { false },
+            &Value::Unspecified =>
+                if let &Value::Unspecified = other { true } else { false },
             &Value::Pair(ref left, ref right) =>
                 if let &Value::Pair(ref left2, ref right2) = other { (left, right) == (left2, right2) } else { false },
             &Value::PrimitiveFn(ref a) =>

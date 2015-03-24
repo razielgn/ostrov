@@ -52,7 +52,7 @@ pub fn if_(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Erro
         try!(eval(&args[1], env.clone(), mem))
     } else {
         if args.len() == 2 {
-            mem.b_false()
+            mem.unspecified()
         } else {
             try!(eval(&args[2], env.clone(), mem))
         }
@@ -69,19 +69,21 @@ pub fn define(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, E
     match args[0] {
         AST::Atom(ref name) => {
             let body = if args.len() == 1 { None } else { Some(&args[1]) };
-            define_variable(name, body, env, mem)
+            try!(define_variable(name, body, env, mem));
         }
         AST::List(ref list) if list.len() > 0 => {
             let body = args.tail().to_vec();
-            define_procedure(list.as_slice(), &body, env, mem)
+            try!(define_procedure(list.as_slice(), &body, env, mem));
         }
         AST::DottedList(ref list, ref extra) => {
             let body = args.tail().to_vec();
-            define_procedure_var(list.as_slice(), &**extra, &body, env, mem)
+            try!(define_procedure_var(list.as_slice(), &**extra, &body, env, mem));
         }
         _ =>
-            Err(Error::MalformedExpression),
+            return Err(Error::MalformedExpression),
     }
+
+    Ok(mem.unspecified())
 }
 
 pub fn lambda(list: &[AST], name: Option<String>, closure: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
@@ -103,8 +105,8 @@ pub fn set(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Erro
     let expr = try!(eval(&args[1], env.clone(), mem));
 
     match env.replace(variable_name.clone(), expr.clone()) {
-        Some(expr) => Ok(expr),
-        None       => Err(Error::UnboundVariable(variable_name)),
+        Some(_) => Ok(mem.unspecified()),
+        None    => Err(Error::UnboundVariable(variable_name)),
     }
 }
 
@@ -135,34 +137,32 @@ pub fn let_(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Err
     eval_sequence(body, inner_env, mem)
 }
 
-fn define_variable(name: &String, body: Option<&AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
-    if body.is_none() {
-        return Ok(mem.intern(name.clone()));
-    }
-
-    let value = match body.unwrap() {
-        &AST::List(ref list) if list[0] == AST::Atom("lambda".to_string()) =>
+fn define_variable(name: &String, body: Option<&AST>, env: CellEnv, mem: &mut Memory) -> Result<(), Error> {
+    let value = match body {
+        Some(&AST::List(ref list)) if list[0] == AST::Atom("lambda".to_string()) =>
             try!(lambda(list.tail(), Some(name.clone()), env.clone(), mem)),
-        value =>
-            try!(eval(value, env.clone(), mem))
+        Some(value) =>
+            try!(eval(value, env.clone(), mem)),
+        None =>
+            mem.unspecified(),
     };
 
     env.set(name.clone(), value.clone());
 
-    Ok(value)
+    Ok(())
 }
 
-fn define_procedure(args: &[AST], body: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
+fn define_procedure(args: &[AST], body: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<(), Error> {
     let procedure_name = try!(atom_or_error(&args[0], mem));
 
     let args = AST::List(args.tail().to_vec());
     let procedure = try!(create_fn(&args, body, Some(procedure_name.clone()), env.clone(), mem));
     env.set(procedure_name.clone(), procedure);
 
-    Ok(mem.intern(procedure_name))
+    Ok(())
 }
 
-fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
+fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<(), Error> {
     let procedure_name = try!(atom_or_error(&args[0], mem));
 
     let procedure = if args.len() == 1 {
@@ -173,7 +173,7 @@ fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: Cel
     };
     env.set(procedure_name.clone(), procedure);
 
-    Ok(mem.intern(procedure_name))
+    Ok(())
 }
 
 fn create_fn(args: &AST, body: &Vec<AST>, name: Option<String>, closure: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {

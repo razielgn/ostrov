@@ -1,4 +1,5 @@
 use runtime::Runtime;
+use values::Value;
 
 use std::io;
 use std::io::Write;
@@ -39,7 +40,9 @@ fn enter_repl(runtime: &mut Runtime) {
                         match runtime.eval_str(line) {
                             Ok(exprs) => {
                                 for expr in exprs.iter() {
-                                    println!("=> {}", expr);
+                                    if **expr != Value::Unspecified {
+                                        println!("=> {}", expr);
+                                    }
                                 }
                             },
                             Err(error) => println!("Error: {:?}", error),
