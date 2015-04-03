@@ -47,7 +47,7 @@ fn eval_list(list: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue,
     if let &AST::Atom(ref special_form) = head {
         let args = tail;
 
-        match special_form.as_slice() {
+        match &**special_form {
             "and"    => return special_forms::and(args, env, mem),
             "define" => return special_forms::define(args, env, mem),
             "if"     => return special_forms::if_(args, env, mem),
@@ -129,14 +129,14 @@ fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String
         }
     };
 
-    eval_sequence(body.as_slice(), inner_env, mem)
+    eval_sequence(body.as_ref(), inner_env, mem)
 }
 
 fn is_quoted(value: &AST) -> bool {
     match value {
         &AST::List(ref list) =>
             match list[0] {
-                AST::Atom(ref a) if a.as_slice() == "quote" =>
+                AST::Atom(ref a) if *a == "quote" =>
                     true,
                 _ =>
                     false

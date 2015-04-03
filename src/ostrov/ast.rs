@@ -25,13 +25,13 @@ fn fmt_join_with_spaces<T: Display>(items: &[T], f: &mut Formatter) -> Result<()
 
 fn fmt_list<T: Display>(items: &Vec<T>, f: &mut Formatter) -> Result<(), Error> {
     try!(write!(f, "("));
-    try!(fmt_join_with_spaces(items.as_slice(), f));
+    try!(fmt_join_with_spaces(items.as_ref(), f));
     write!(f, ")")
 }
 
 fn fmt_dotted_list<T: Display>(items: &[T], right: &T, f: &mut Formatter) -> Result<(), Error> {
     try!(write!(f, "("));
-    try!(fmt_join_with_spaces(items.as_slice(), f));
+    try!(fmt_join_with_spaces(items.as_ref(), f));
     write!(f, " . {})", right)
 }
 
@@ -49,7 +49,7 @@ impl Display for AST {
             &AST::List(ref list) =>
                 fmt_list(list, f),
             &AST::DottedList(ref list, ref value) =>
-                fmt_dotted_list(list.as_slice(), &**value, f),
+                fmt_dotted_list(list.as_ref(), &**value, f),
         }
     }
 }

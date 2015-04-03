@@ -78,7 +78,7 @@ fn fmt_join_with_spaces<T: Display>(items: &[T], f: &mut Formatter) -> Result<()
 
 fn fmt_list<T: Display>(items: &Vec<T>, f: &mut Formatter) -> Result<(), Error> {
     try!(write!(f, "("));
-    try!(fmt_join_with_spaces(items.as_slice(), f));
+    try!(fmt_join_with_spaces(items.as_ref(), f));
     write!(f, ")")
 }
 
@@ -99,7 +99,7 @@ fn fmt_pair(left: &RcValue, right: &RcValue, f: &mut Formatter) -> Result<(), Er
 
 fn fmt_dotted_list<T: Display>(items: &[T], right: &T, f: &mut Formatter) -> Result<(), Error> {
     try!(write!(f, "("));
-    try!(fmt_join_with_spaces(items.as_slice(), f));
+    try!(fmt_join_with_spaces(items.as_ref(), f));
     write!(f, " . {})", right)
 }
 

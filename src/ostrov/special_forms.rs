@@ -73,11 +73,11 @@ pub fn define(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, E
         }
         AST::List(ref list) if list.len() > 0 => {
             let body = args.tail().to_vec();
-            try!(define_procedure(list.as_slice(), &body, env, mem));
+            try!(define_procedure(list.as_ref(), &body, env, mem));
         }
         AST::DottedList(ref list, ref extra) => {
             let body = args.tail().to_vec();
-            try!(define_procedure_var(list.as_slice(), &**extra, &body, env, mem));
+            try!(define_procedure_var(list.as_ref(), &**extra, &body, env, mem));
         }
         _ =>
             return Err(Error::MalformedExpression),
@@ -179,11 +179,11 @@ fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: Cel
 fn create_fn(args: &AST, body: &Vec<AST>, name: Option<String>, closure: CellEnv, mem: &mut Memory) -> Result<RcValue, Error> {
     match args {
         &AST::List(ref list) => {
-            let args_list = try!(compose_args_list(list.as_slice(), None, mem));
+            let args_list = try!(compose_args_list(list.as_ref(), None, mem));
             Ok(mem.lambda(name, ArgumentsType::Fixed, args_list, closure, body.clone()))
         },
         &AST::DottedList(ref list, ref extra) => {
-            let args_list = try!(compose_args_list(list.as_slice(), Some(&**extra), mem));
+            let args_list = try!(compose_args_list(list.as_ref(), Some(&**extra), mem));
             Ok(mem.lambda(name, ArgumentsType::Variable, args_list, closure, body.clone()))
         }
         &AST::Atom(ref atom) =>

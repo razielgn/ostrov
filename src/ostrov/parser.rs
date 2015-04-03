@@ -39,11 +39,11 @@ fn parse_list(values: Vec<AST>) -> AST {
 fn parse_dotted_list(mut left: Vec<AST>, right: AST) -> AST {
     match right {
         AST::List(list) => {
-            left.push_all(list.as_slice());
+            left.push_all(list.as_ref());
             AST::List(left)
         }
         AST::DottedList(list, right) => {
-            left.push_all(list.as_slice());
+            left.push_all(list.as_ref());
             AST::DottedList(left, right)
         }
         _ => AST::DottedList(left, Box::new(right))

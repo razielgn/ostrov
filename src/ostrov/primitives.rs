@@ -26,7 +26,7 @@ pub static PRIMITIVES: [&'static str; 20] = [
 ];
 
 pub fn apply(name: &String, args: Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
-    match name.as_slice() {
+    match &**name {
         "*"      => product(args, mem),
         "+"      => plus(args, mem),
         "-"      => minus(args, mem),

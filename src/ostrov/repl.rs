@@ -31,7 +31,7 @@ fn enter_repl(runtime: &mut Runtime) {
         match input.read_line(&mut line) {
             Ok(0) => break,
             Ok(_) => {
-                match line.as_slice() {
+                match &*line {
                     "exit\n" => break,
                     "dump-heap\n" => {
                         runtime.dump_heap();

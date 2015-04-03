@@ -1,4 +1,4 @@
-#![feature(collections, core, plugin, str_char)]
+#![feature(collections, plugin, str_char)]
 #![plugin(peg_syntax_ext)]
 
 pub mod ast;

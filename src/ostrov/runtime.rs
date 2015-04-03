@@ -62,7 +62,7 @@ impl Runtime {
         let mut content = String::new();
         try!(Runtime::handle_io_error(file.read_to_string(&mut content), path));
 
-        self.eval_str(content.as_slice())
+        self.eval_str(&*content)
     }
 
     pub fn dump_heap(&self) {
