@@ -2,11 +2,11 @@
 name = "ostrov"
 version = "0.0.1"
 dependencies = [
- "peg 0.2.1 (git+https://github.com/kevinmehall/rust-peg)",
+ "peg 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "peg"
-version = "0.2.1"
-source = "git+https://github.com/kevinmehall/rust-peg#c2ed527e822c0c2a4be0f7f561e9f03e8e885123"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
