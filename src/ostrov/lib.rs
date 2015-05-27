@@ -1,11 +1,9 @@
-#![feature(collections, plugin, str_char)]
-#![plugin(peg_syntax_ext)]
-
 pub mod ast;
 mod parser;
 pub mod runtime;
 pub mod env;
 mod eval;
+mod grammar;
 pub mod memory;
 mod primitives;
 mod special_forms;

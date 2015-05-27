@@ -32,6 +32,3 @@ doc = false
 name = "benchmarks"
 doc = false
 test = false
-
-[dependencies]
-peg = "^0.2.2"

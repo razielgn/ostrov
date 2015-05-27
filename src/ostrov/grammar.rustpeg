@@ -1,0 +1,104 @@
+use ast::AST;
+use parser;
+
+#[pub]
+grammar -> Vec<AST> =
+    expression*
+
+expression -> AST =
+    __ ast:value {
+        ast
+    }
+
+value -> AST =
+    integer
+    / boolean
+    / identifier
+    / quoted
+    / list
+
+identifier -> AST =
+    identifier:(
+        initial subsequent*   { match_str }
+        / peculiar_identifier { match_str }
+    ) __ {
+        parser::parse_atom(identifier)
+    }
+
+initial -> &'input str =
+    constituent
+    / special_initial
+
+constituent -> &'input str =
+    letter
+
+letter -> &'input str =
+    [a-zA-Z] { match_str }
+
+special_initial -> &'input str =
+    [!$%&*/<=>?^_~] { match_str }
+
+subsequent -> &'input str =
+    initial
+    / digit
+    / special_subsequent
+
+digit -> &'input str =
+    [0-9] { match_str }
+
+peculiar_identifier -> &'input str =
+    (
+        "->" subsequent*
+        / "..."
+        / "+"
+        / "-"
+    )
+    { match_str }
+
+special_subsequent -> &'input str =
+    [+-.@] { match_str }
+
+integer -> AST =
+    sign:sign digits:digits __ {
+        parser::parse_decimal(digits, &sign)
+    }
+
+list -> AST =
+    "(" values:(value ** __) ")" __ {
+        parser::parse_list(values)
+    }
+    / "[" values:(value ** __) "]" __ {
+        parser::parse_list(values)
+    }
+    / "(" left:(value ++ __) "." __ right:value ")" __ {
+        parser::parse_dotted_list(left, right)
+    }
+    / "[" left:(value ++ __) "." __ right:value "]" __ {
+        parser::parse_dotted_list(left, right)
+    }
+
+boolean -> AST =
+    "\#" value:boolean_char __ {
+        parser::parse_bool(value)
+    }
+
+boolean_char -> &'input str =
+    [tfTF] { match_str }
+
+digits -> &'input str =
+    digit+ { match_str }
+
+sign -> parser::IntegerSign =
+    [-+]? {
+        parser::parse_sign(match_str)
+    }
+
+quoted -> AST =
+    "'" value:value {
+        parser::parse_quoted(value)
+    }
+
+__ = (whitespace)*
+
+whitespace =
+    [ \t\r\n]
