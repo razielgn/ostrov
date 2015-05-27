@@ -36,8 +36,8 @@ fn eval_list(list: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue,
         return Ok(mem.nil());
     }
 
-    let head = list.first().unwrap();
-    let tail = list.tail();
+    let head = &list[0];
+    let tail = &list[1..];
 
     if is_quoted(head) {
         let value = Value::from_ast(head, mem);

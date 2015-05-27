@@ -72,11 +72,11 @@ pub fn define(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, E
             try!(define_variable(name, body, env, mem));
         }
         AST::List(ref list) if list.len() > 0 => {
-            let body = args.tail().to_vec();
+            let body = args[1..].to_vec();
             try!(define_procedure(list.as_ref(), &body, env, mem));
         }
         AST::DottedList(ref list, ref extra) => {
-            let body = args.tail().to_vec();
+            let body = args[1..].to_vec();
             try!(define_procedure_var(list.as_ref(), &**extra, &body, env, mem));
         }
         _ =>
@@ -91,8 +91,8 @@ pub fn lambda(list: &[AST], name: Option<String>, closure: CellEnv, mem: &mut Me
         return Err(Error::BadArity(Some("lambda".to_string())));
     }
 
-    let args = list.first().unwrap();
-    let body = list.tail().to_vec();
+    let args = &list[0];
+    let body = &list[1..].to_vec();
     create_fn(args, &body, name, closure, mem)
 }
 
@@ -133,14 +133,14 @@ pub fn let_(args: &[AST], env: CellEnv, mem: &mut Memory) -> Result<RcValue, Err
         return Err(Error::MalformedExpression);
     };
 
-    let body = args.tail();
+    let body = &args[1..];
     eval_sequence(body, inner_env, mem)
 }
 
 fn define_variable(name: &String, body: Option<&AST>, env: CellEnv, mem: &mut Memory) -> Result<(), Error> {
     let value = match body {
         Some(&AST::List(ref list)) if list[0] == AST::Atom("lambda".to_string()) =>
-            try!(lambda(list.tail(), Some(name.clone()), env.clone(), mem)),
+            try!(lambda(&list[1..], Some(name.clone()), env.clone(), mem)),
         Some(value) =>
             try!(eval(value, env.clone(), mem)),
         None =>
@@ -155,7 +155,7 @@ fn define_variable(name: &String, body: Option<&AST>, env: CellEnv, mem: &mut Me
 fn define_procedure(args: &[AST], body: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<(), Error> {
     let procedure_name = try!(atom_or_error(&args[0], mem));
 
-    let args = AST::List(args.tail().to_vec());
+    let args = AST::List(args[1..].to_vec());
     let procedure = try!(create_fn(&args, body, Some(procedure_name.clone()), env.clone(), mem));
     env.set(procedure_name.clone(), procedure);
 
@@ -168,7 +168,7 @@ fn define_procedure_var(args: &[AST], extra_arg: &AST, body: &Vec<AST>, env: Cel
     let procedure = if args.len() == 1 {
         try!(create_fn(extra_arg, body, Some(procedure_name.clone()), env.clone(), mem))
     } else {
-        let args = AST::DottedList(args.tail().to_vec(), Box::new(extra_arg.clone()));
+        let args = AST::DottedList(args[1..].to_vec(), Box::new(extra_arg.clone()));
         try!(create_fn(&args, body, Some(procedure_name.clone()), env.clone(), mem))
     };
     env.set(procedure_name.clone(), procedure);
