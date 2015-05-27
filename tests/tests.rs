@@ -23,3 +23,6 @@ mod eval_list_procedures;
 mod ast_fmt;
 mod values_fmt;
 mod env;
+
+mod compiler;
+mod vm;

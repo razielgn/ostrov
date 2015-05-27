@@ -2,7 +2,7 @@ use ast::AST;
 use env::CellEnv;
 use memory::Memory;
 use values::{Value, RcValue, ArgumentsType};
-use runtime::Error;
+use errors::Error;
 use eval::{eval, eval_sequence};
 
 pub fn quote(list: &[AST], mem: &mut Memory) -> Result<RcValue, Error> {

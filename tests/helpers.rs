@@ -1,6 +1,6 @@
 pub use ostrov::runtime::Runtime;
 use ostrov::ast::AST;
-use ostrov::runtime::Error;
+use ostrov::errors::Error;
 use ostrov::values::RcValue;
 
 use std::fmt::Debug;

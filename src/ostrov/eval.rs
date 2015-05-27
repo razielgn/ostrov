@@ -1,6 +1,6 @@
 use ast::AST;
 use env::CellEnv;
-use runtime::Error;
+use errors::Error;
 use primitives;
 use special_forms;
 use memory::Memory;
@@ -67,7 +67,7 @@ fn eval_list(list: &Vec<AST>, env: CellEnv, mem: &mut Memory) -> Result<RcValue,
         Value::Fn(ref name, args_type, ref args_names, ref closure, ref body) =>
             apply(name, args_type, args_names, args, body, closure.clone(), mem),
         Value::PrimitiveFn(ref name) =>
-            primitives::apply(name, args, mem),
+            primitives::apply(name, &args, mem),
         _ =>
             Err(Error::UnappliableValue(fun.clone()))
     }
@@ -96,7 +96,7 @@ fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String
 
     match args_type {
         ArgumentsType::Any => {
-            inner_env.set(arg_names[0].clone(), mem.list(arg_values));
+            inner_env.set(arg_names[0].clone(), mem.list(&arg_values));
         }
         ArgumentsType::Fixed => {
             if arg_names.len() != arg_values.len() {
@@ -124,7 +124,7 @@ fn apply(name: &Option<String>, args_type: ArgumentsType, arg_names: &Vec<String
 
             inner_env.set(
                 arg_names.last().unwrap().clone(),
-                mem.list(var_args)
+                mem.list(&var_args)
             );
         }
     };

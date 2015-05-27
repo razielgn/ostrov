@@ -1,5 +1,4 @@
-use runtime_vm::Runtime;
-use values::Value;
+use runtime::RuntimeVM as Runtime;
 
 use std::io;
 use std::io::Write;
@@ -31,7 +30,7 @@ fn enter_repl(runtime: &mut Runtime) {
         match input.read_line(&mut line) {
             Ok(0) => break,
             Ok(_) => {
-                match &*line {
+                match line.as_slice() {
                     "exit\n" => break,
                     "dump-heap\n" => {
                         runtime.dump_heap();
@@ -40,9 +39,7 @@ fn enter_repl(runtime: &mut Runtime) {
                         match runtime.eval_str(line) {
                             Ok(exprs) => {
                                 for expr in exprs.iter() {
-                                    if **expr != Value::Unspecified {
-                                        println!("=> {}", expr);
-                                    }
+                                    println!("=> {}", expr);
                                 }
                             },
                             Err(error) => println!("Error: {:?}", error),

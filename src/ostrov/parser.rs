@@ -1,6 +1,6 @@
 use ast::AST;
 use grammar;
-use runtime::Error;
+use errors::Error;
 
 pub type ParseError = grammar::ParseError;
 

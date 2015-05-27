@@ -215,7 +215,7 @@ impl Value {
                 mem.integer(i),
             &AST::List(ref list) => {
                 let values = list.iter().map(|ast| Value::from_ast(ast, mem)).collect();
-                mem.list(values)
+                mem.list(&values)
             }
             &AST::DottedList(ref list, ref value) => {
                 let values: Vec<RcValue> = list.iter().map(|ast| Value::from_ast(ast, mem)).collect();

@@ -56,7 +56,7 @@ impl Memory {
         self.store(value)
     }
 
-    pub fn list(&mut self, elems: Vec<RcValue>) -> RcValue {
+    pub fn list(&mut self, elems: &Vec<RcValue>) -> RcValue {
         elems
             .iter()
             .rev()

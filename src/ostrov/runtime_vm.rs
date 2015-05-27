@@ -1,11 +1,9 @@
 use ast::AST;
-use env::CellEnv;
+use compiler::compile_single;
 use errors::Error;
-use eval::eval;
 use parser::parse;
-use primitives;
-use memory::Memory;
 use values::RcValue;
+use vm::VM;
 
 use std::io;
 use std::io::Read;
@@ -13,20 +11,14 @@ use std::fs::File;
 use std::path::Path;
 
 pub struct Runtime {
-    env: CellEnv,
-    memory: Memory,
+    vm: VM,
 }
 
 impl Runtime {
     pub fn new() -> Runtime {
-        let mut runtime = Runtime {
-            env: CellEnv::new(),
-            memory: Memory::new(),
-        };
-
-        runtime.init_primitives();
-
-        runtime
+        Runtime {
+            vm: VM::new(),
+        }
     }
 
     pub fn parse_str(&self, input: &str) -> Result<Vec<AST>, Error> {
@@ -38,7 +30,9 @@ impl Runtime {
 
         let mut evalued_exprs = Vec::new();
         for expr in exprs.iter() {
-            let evalued_expr = try!(eval(expr, self.env.clone(), &mut self.memory));
+            let bytecode = try!(compile_single(expr));
+            for instr in bytecode.iter() { println!("{:?}", instr); }
+            let evalued_expr = try!(self.vm.execute(bytecode.iter()));
             evalued_exprs.push(evalued_expr);
         }
 
@@ -54,7 +48,7 @@ impl Runtime {
     }
 
     pub fn dump_heap(&self) {
-        self.memory.dump();
+        self.vm.memory.dump();
     }
 
     fn open_file(path: &Path) -> Result<File, Error> {
@@ -68,13 +62,6 @@ impl Runtime {
                 let str_path = path.display().to_string();
                 Err(Error::LoadError(str_path))
             }
-        }
-    }
-
-    fn init_primitives(&mut self) {
-        for name in primitives::PRIMITIVES.iter() {
-            let primitive = self.memory.primitive(name.to_string());
-            self.env.set(name.to_string(), primitive);
         }
     }
 }
