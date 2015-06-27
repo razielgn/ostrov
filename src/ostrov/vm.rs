@@ -5,12 +5,29 @@ use instructions::Instruction;
 use memory::Memory;
 use primitives;
 use values::{RcValue, Value};
+use std::collections::LinkedList;
+
+pub type Rib = Vec<RcValue>;
+pub type Stack = LinkedList<Frame>;
+
+struct Frame {
+    rib: Rib,
+}
+
+impl Frame {
+    pub fn from(rib: &Rib) -> Frame {
+        Frame {
+            rib: rib.clone(),
+        }
+    }
+}
 
 pub struct VM {
     pub acc: RcValue,
     pub memory: Memory,
+    pub rib: Rib,
     pub env: CellEnv,
-    pub rib: Vec<RcValue>,
+    pub stack: Stack,
 }
 
 impl VM {
@@ -20,6 +37,7 @@ impl VM {
         let mut vm = VM {
             acc: memory.unspecified(),
             memory: memory,
+            stack: LinkedList::new(),
             rib: Vec::new(),
             env: CellEnv::new(),
         };
@@ -52,6 +70,8 @@ impl VM {
                             try!(self.apply()),
                         &Instruction::Argument =>
                             self.argument(),
+                        &Instruction::Frame =>
+                            self.push_frame(),
                     },
                 None =>
                     break,
@@ -93,6 +113,23 @@ impl VM {
         self.acc = self.memory.unspecified();
     }
 
+    fn push_frame(&mut self) {
+        self.stack.push_back(Frame::from(&self.rib));
+        self.rib = Vec::new();
+    }
+
+    fn pop_frame(&mut self) -> Result<(), Error> {
+        let frame = try!(
+            self.stack
+                .pop_back()
+                .ok_or(Error::CannotPopLastFrame)
+        );
+
+        self.rib = frame.rib;
+
+        Ok(())
+    }
+
     fn apply(&mut self) -> Result<(), Error> {
         match *self.acc.clone() {
             Value::PrimitiveFn(ref name) => {
@@ -100,7 +137,7 @@ impl VM {
                     primitives::apply(name, &self.rib, &mut self.memory)
                 );
 
-                self.rib.clear();
+                try!(self.pop_frame());
 
                 Ok(self.acc = result)
             }

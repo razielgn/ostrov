@@ -121,3 +121,4 @@ pub fn wrong_argument_type(val: RcValue) -> Error { Error::WrongArgumentType(val
 pub fn bad_arity(val: &str) -> Error { Error::BadArity(Some(val.to_string())) }
 pub fn bad_arity_lambda() -> Error { Error::BadArity(None) }
 pub fn malformed_expr() -> Error { Error::MalformedExpression }
+pub fn cannot_pop_last_frame() -> Error { Error::CannotPopLastFrame }

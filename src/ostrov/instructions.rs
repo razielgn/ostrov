@@ -5,6 +5,7 @@ pub enum Instruction {
     Apply,
     Argument,
     Assignment { reference: String },
+    Frame,
     LoadConstant { value: AST },
     LoadReference { reference: String },
     LoadUnspecified,
@@ -25,6 +26,10 @@ impl Instruction {
         Instruction::Assignment {
             reference: reference,
         }
+    }
+
+    pub fn frame() -> Instruction {
+        Instruction::Frame
     }
 
     pub fn load_constant(value: AST) -> Instruction {

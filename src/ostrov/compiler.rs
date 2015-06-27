@@ -107,6 +107,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
 
 fn emit_apply(fun: &String, args: &[AST]) -> Result<Bytecode, Error> {
     let mut instructions = LinkedList::new();
+    instructions.push_back(Instruction::frame());
 
     for arg in args {
         instructions.append(&mut try!(compile_single(arg)));

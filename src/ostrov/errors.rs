@@ -13,4 +13,5 @@ pub enum Error {
     UnappliableValue(RcValue),
     UnboundVariable(String),
     WrongArgumentType(RcValue),
+    CannotPopLastFrame,
 }

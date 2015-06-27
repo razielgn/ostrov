@@ -120,6 +120,7 @@ fn variable_assignment() {
 fn function_application() {
     assert_eq!(
         vec!(
+            Instruction::frame(),
             Instruction::load_reference("+".to_string()),
             Instruction::apply(),
         ),
@@ -128,6 +129,7 @@ fn function_application() {
 
     assert_eq!(
         vec!(
+            Instruction::frame(),
             Instruction::load_constant(integer(1)),
             Instruction::argument(),
             Instruction::load_constant(integer(2)),
@@ -138,5 +140,30 @@ fn function_application() {
             Instruction::apply(),
         ),
         parse_and_compile("(+ 1 2 3)")
+    );
+
+    assert_eq!(
+        vec!(
+            Instruction::frame(),
+            Instruction::frame(),
+            Instruction::load_constant(integer(1)),
+            Instruction::argument(),
+            Instruction::load_constant(integer(2)),
+            Instruction::argument(),
+            Instruction::load_reference("+".to_string()),
+            Instruction::apply(),
+            Instruction::argument(),
+            Instruction::frame(),
+            Instruction::load_constant(integer(4)),
+            Instruction::argument(),
+            Instruction::load_constant(integer(3)),
+            Instruction::argument(),
+            Instruction::load_reference("-".to_string()),
+            Instruction::apply(),
+            Instruction::argument(),
+            Instruction::load_reference("+".to_string()),
+            Instruction::apply(),
+        ),
+        parse_and_compile("(+ (+ 1 2) (- 4 3))")
     );
 }

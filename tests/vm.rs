@@ -151,6 +151,7 @@ fn execute_load_unspecified() {
 fn execute_apply() {
     let mut vm = VM::new();
     let instr = &[
+        Instruction::frame(),
         Instruction::load_reference("+".to_string()),
         Instruction::apply(),
     ];
@@ -165,6 +166,7 @@ fn execute_apply() {
 fn execute_argument() {
     let mut vm = VM::new();
     let instr = &[
+        Instruction::frame(),
         Instruction::load_constant(integer(2)),
         Instruction::argument(),
         Instruction::load_reference("+".to_string()),
@@ -173,6 +175,51 @@ fn execute_argument() {
 
     assert_eq!(
         Ok(vm.memory.integer(2)),
+        vm.execute(instr.iter())
+    );
+}
+
+#[test]
+fn execute_nested_arguments() {
+    let mut vm = VM::new();
+    let instr = &[
+        Instruction::frame(),
+        Instruction::frame(),
+        Instruction::load_constant(integer(1)),
+        Instruction::argument(),
+        Instruction::load_constant(integer(2)),
+        Instruction::argument(),
+        Instruction::load_reference("+".to_string()),
+        Instruction::apply(),
+        Instruction::argument(),
+        Instruction::frame(),
+        Instruction::load_constant(integer(4)),
+        Instruction::argument(),
+        Instruction::load_constant(integer(3)),
+        Instruction::argument(),
+        Instruction::load_reference("-".to_string()),
+        Instruction::apply(),
+        Instruction::argument(),
+        Instruction::load_reference("+".to_string()),
+        Instruction::apply(),
+    ];
+
+    assert_eq!(
+        Ok(vm.memory.integer(4)),
+        vm.execute(instr.iter())
+    );
+}
+
+#[test]
+fn illegal_frame_apply() {
+    let mut vm = VM::new();
+    let instr = &[
+        Instruction::load_reference("+".to_string()),
+        Instruction::apply(),
+    ];
+
+    assert_eq!(
+        Err(cannot_pop_last_frame()),
         vm.execute(instr.iter())
     );
 }
