@@ -89,6 +89,37 @@ fn execute_jump_on_false() {
 }
 
 #[test]
+fn execute_jump_on_true() {
+    {
+        let mut vm = VM::new();
+        let instr = &[
+            Instruction::load_constant(bool(false)),
+            Instruction::jump_on_true(1),
+            Instruction::load_constant(integer(23)),
+        ];
+
+        assert_eq!(
+            Ok(vm.memory.integer(23)),
+            vm.execute(instr.iter())
+        );
+    }
+
+    {
+        let mut vm = VM::new();
+        let instr = &[
+            Instruction::load_constant(bool(true)),
+            Instruction::jump_on_true(1),
+            Instruction::load_constant(integer(23)),
+        ];
+
+        assert_eq!(
+            Ok(vm.memory.b_true()),
+            vm.execute(instr.iter())
+        );
+    }
+}
+
+#[test]
 fn execute_load_reference() {
     {
         let mut vm = VM::new();

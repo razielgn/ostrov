@@ -10,6 +10,7 @@ pub enum Instruction {
     LoadReference { reference: String },
     LoadUnspecified,
     JumpOnFalse { offset: usize },
+    JumpOnTrue { offset: usize },
     Jump { offset: usize },
 }
 
@@ -50,6 +51,12 @@ impl Instruction {
 
     pub fn jump_on_false(offset: usize) -> Instruction {
         Instruction::JumpOnFalse {
+            offset: offset,
+        }
+    }
+
+    pub fn jump_on_true(offset: usize) -> Instruction {
+        Instruction::JumpOnTrue {
             offset: offset,
         }
     }

@@ -60,6 +60,8 @@ impl VM {
                             VM::jump(&mut instructions, offset),
                         &Instruction::JumpOnFalse { offset } =>
                             self.jump_on_false(&mut instructions, offset),
+                        &Instruction::JumpOnTrue { offset } =>
+                            self.jump_on_true(&mut instructions, offset),
                         &Instruction::LoadReference { ref reference } =>
                             try!(self.load_reference(reference)),
                         &Instruction::Assignment { ref reference } =>
@@ -87,6 +89,12 @@ impl VM {
 
     fn jump_on_false<I>(&mut self, iter: &mut I, times: usize) where I: Iterator {
         if self.acc == self.memory.b_false() {
+            VM::jump(iter, times);
+        }
+    }
+
+    fn jump_on_true<I>(&mut self, iter: &mut I, times: usize) where I: Iterator {
+        if self.acc != self.memory.b_false() {
             VM::jump(iter, times);
         }
     }
