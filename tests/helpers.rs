@@ -43,6 +43,15 @@ pub fn assert_eval_val(input: &str, expected: RcValue) {
     }
 }
 
+pub fn assert_eval_vm_val(input: &str, expected: RcValue) {
+    let mut runtime = RuntimeVM::new();
+
+    match runtime.eval_str(input) {
+        Ok(exprs)  => assert_eq!(expected, *exprs.iter().last().unwrap()),
+        Err(error) => panic_expected(input, &expected, &error),
+    }
+}
+
 pub fn assert_eval_err(input: &str, expected: Error) {
     let mut runtime = Runtime::new();
 

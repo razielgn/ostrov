@@ -15,12 +15,15 @@ fn parse_and_compile(input: &str) -> Vec<Instruction> {
 }
 
 #[test]
-fn constants_values() {
+fn constants_values_one_integer() {
     assert_eq!(
         vec!(Instruction::load_constant(integer(1))),
         parse_and_compile("1")
     );
+}
 
+#[test]
+fn constants_values_two_integers() {
     assert_eq!(
         vec!(
             Instruction::load_constant(integer(1)),
@@ -28,7 +31,10 @@ fn constants_values() {
         ),
         parse_and_compile("1 2")
     );
+}
 
+#[test]
+fn constants_values_boolean() {
     assert_eq!(
         vec!(
             Instruction::load_constant(bool(true))
@@ -38,7 +44,21 @@ fn constants_values() {
 }
 
 #[test]
-fn if_() {
+fn if_one_arg() {
+    assert_eq!(
+        vec!(
+            Instruction::load_constant(bool(true)),
+            Instruction::jump_on_false(2),
+            Instruction::load_constant(integer(1)),
+            Instruction::jump(1),
+            Instruction::load_unspecified(),
+        ),
+        parse_and_compile("(if #t 1)")
+    );
+}
+
+#[test]
+fn if_two_args() {
     assert_eq!(
         vec!(
             Instruction::load_constant(bool(true)),

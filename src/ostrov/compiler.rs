@@ -49,6 +49,10 @@ fn emit_reference(atom: &String) -> Result<Bytecode, Error> {
 }
 
 fn emit_application(list: &Vec<AST>) -> Result<Bytecode, Error> {
+    if list.is_empty() {
+        return Err(Error::MalformedExpression);
+    }
+
     let ref fun = list[0];
 
     if let &AST::Atom(ref fun) = fun {
@@ -67,16 +71,27 @@ fn emit_application(list: &Vec<AST>) -> Result<Bytecode, Error> {
 }
 
 fn emit_if(args: &[AST]) -> Result<Bytecode, Error> {
-    let mut condition = try!(compile_single(&args[0]));
-    let mut then      = try!(compile_single(&args[1]));
-    let mut else_     = try!(compile_single(&args[2]));
+    if args.len() < 2 || args.len() > 3 {
+        return Err(Error::BadArity(Some("if".to_owned())));
+    }
 
     let mut instructions = LinkedList::new();
-    instructions.append(&mut condition);
+
+    instructions.append(&mut try!(compile_single(&args[0])));
+
+    let mut then = try!(compile_single(&args[1]));
     instructions.push_back(Instruction::jump_on_false(then.len() + 1));
     instructions.append(&mut then);
-    instructions.push_back(Instruction::jump(else_.len()));
-    instructions.append(&mut else_);
+
+    if args.len() == 3 {
+        let mut else_ = try!(compile_single(&args[2]));
+        instructions.push_back(Instruction::jump(else_.len()));
+        instructions.append(&mut else_);
+    } else {
+        instructions.push_back(Instruction::jump(1usize));
+        instructions.push_back(Instruction::load_unspecified());
+    }
+
     Ok(instructions)
 }
 
