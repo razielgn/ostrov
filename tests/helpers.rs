@@ -135,6 +135,7 @@ pub mod values {
 }
 
 pub fn unbound_variable_error(val: &str) -> Error { Error::UnboundVariable(val.to_string()) }
+pub fn unappliable_value_error(val: RcValue) -> Error { Error::UnappliableValue(val) }
 pub fn wrong_argument_type(val: RcValue) -> Error { Error::WrongArgumentType(val) }
 pub fn bad_arity(val: &str) -> Error { Error::BadArity(Some(val.to_string())) }
 pub fn bad_arity_lambda() -> Error { Error::BadArity(None) }

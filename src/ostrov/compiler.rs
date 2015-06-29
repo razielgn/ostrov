@@ -51,24 +51,25 @@ fn emit_application(list: &Vec<AST>) -> Result<Bytecode, Error> {
         return Err(Error::MalformedExpression);
     }
 
-    let ref fun = list[0];
+    let head = &list[0];
+    let tail = &list[1..];
 
-    if let &AST::Atom(ref fun) = fun {
-        let args = &list[1..];
+    if let &AST::Atom(ref special_form) = head {
+        let args = tail;
 
-        match &**fun {
-            "if"     => emit_if(args),
-            "and"    => emit_and(args),
-            "or"     => emit_or(args),
-            "quote"  => emit_constant(&args[0]),
-            "set!"   => emit_set(args),
-            "define" => emit_define(args),
-            "lambda" => emit_lambda(args),
-            _        => emit_apply(fun, args),
+        match special_form.as_ref() {
+            "if"     => return emit_if(args),
+            "and"    => return emit_and(args),
+            "or"     => return emit_or(args),
+            "quote"  => return emit_constant(&args[0]),
+            "set!"   => return emit_set(args),
+            "define" => return emit_define(args),
+            "lambda" => return emit_lambda(args),
+            _        => (),
         }
-    } else {
-        Err(Error::MalformedExpression)
     }
+
+    emit_apply(head, tail)
 }
 
 fn emit_if(args: &[AST]) -> Result<Bytecode, Error> {
@@ -181,7 +182,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
     }
 }
 
-fn emit_apply(fun: &String, args: &[AST]) -> Result<Bytecode, Error> {
+fn emit_apply(head: &AST, args: &[AST]) -> Result<Bytecode, Error> {
     let mut instructions = LinkedList::new();
     instructions.push_back(Instruction::frame());
 
@@ -190,7 +191,7 @@ fn emit_apply(fun: &String, args: &[AST]) -> Result<Bytecode, Error> {
         instructions.push_back(Instruction::argument());
     }
 
-    instructions.append(&mut try!(emit_reference(fun)));
+    instructions.append(&mut try!(compile_single(head)));
     instructions.push_back(Instruction::apply());
     Ok(instructions)
 }

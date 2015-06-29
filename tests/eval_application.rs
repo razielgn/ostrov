@@ -1,8 +1,9 @@
 use helpers::*;
+use helpers::values::*;
 
 #[test]
 fn integers() {
-    assert_eval_vm_err("(0 1 2)", malformed_expr());
+    assert_eval_vm_err("(0 1 2)", unappliable_value_error(integer(0)));
 }
 
 #[test]
@@ -12,7 +13,7 @@ fn dotted_lists() {
 
 #[test]
 fn booleans() {
-    assert_eval_vm_err("(#t #f #t)", malformed_expr());
+    assert_eval_vm_err("(#t #f #t)", unappliable_value_error(bool(true)));
 }
 
 #[test]
@@ -22,7 +23,7 @@ fn atoms() {
 
 #[test]
 fn lists() {
-    assert_eval_vm_err("('(1))", malformed_expr());
+    assert_eval_vm_err("('(1))", unappliable_value_error(pair(integer(1), nil())));
 }
 
 #[test]
@@ -95,8 +96,8 @@ fn lambda_multiple_expressions_are_evaluated_sequentially() {
 
 #[test]
 fn lambda_with_fixed_arguments_number() {
-    assert_eval("((lambda () 1))", "1");
-    assert_eval("((lambda (x y) (+ x y)) 6 8)", "14");
+    assert_eval_vm("((lambda () 1))", "1");
+    assert_eval_vm("((lambda (x y) (+ x y)) 6 8)", "14");
 }
 
 #[test]

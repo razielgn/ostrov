@@ -3,7 +3,7 @@ use std::collections::LinkedList;
 
 pub type Bytecode = LinkedList<Instruction>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Instruction {
     Apply,
     Argument,

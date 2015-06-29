@@ -1,11 +1,12 @@
 use ast::AST;
 use env::CellEnv;
 use errors::Error;
-use instructions::Instruction;
+use instructions::{Instruction, Bytecode};
 use memory::Memory;
 use primitives;
 use values::{RcValue, Value};
 use std::collections::LinkedList;
+use std::rc::Rc;
 
 pub type Rib = Vec<RcValue>;
 pub type Stack = LinkedList<Frame>;
@@ -75,7 +76,7 @@ impl VM {
                         &Instruction::Frame =>
                             self.push_frame(),
                         &Instruction::Close { ref args, ref body } =>
-                            (),
+                            self.push_closure(args, body),
                     },
                 None =>
                     break,
@@ -151,9 +152,16 @@ impl VM {
 
                 Ok(self.acc = result)
             }
+            Value::Closure(ref args, ref body) => {
+                Ok(())
+            }
             _ =>
                 return Err(Error::UnappliableValue(self.acc.clone()))
         }
+    }
+
+    fn push_closure(&mut self, args: &Vec<String>, body: &Bytecode) {
+        self.acc = Rc::new(Value::Closure(args.clone(), body.clone()));
     }
 
     fn argument(&mut self) {

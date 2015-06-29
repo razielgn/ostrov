@@ -1,6 +1,7 @@
 use ast::AST;
 use env::CellEnv;
 use memory::Memory;
+use instructions::Bytecode;
 
 use std::fmt::Error;
 use std::fmt::Formatter;
@@ -18,6 +19,7 @@ pub enum Value {
     Unspecified,
     Pair(RcValue, RcValue),
     Fn(Option<String>, ArgumentsType, Vec<String>, CellEnv, Vec<AST>),
+    Closure(Vec<String>, Bytecode),
     PrimitiveFn(String),
     Integer(i64),
 }
@@ -160,6 +162,8 @@ impl Display for Value {
                 write!(f, "{}", i),
             &Value::PrimitiveFn(ref name) =>
                 fmt_primitive(name, f),
+            &Value::Closure(..) =>
+                write!(f, "<closure>"),
         }
     }
 }
@@ -174,7 +178,8 @@ impl Debug for Value {
             &Value::Nil(..)         => "Nil",
             &Value::Unspecified     => "Unspecified",
             &Value::Pair(..)        => "Pair",
-            &Value::PrimitiveFn(..) => "PrimitiveFn"
+            &Value::PrimitiveFn(..) => "PrimitiveFn",
+            &Value::Closure(..)     => "Closure",
         };
 
         write!(f, "{}({})", t, self)
@@ -200,6 +205,8 @@ impl PartialEq for Value {
                 if let &Value::Pair(ref left2, ref right2) = other { (left, right) == (left2, right2) } else { false },
             &Value::PrimitiveFn(ref a) =>
                 if let &Value::PrimitiveFn(ref b) = other { a == b } else { false },
+            &Value::Closure(..) =>
+                false,
         }
     }
 }
