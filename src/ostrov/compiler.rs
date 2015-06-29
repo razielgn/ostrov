@@ -61,6 +61,7 @@ fn emit_application(list: &Vec<AST>) -> Result<Bytecode, Error> {
         match &**fun {
             "if"     => emit_if(args),
             "and"    => emit_and(args),
+            "or"     => emit_or(args),
             "quote"  => emit_constant(&args[0]),
             "set!"   => emit_set(args),
             "define" => emit_define(args),
@@ -97,10 +98,20 @@ fn emit_if(args: &[AST]) -> Result<Bytecode, Error> {
 }
 
 fn emit_and(args: &[AST]) -> Result<Bytecode, Error> {
+    emit_logical_op(args, true, Instruction::jump_on_false)
+}
+
+fn emit_or(args: &[AST]) -> Result<Bytecode, Error> {
+    emit_logical_op(args, false, Instruction::jump_on_true)
+}
+
+fn emit_logical_op<F>(args: &[AST], default: bool, instruction: F) -> Result<Bytecode, Error>
+    where F: Fn(usize) -> Instruction
+{
     let mut instructions = LinkedList::new();
 
     if args.len() == 0 {
-        instructions.push_back(Instruction::load_constant(AST::Bool(true)));
+        instructions.push_back(Instruction::load_constant(AST::Bool(default)));
     } else {
         let mut compiled_args = Vec::with_capacity(args.len());
         let mut sizes = Vec::with_capacity(args.len());
@@ -128,7 +139,7 @@ fn emit_and(args: &[AST]) -> Result<Bytecode, Error> {
 
         for (mut compiled_arg, jump) in compiled_args.into_iter().zip(jumps.into_iter()) {
             instructions.append(&mut compiled_arg);
-            instructions.push_back(Instruction::jump_on_false(jump));
+            instructions.push_back(instruction(jump));
         }
         instructions.pop_back();
     }

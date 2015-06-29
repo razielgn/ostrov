@@ -12,10 +12,10 @@ fn and() {
 
 #[test]
 fn or() {
-    assert_eval("(or)", "#f");
-    assert_eval("(or (+ 2 3))", "5");
-    assert_eval("(or #f 2)", "2");
-    assert_eval("(or 1 a)", "1");
+    assert_eval_vm("(or)", "#f");
+    assert_eval_vm("(or (+ 2 3))", "5");
+    assert_eval_vm("(or #f 2)", "2");
+    assert_eval_vm("(or 1 a)", "1");
 }
 
 #[test]

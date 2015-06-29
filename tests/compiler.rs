@@ -124,6 +124,40 @@ fn and() {
 }
 
 #[test]
+fn or() {
+    assert_eq!(
+        vec!(
+            Instruction::load_constant(bool(false)),
+        ),
+        parse_and_compile("(or)")
+    );
+
+    assert_eq!(
+        vec!(
+            Instruction::load_constant(integer(1)),
+        ),
+        parse_and_compile("(or 1)")
+    );
+
+    assert_eq!(
+        vec!(
+            Instruction::frame(),
+            Instruction::load_reference("+".to_owned()),
+            Instruction::apply(),
+            Instruction::jump_on_true(7),
+            Instruction::load_constant(bool(true)),
+            Instruction::jump_on_true(5),
+            Instruction::frame(),
+            Instruction::load_reference("+".to_owned()),
+            Instruction::apply(),
+            Instruction::jump_on_true(1),
+            Instruction::load_constant(bool(false)),
+        ),
+        parse_and_compile("(or (+) #t (+) #f)")
+    );
+}
+
+#[test]
 fn quote() {
     assert_eq!(
         vec!(
