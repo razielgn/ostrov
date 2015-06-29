@@ -185,7 +185,7 @@ fn variable_referencing() {
 }
 
 #[test]
-fn variable_assignment() {
+fn set_bang() {
     assert_eq!(
         vec!(
             Instruction::load_reference("x".to_string()),
@@ -194,13 +194,27 @@ fn variable_assignment() {
         ),
         parse_and_compile("(set! x 23)")
     );
+}
 
+#[test]
+fn define_with_nothing() {
     assert_eq!(
         vec!(
             Instruction::load_unspecified(),
             Instruction::assignment("x".to_string()),
         ),
         parse_and_compile("(define x)")
+    );
+}
+
+#[test]
+fn define_with_constant() {
+    assert_eq!(
+        vec!(
+            Instruction::load_constant(integer(25)),
+            Instruction::assignment("x".to_string()),
+        ),
+        parse_and_compile("(define x 25)")
     );
 }
 

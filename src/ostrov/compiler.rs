@@ -162,9 +162,19 @@ fn emit_set(args: &[AST]) -> Result<Bytecode, Error> {
 }
 
 fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
+    if args.is_empty() {
+        return Err(Error::MalformedExpression);
+    }
+
     if let AST::Atom(ref name) = args[0] {
         let mut instructions = LinkedList::new();
-        instructions.push_back(Instruction::load_unspecified());
+
+        if args.len() == 2 {
+            instructions.append(&mut try!(compile_single(&args[1])));
+        } else {
+            instructions.push_back(Instruction::load_unspecified());
+        }
+
         instructions.push_back(Instruction::assignment(name.clone()));
         Ok(instructions)
     } else {
