@@ -103,14 +103,6 @@ pub mod values {
     pub fn pair(left: RcValue, right: RcValue) -> RcValue {
         Rc::new(Value::Pair(left, right))
     }
-    pub fn list(values: Vec<RcValue>) -> RcValue {
-        values
-            .iter()
-            .rev()
-            .fold(Rc::new(Value::Nil), |cdr, car| {
-                Rc::new(Value::Pair(car.clone(), cdr))
-            })
-    }
     pub fn nil() -> RcValue { Rc::new(Value::Nil) }
     pub fn unspecified() -> RcValue { Rc::new(Value::Unspecified) }
     pub fn bool(val: bool) -> RcValue { Rc::new(Value::Bool(val)) }
@@ -143,8 +135,6 @@ pub mod values {
 }
 
 pub fn unbound_variable_error(val: &str) -> Error { Error::UnboundVariable(val.to_string()) }
-pub fn unappliable_value_error(val: RcValue) -> Error { Error::UnappliableValue(val) }
-pub fn irreducible_value(val: AST) -> Error { Error::IrreducibleValue(val) }
 pub fn wrong_argument_type(val: RcValue) -> Error { Error::WrongArgumentType(val) }
 pub fn bad_arity(val: &str) -> Error { Error::BadArity(Some(val.to_string())) }
 pub fn bad_arity_lambda() -> Error { Error::BadArity(None) }
