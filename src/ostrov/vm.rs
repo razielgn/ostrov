@@ -74,6 +74,8 @@ impl VM {
                             self.argument(),
                         &Instruction::Frame =>
                             self.push_frame(),
+                        &Instruction::Close { ref args, ref body } =>
+                            (),
                     },
                 None =>
                     break,

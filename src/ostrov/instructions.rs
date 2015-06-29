@@ -1,10 +1,14 @@
 use ast::AST;
+use std::collections::LinkedList;
+
+pub type Bytecode = LinkedList<Instruction>;
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
     Apply,
     Argument,
     Assignment { reference: String },
+    Close { args: Vec<String>, body: Bytecode },
     Frame,
     LoadConstant { value: AST },
     LoadReference { reference: String },
@@ -26,6 +30,13 @@ impl Instruction {
     pub fn assignment(reference: String) -> Instruction {
         Instruction::Assignment {
             reference: reference,
+        }
+    }
+
+    pub fn close(args: Vec<String>, body: Bytecode) -> Instruction {
+        Instruction::Close {
+            args: args,
+            body: body,
         }
     }
 

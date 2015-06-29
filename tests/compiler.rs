@@ -1,5 +1,5 @@
 use ostrov::compiler::compile;
-use ostrov::instructions::Instruction;
+use ostrov::instructions::{Instruction, Bytecode};
 use ostrov::parser::parse;
 use helpers::ast::*;
 
@@ -12,6 +12,10 @@ fn parse_and_compile(input: &str) -> Vec<Instruction> {
             unwrap().
             into_iter()
     )
+}
+
+fn bytecode(input: Vec<Instruction>) -> Bytecode {
+    FromIterator::from_iter(input.into_iter())
 }
 
 #[test]
@@ -215,6 +219,25 @@ fn define_with_constant() {
             Instruction::assignment("x".to_string()),
         ),
         parse_and_compile("(define x 25)")
+    );
+}
+
+#[test]
+fn lambda() {
+    assert_eq!(
+        vec!(
+            Instruction::close(
+                vec!(
+                    "x".to_string(),
+                    "y".to_string(),
+                    "z".to_string(),
+                ),
+                bytecode(vec!(
+                    Instruction::load_reference("x".to_string()),
+                )),
+            ),
+        ),
+        parse_and_compile("(lambda (x y z) x)")
     );
 }
 

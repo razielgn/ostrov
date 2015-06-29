@@ -1,9 +1,7 @@
-use instructions::Instruction;
+use instructions::{Instruction, Bytecode};
 use ast::AST;
 use errors::Error;
 use std::collections::LinkedList;
-
-pub type Bytecode = LinkedList<Instruction>;
 
 pub fn compile(ast: &Vec<AST>) -> Result<Bytecode, Error> {
     let mut instructions = LinkedList::new();
@@ -65,6 +63,7 @@ fn emit_application(list: &Vec<AST>) -> Result<Bytecode, Error> {
             "quote"  => emit_constant(&args[0]),
             "set!"   => emit_set(args),
             "define" => emit_define(args),
+            "lambda" => emit_lambda(args),
             _        => emit_apply(fun, args),
         }
     } else {
@@ -194,4 +193,31 @@ fn emit_apply(fun: &String, args: &[AST]) -> Result<Bytecode, Error> {
     instructions.append(&mut try!(emit_reference(fun)));
     instructions.push_back(Instruction::apply());
     Ok(instructions)
+}
+
+fn emit_lambda(args_: &[AST]) -> Result<Bytecode, Error> {
+    let args = try!(list_of_atoms(&args_[0]));
+    let compiled_body = try!(compile_single(&args_[1]));
+
+    let mut instructions = LinkedList::new();
+    instructions.push_back(Instruction::close(args, compiled_body));
+    Ok(instructions)
+}
+
+fn list_of_atoms(ast: &AST) -> Result<Vec<String>, Error> {
+    if let AST::List(ref list) = *ast {
+        let mut atoms = Vec::with_capacity(list.len());
+
+        for atom in list {
+            if let AST::Atom(ref atom) = *atom {
+                atoms.push(atom.clone());
+            } else {
+                return Err(Error::MalformedExpression);
+            }
+        }
+
+        Ok(atoms)
+    } else {
+        Err(Error::MalformedExpression)
+    }
 }
