@@ -3,28 +3,27 @@ use helpers::values::*;
 
 #[test]
 fn integers() {
-    assert_eval_err("(0 1 2)", unappliable_value_error(integer(0)));
+    assert_eval_vm_err("(0 1 2)", malformed_expr());
 }
 
 #[test]
 fn dotted_lists() {
-    assert_eval_err("(1 . 2)", irreducible_value(ast::dotted_list(vec!(ast::integer(1)), ast::integer(2))));
+    assert_eval_vm_err("(1 . 2)", malformed_expr());
 }
 
 #[test]
 fn booleans() {
-    assert_eval_err("(#t #f #t)", unappliable_value_error(bool(true)));
+    assert_eval_vm_err("(#t #f #t)", malformed_expr());
 }
 
 #[test]
 fn atoms() {
-    assert_eval_err("(a b c)", unbound_variable_error("a"));
+    assert_eval_vm_err("(a b c)", unbound_variable_error("b"));
 }
 
 #[test]
 fn lists() {
-    assert_eval_err("('(1))", unappliable_value_error(list(vec!(atom("quote"),
-                                                                list(vec!(integer(1)))))));
+    assert_eval_vm_err("('(1))", malformed_expr());
 }
 
 #[test]
