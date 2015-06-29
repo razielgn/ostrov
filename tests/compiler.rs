@@ -90,6 +90,40 @@ fn if_two_args() {
 }
 
 #[test]
+fn and() {
+    assert_eq!(
+        vec!(
+            Instruction::load_constant(bool(true)),
+        ),
+        parse_and_compile("(and)")
+    );
+
+    assert_eq!(
+        vec!(
+            Instruction::load_constant(integer(1)),
+        ),
+        parse_and_compile("(and 1)")
+    );
+
+    assert_eq!(
+        vec!(
+            Instruction::frame(),
+            Instruction::load_reference("+".to_owned()),
+            Instruction::apply(),
+            Instruction::jump_on_false(7),
+            Instruction::load_constant(bool(true)),
+            Instruction::jump_on_false(5),
+            Instruction::frame(),
+            Instruction::load_reference("+".to_owned()),
+            Instruction::apply(),
+            Instruction::jump_on_false(1),
+            Instruction::load_constant(bool(false)),
+        ),
+        parse_and_compile("(and (+) #t (+) #f)")
+    );
+}
+
+#[test]
 fn quote() {
     assert_eq!(
         vec!(

@@ -11,7 +11,7 @@ fn if_with_one_arg() {
 fn if_with_two_args() {
     assert_eval_vm("(if #t (+ 1) a)", "1");
     assert_eval_vm("(if #f a (+ 1))", "1");
-    assert_eval("(if (and #t #f) a 1)", "1");
+    assert_eval_vm("(if (and #t #f) a 1)", "1");
 }
 
 #[test]

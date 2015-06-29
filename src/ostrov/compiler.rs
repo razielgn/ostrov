@@ -60,6 +60,7 @@ fn emit_application(list: &Vec<AST>) -> Result<Bytecode, Error> {
 
         match &**fun {
             "if"     => emit_if(args),
+            "and"    => emit_and(args),
             "quote"  => emit_constant(&args[0]),
             "set!"   => emit_set(args),
             "define" => emit_define(args),
@@ -90,6 +91,46 @@ fn emit_if(args: &[AST]) -> Result<Bytecode, Error> {
     } else {
         instructions.push_back(Instruction::jump(1usize));
         instructions.push_back(Instruction::load_unspecified());
+    }
+
+    Ok(instructions)
+}
+
+fn emit_and(args: &[AST]) -> Result<Bytecode, Error> {
+    let mut instructions = LinkedList::new();
+
+    if args.len() == 0 {
+        instructions.push_back(Instruction::load_constant(AST::Bool(true)));
+    } else {
+        let mut compiled_args = Vec::with_capacity(args.len());
+        let mut sizes = Vec::with_capacity(args.len());
+
+        for arg in args {
+            let compiled_single = try!(compile_single(arg));
+            sizes.push(compiled_single.len());
+            compiled_args.push(compiled_single);
+        }
+
+        sizes.reverse();
+
+        let mut jumps: Vec<usize> = sizes
+            .iter()
+            .enumerate()
+            .map(|(i, size)| {
+                let sum_of_previouses = sizes.iter().take(i).fold(0, |acc, n| acc + n);
+                size + sum_of_previouses + i
+            })
+            .rev()
+            .skip(1)
+            .collect();
+
+        jumps.push(0);
+
+        for (mut compiled_arg, jump) in compiled_args.into_iter().zip(jumps.into_iter()) {
+            instructions.append(&mut compiled_arg);
+            instructions.push_back(Instruction::jump_on_false(jump));
+        }
+        instructions.pop_back();
     }
 
     Ok(instructions)
