@@ -13,12 +13,14 @@ pub type Stack = LinkedList<Frame>;
 
 struct Frame {
     rib: Rib,
+    env: CellEnv,
 }
 
 impl Frame {
-    pub fn from(rib: &Rib) -> Frame {
+    pub fn new(rib: &Rib, env: &CellEnv) -> Frame {
         Frame {
             rib: rib.clone(),
+            env: env.clone(),
         }
     }
 }
@@ -125,7 +127,10 @@ impl VM {
     }
 
     fn push_frame(&mut self) {
-        self.stack.push_back(Frame::from(&self.rib));
+        self.stack.push_back(
+            Frame::new(&self.rib, &self.env)
+        );
+
         self.rib = Vec::new();
     }
 
@@ -137,6 +142,7 @@ impl VM {
         );
 
         self.rib = frame.rib;
+        self.env = frame.env;
 
         Ok(())
     }
