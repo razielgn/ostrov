@@ -3,15 +3,15 @@ use helpers::values::*;
 
 #[test]
 fn returns_expression() {
-    assert_eval_val("(define x 0)
-                     (set! x (+ x 1))", unspecified());
+    assert_eval_vm_val("(define x 0)
+                        (set! x (+ x 1))", unspecified());
 }
 
 #[test]
 fn overwrites_variables() {
-    assert_eval("(define x 0)
-                 (set! x (+ x 1))
-                 x", "1");
+    assert_eval_vm("(define x 0)
+                    (set! x (+ x 1))
+                    x", "1");
 }
 
 #[test]
@@ -38,17 +38,17 @@ fn overwrites_variables_in_captured_scopes() {
 
 #[test]
 fn malformed_variable_name() {
-    assert_eval_err("(set! 3 3)", wrong_argument_type(integer(3)));
+    assert_eval_vm_err("(set! 3 3)", malformed_expr());
 }
 
 #[test]
 fn unknown_variable() {
-    assert_eval_err("(set! x 3)", unbound_variable_error("x"));
+    assert_eval_vm_err("(set! x 3)", unbound_variable_error("x"));
 }
 
 #[test]
 fn wrong_arguments_number() {
-    assert_eval_err("(set!)", bad_arity("set!"));
-    assert_eval_err("(set! x)", bad_arity("set!"));
-    assert_eval_err("(set! x 2 3)", bad_arity("set!"));
+    assert_eval_vm_err("(set!)", bad_arity("set!"));
+    assert_eval_vm_err("(set! x)", bad_arity("set!"));
+    assert_eval_vm_err("(set! x 2 3)", bad_arity("set!"));
 }

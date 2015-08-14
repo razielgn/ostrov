@@ -148,6 +148,10 @@ fn emit_logical_op<F>(args: &[AST], default: bool, instruction: F) -> Result<Byt
 }
 
 fn emit_set(args: &[AST]) -> Result<Bytecode, Error> {
+    if args.len() != 2 {
+        return Err(Error::BadArity(Some("set!".to_owned())));
+    }
+
     let mut argument = try!(compile_single(&args[1]));
 
     if let AST::Atom(ref name) = args[0] {
