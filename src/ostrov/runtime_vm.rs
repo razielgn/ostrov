@@ -31,8 +31,9 @@ impl Runtime {
         let mut evalued_exprs = Vec::new();
         for expr in exprs.iter() {
             let bytecode = try!(compile_single(expr));
-            for instr in bytecode.iter() { println!("{:?}", instr); }
-            let evalued_expr = try!(self.vm.execute(bytecode.iter()));
+            //for (i, instr) in bytecode.iter().enumerate() { println!("{:?}: {:#?}", i, instr); }
+            //println!("");
+            let evalued_expr = try!(self.vm.execute(bytecode.into_iter()));
             evalued_exprs.push(evalued_expr);
         }
 

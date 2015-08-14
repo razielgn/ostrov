@@ -19,7 +19,7 @@ pub enum Value {
     Unspecified,
     Pair(RcValue, RcValue),
     Fn(Option<String>, ArgumentsType, Vec<String>, CellEnv, Vec<AST>),
-    Closure(Vec<String>, Bytecode),
+    Closure(ArgumentsType, Vec<String>, CellEnv, Bytecode),
     PrimitiveFn(String),
     Integer(i64),
 }

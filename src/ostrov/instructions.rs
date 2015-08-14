@@ -2,6 +2,7 @@ use ast::AST;
 use std::collections::LinkedList;
 
 pub type Bytecode = LinkedList<Instruction>;
+pub type PackedBytecode = Vec<Instruction>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Instruction {

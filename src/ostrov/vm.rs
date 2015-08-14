@@ -1,12 +1,13 @@
 use ast::AST;
 use env::CellEnv;
 use errors::Error;
-use instructions::{Instruction, Bytecode};
+use instructions::{Instruction, Bytecode, PackedBytecode};
 use memory::Memory;
 use primitives;
-use values::{RcValue, Value};
+use values::{RcValue, Value, ArgumentsType};
 use std::collections::LinkedList;
-use std::rc::Rc;
+use std::iter::FromIterator;
+use std::mem;
 
 pub type Rib = Vec<RcValue>;
 pub type Stack = LinkedList<Frame>;
@@ -31,6 +32,9 @@ pub struct VM {
     pub rib: Rib,
     pub env: CellEnv,
     pub stack: Stack,
+    instructions: PackedBytecode,
+    pc: usize,
+    code: Vec<(PackedBytecode, usize)>,
 }
 
 impl VM {
@@ -40,9 +44,12 @@ impl VM {
         let mut vm = VM {
             acc: memory.unspecified(),
             memory: memory,
-            stack: LinkedList::new(),
-            rib: Vec::new(),
+            stack: Default::default(),
+            rib: Default::default(),
             env: CellEnv::new(),
+            instructions: Default::default(),
+            pc: 0,
+            code: Default::default(),
         };
 
         vm.init_primitives();
@@ -50,80 +57,103 @@ impl VM {
         vm
     }
 
-    pub fn execute<'a, I>(&mut self, mut instructions: I) -> Result<RcValue, Error>
-        where I: Iterator<Item = &'a Instruction>
+    pub fn execute<'a, I>(&mut self, instructions: I) -> Result<RcValue, Error>
+        where I: Iterator<Item = Instruction>
     {
+        self.instructions = Vec::from_iter(instructions.into_iter());
+        self.pc = 0;
+
         loop {
-            match instructions.next() {
-                Some(instr) =>
+            match self.next_instruction() {
+                Some(instr) => {
+                    //println!("pc: {:?}, instr: {:?}", self.pc, instr);
                     match instr {
-                        &Instruction::LoadConstant { ref value } =>
+                        Instruction::LoadConstant { ref value } =>
                             self.load_constant(value),
-                        &Instruction::Jump { offset } =>
-                            VM::jump(&mut instructions, offset),
-                        &Instruction::JumpOnFalse { offset } =>
-                            self.jump_on_false(&mut instructions, offset),
-                        &Instruction::JumpOnTrue { offset } =>
-                            self.jump_on_true(&mut instructions, offset),
-                        &Instruction::LoadReference { ref reference } =>
+                        Instruction::Jump { offset } =>
+                            self.jump(offset),
+                        Instruction::JumpOnFalse { offset } =>
+                            self.jump_on_false(offset),
+                        Instruction::JumpOnTrue { offset } =>
+                            self.jump_on_true(offset),
+                        Instruction::LoadReference { ref reference } =>
                             try!(self.load_reference(reference)),
-                        &Instruction::Assignment { ref reference } =>
+                        Instruction::Assignment { ref reference } =>
                             self.assignment(reference),
-                        &Instruction::LoadUnspecified =>
+                        Instruction::LoadUnspecified =>
                             self.load_unspecified(),
-                        &Instruction::Apply =>
+                        Instruction::Apply =>
                             try!(self.apply()),
-                        &Instruction::Argument =>
+                        Instruction::Argument =>
                             self.argument(),
-                        &Instruction::Frame =>
+                        Instruction::Frame =>
                             self.push_frame(),
-                        &Instruction::Close { ref args, ref body } =>
+                        Instruction::Close { ref args, ref body } =>
                             self.push_closure(args, body),
-                    },
-                None =>
-                    break,
+                    }
+                }
+                None => {
+                    match self.pop_frame(true) {
+                        Ok(()) => (),
+                        Err(_) => break,
+                    }
+                }
             }
         }
 
         Ok(self.acc.clone())
     }
 
+    fn next_instruction(&self) -> Option<Instruction> {
+        self.instructions.get(self.pc).map(Clone::clone)
+    }
+
     fn load_constant(&mut self, ast: &AST) {
         self.acc = Value::from_ast(ast, &mut self.memory);
+        self.pc += 1;
     }
 
-    fn jump_on_false<I>(&mut self, iter: &mut I, times: usize) where I: Iterator {
+    fn jump_on_false(&mut self, times: usize) {
         if self.acc == self.memory.b_false() {
-            VM::jump(iter, times);
+            self.jump(times);
+        } else {
+            self.pc += 1;
         }
     }
 
-    fn jump_on_true<I>(&mut self, iter: &mut I, times: usize) where I: Iterator {
+    fn jump_on_true(&mut self, times: usize) {
         if self.acc != self.memory.b_false() {
-            VM::jump(iter, times);
+            self.jump(times);
+        } else {
+            self.pc += 1;
         }
     }
 
-    fn jump<I>(iter: &mut I, times: usize) where I: Iterator {
-        for _ in (0..times) {
-            iter.next();
-        }
+    fn jump(&mut self, times: usize) {
+        self.pc += times;
+        self.pc += 1;
     }
 
     fn load_reference(&mut self, reference: &String) -> Result<(), Error> {
         match self.env.get(reference) {
-            Some(value) => Ok(self.acc = value),
-            None        => Err(Error::UnboundVariable(reference.clone())),
+            Some(value) => {
+                self.acc = value;
+                self.pc += 1;
+                Ok(())
+            }
+            None => Err(Error::UnboundVariable(reference.clone())),
         }
     }
 
     fn assignment(&mut self, reference: &String) {
         self.env.set(reference.clone(), self.acc.clone());
         self.load_unspecified();
+        self.pc += 1;
     }
 
     fn load_unspecified(&mut self) {
         self.acc = self.memory.unspecified();
+        self.pc += 1;
     }
 
     fn push_frame(&mut self) {
@@ -132,9 +162,10 @@ impl VM {
         );
 
         self.rib = Vec::new();
+        self.pc += 1;
     }
 
-    fn pop_frame(&mut self) -> Result<(), Error> {
+    fn pop_frame(&mut self, a: bool) -> Result<(), Error> {
         let frame = try!(
             self.stack
                 .pop_back()
@@ -143,6 +174,17 @@ impl VM {
 
         self.rib = frame.rib;
         self.env = frame.env;
+
+        if a {
+            let (instr, pc) = try!(
+                self.code
+                    .pop()
+                    .ok_or(Error::CannotPopLastFrame)
+            );
+
+            self.instructions = instr;
+            self.pc = pc;
+        }
 
         Ok(())
     }
@@ -154,24 +196,56 @@ impl VM {
                     primitives::apply(name, &self.rib, &mut self.memory)
                 );
 
-                try!(self.pop_frame());
+                self.acc = result;
+                self.pc += 1;
 
-                Ok(self.acc = result)
-            }
-            Value::Closure(ref args, ref body) => {
+                try!(self.pop_frame(false));
+
                 Ok(())
             }
-            _ =>
+            Value::Closure(ref args_type, ref arg_names, ref closure, ref body) => {
+                let mut instructions = Vec::from_iter(body.clone().into_iter());
+                mem::swap(&mut self.instructions, &mut instructions);
+
+                self.code.push((instructions, self.pc + 1));
+                self.pc = 0;
+
+                self.env = CellEnv::wraps(closure.clone());
+
+                match *args_type {
+                    ArgumentsType::Fixed => {
+                        if arg_names.len() != self.rib.len() {
+                            return Err(Error::BadArity(Some("closure".to_owned())));
+                        }
+
+                        for (name, value) in arg_names.iter().zip(self.rib.iter()) {
+                            self.env.set(name.clone(), value.clone());
+                        }
+                    }
+                    _ => {}
+                }
+
+                Ok(())
+            }
+            _ => {
                 return Err(Error::UnappliableValue(self.acc.clone()))
+            }
         }
     }
 
     fn push_closure(&mut self, args: &Vec<String>, body: &Bytecode) {
-        self.acc = Rc::new(Value::Closure(args.clone(), body.clone()));
+        self.acc = self.memory.closure(
+            ArgumentsType::Fixed,
+            args.clone(),
+            self.env.clone(),
+            body.clone(),
+        );
+        self.pc += 1;
     }
 
     fn argument(&mut self) {
         self.rib.push(self.acc.clone());
+        self.pc += 1;
     }
 
     fn init_primitives(&mut self) {
