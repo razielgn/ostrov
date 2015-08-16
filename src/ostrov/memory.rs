@@ -1,4 +1,3 @@
-use ast::AST;
 use env::CellEnv;
 use values::{RcValue, Value, ArgumentsType};
 use instructions::Bytecode;
@@ -72,14 +71,14 @@ impl Memory {
         self.store(value)
     }
 
-    pub fn lambda(&mut self, name: Option<String>, args_type: ArgumentsType, args: Vec<String>, closure: CellEnv, body: Vec<AST>) -> RcValue {
-        let value = Value::Fn(name, args_type, args, closure, body);
-
-        self.store(value)
-    }
-
     pub fn closure(&mut self, args_type: ArgumentsType, args: Vec<String>, closure: CellEnv, bytecode: Bytecode) -> RcValue {
-        let value = Value::Closure(args_type, args, closure, bytecode);
+        let value = Value::Closure {
+            name: None,
+            args_type: args_type,
+            args: args,
+            closure: closure,
+            code: bytecode,
+        };
 
         self.store(value)
     }

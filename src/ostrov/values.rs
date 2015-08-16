@@ -18,8 +18,13 @@ pub enum Value {
     Nil,
     Unspecified,
     Pair(RcValue, RcValue),
-    Fn(Option<String>, ArgumentsType, Vec<String>, CellEnv, Vec<AST>),
-    Closure(ArgumentsType, Vec<String>, CellEnv, Bytecode),
+    Closure {
+        name: Option<String>,
+        args_type: ArgumentsType,
+        args: Vec<String>,
+        closure: CellEnv,
+        code: Bytecode,
+    },
     PrimitiveFn(String),
     Integer(i64),
 }
@@ -156,14 +161,12 @@ impl Display for Value {
                 try!(fmt_pair(left, right, f));
                 write!(f, ")")
             }
-            &Value::Fn(ref name, ref args_type, ref args, ref _closure, ref _body) =>
+            &Value::Closure { ref name, ref args_type, ref args, .. } =>
                 fmt_procedure(name, args_type, args, f),
             &Value::Integer(ref i) =>
                 write!(f, "{}", i),
             &Value::PrimitiveFn(ref name) =>
                 fmt_primitive(name, f),
-            &Value::Closure(..) =>
-                write!(f, "<closure>"),
         }
     }
 }
@@ -173,13 +176,12 @@ impl Debug for Value {
         let t = match self {
             &Value::Atom(..)        => "Atom",
             &Value::Bool(..)        => "Bool",
-            &Value::Fn(..)          => "Fn",
             &Value::Integer(..)     => "Integer",
             &Value::Nil(..)         => "Nil",
             &Value::Unspecified     => "Unspecified",
             &Value::Pair(..)        => "Pair",
             &Value::PrimitiveFn(..) => "PrimitiveFn",
-            &Value::Closure(..)     => "Closure",
+            &Value::Closure { .. }  => "Closure",
         };
 
         write!(f, "{}({})", t, self)
@@ -193,8 +195,6 @@ impl PartialEq for Value {
                 if let &Value::Atom(ref b) = other { a == b } else { false },
             &Value::Bool(ref a) =>
                 if let &Value::Bool(ref b) = other { a == b } else { false },
-            &Value::Fn(ref a, ref a1, ref a2, ref _closure, ref a3) =>
-                if let &Value::Fn(ref b, ref b1, ref b2, ref _closure, ref b3) = other { (a, a1, a2, a3) == (b, b1, b2, b3) } else { false },
             &Value::Integer(ref a) =>
                 if let &Value::Integer(ref b) = other { a == b } else { false },
             &Value::Nil =>
@@ -205,8 +205,8 @@ impl PartialEq for Value {
                 if let &Value::Pair(ref left2, ref right2) = other { (left, right) == (left2, right2) } else { false },
             &Value::PrimitiveFn(ref a) =>
                 if let &Value::PrimitiveFn(ref b) = other { a == b } else { false },
-            &Value::Closure(..) =>
-                false,
+            &Value::Closure { .. } =>
+                false
         }
     }
 }

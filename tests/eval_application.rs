@@ -96,6 +96,7 @@ fn lambda_multiple_expressions_are_evaluated_sequentially() {
 
 #[test]
 fn lambda_with_fixed_arguments_number() {
+    assert_eval_err("((lambda ()))", malformed_expr());
     assert_eval("((lambda () 1))", "1");
     assert_eval("((lambda () 1 2 3))", "3");
     assert_eval("((lambda (x y) (+ x y)) 6 8)", "14");

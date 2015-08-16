@@ -58,17 +58,17 @@ fn dotted_lists() {
 #[test]
 fn procedures() {
     assert_fmt("<procedure foo (bar baz)>",
-               func("foo", vec!("bar", "baz"), vec!()));
+               func("foo", vec!("bar", "baz")));
 }
 
 #[test]
 fn lambdas() {
     assert_fmt("<lambda (bar baz)>",
-               lambda(vec!("bar", "baz"), vec!()));
+               lambda(vec!("bar", "baz")));
     assert_fmt("<lambda (bar . baz)>",
-               lambda_var(vec!("bar", "baz"), vec!()));
+               lambda_var(vec!("bar", "baz")));
     assert_fmt("<lambda bar>",
-               lambda_any("bar", vec!()));
+               lambda_any("bar"));
 }
 
 #[test]

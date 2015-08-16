@@ -203,7 +203,11 @@ impl VM {
 
                 Ok(())
             }
-            Value::Closure(ref args_type, ref arg_names, ref closure, ref body) => {
+            Value::Closure { ref name,
+                             ref args_type,
+                             args: ref arg_names,
+                             ref closure,
+                             code: ref body } => {
                 let mut instructions = Vec::from_iter(body.clone().into_iter());
                 mem::swap(&mut self.instructions, &mut instructions);
 
@@ -214,7 +218,7 @@ impl VM {
                 match *args_type {
                     ArgumentsType::Fixed => {
                         if arg_names.len() != self.rib.len() {
-                            return Err(Error::BadArity(None));
+                            return Err(Error::BadArity(name.clone()));
                         }
 
                         for (name, value) in arg_names.iter().zip(self.rib.iter()) {
@@ -225,7 +229,7 @@ impl VM {
                         let fixed_arg_names = &arg_names[0 .. arg_names.len() - 1];
 
                         if fixed_arg_names.len() > self.rib.len() {
-                            return Err(Error::BadArity(None));
+                            return Err(Error::BadArity(name.clone()));
                         }
 
                         for (name, value) in fixed_arg_names.iter().zip(self.rib.iter()) {

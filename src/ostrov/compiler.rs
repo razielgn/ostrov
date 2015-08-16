@@ -236,9 +236,14 @@ fn emit_apply(head: &AST, args: &[AST]) -> Result<Bytecode, Error> {
 }
 
 fn emit_lambda(args_: &[AST]) -> Result<Bytecode, Error> {
+    let ref body = &args_[1..];
+    if body.is_empty() {
+        return Err(Error::MalformedExpression);
+    }
+
     let mut instructions = LinkedList::new();
 
-    let compiled_body = try!(compile(&args_[1..]));
+    let compiled_body = try!(compile(&body));
     let (args, args_type) = try!(function_arguments(&args_[0]));
     instructions.push_back(Instruction::close(args, args_type, compiled_body));
 
