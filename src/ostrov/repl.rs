@@ -1,4 +1,4 @@
-use runtime_vm::Runtime;
+use runtime::Runtime;
 use values::Value;
 
 use std::io;

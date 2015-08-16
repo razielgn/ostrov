@@ -2,7 +2,6 @@ extern crate ostrov;
 extern crate test;
 
 use ostrov::runtime::Runtime;
-use ostrov::runtime_vm::Runtime as RuntimeVM;
 
 use test::Bencher;
 
@@ -45,7 +44,7 @@ fn nested_evaluation(b: &mut Bencher) {
 
 #[bench]
 fn nested_evaluation_bytecode(b: &mut Bencher) {
-    let mut runtime = RuntimeVM::new();
+    let mut runtime = Runtime::new();
 
     b.iter(|| {
         assert_eq!(runtime.eval_str(NESTED_IFS), runtime.eval_str("3"));

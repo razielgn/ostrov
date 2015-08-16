@@ -1,5 +1,4 @@
 pub use ostrov::runtime::Runtime;
-pub use ostrov::runtime_vm::Runtime as RuntimeVM;
 use ostrov::ast::AST;
 use ostrov::errors::Error;
 use ostrov::values::RcValue;
@@ -16,8 +15,8 @@ pub fn assert_parse(input: &str, expected: AST) {
     }
 }
 
-pub fn assert_eval_vm(input: &str, expected: &str) {
-    let mut runtime = RuntimeVM::new();
+pub fn assert_eval(input: &str, expected: &str) {
+    let mut runtime = Runtime::new();
 
     match (runtime.eval_str(input), runtime.eval_str(expected)) {
         (Ok(got), Ok(expected)) => assert_eq!(expected.iter().last().unwrap(), got.iter().last().unwrap()),
@@ -25,8 +24,8 @@ pub fn assert_eval_vm(input: &str, expected: &str) {
     }
 }
 
-pub fn assert_eval_vm_val(input: &str, expected: RcValue) {
-    let mut runtime = RuntimeVM::new();
+pub fn assert_eval_val(input: &str, expected: RcValue) {
+    let mut runtime = Runtime::new();
 
     match runtime.eval_str(input) {
         Ok(exprs)  => assert_eq!(expected, *exprs.iter().last().unwrap()),
@@ -34,8 +33,8 @@ pub fn assert_eval_vm_val(input: &str, expected: RcValue) {
     }
 }
 
-pub fn assert_eval_vm_err(input: &str, expected: Error) {
-    let mut runtime = RuntimeVM::new();
+pub fn assert_eval_err(input: &str, expected: Error) {
+    let mut runtime = Runtime::new();
 
     match runtime.eval_str(input) {
         Ok(exprs)  => panic_expected(input, &expected, &exprs),
