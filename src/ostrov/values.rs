@@ -24,7 +24,7 @@ pub enum Value {
     Integer(i64),
 }
 
-#[derive(Copy, PartialEq, Clone)]
+#[derive(Copy, PartialEq, Clone, Debug)]
 pub enum ArgumentsType {
     Fixed,
     Variable,

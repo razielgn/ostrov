@@ -16,24 +16,26 @@ fn overwrites_variables() {
 
 #[test]
 fn overwrites_variables_on_upper_scopes() {
-    assert_eval("(define x 0)
-                 (define (f) (set! x (+ x 1)))
-                 (f)
-                 x", "1");
+    assert_eval_vm("(define x 0)
+                    (define (f)
+                      (set! x (+ x 1)))
+                    (f)
+                    (f)
+                    (f)
+                    x", "3");
 }
 
 #[test]
 fn overwrites_variables_in_captured_scopes() {
-    assert_eval("(define incr 1)
-                 (define (f)
-                   (define x 0)
-                   (lambda ()
-                     (set! x (+ x incr))
-                     x))
-                 (define a (f))
-                 (a)
-                 (a)
-                 (a)", "3");
+    assert_eval_vm("(define (gen-counter)
+                      (define counter 0)
+                      (lambda ()
+                        (set! counter (+ counter 1))
+                        counter))
+                    (define count (gen-counter))
+                    (count)
+                    (count)
+                    (count)", "3");
 }
 
 #[test]

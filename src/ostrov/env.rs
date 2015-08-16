@@ -17,18 +17,15 @@ impl CellEnv {
     }
 
     pub fn set(&self, name: String, expr: RcValue) {
-        let CellEnv(ref cell) = *self;
-        cell.borrow_mut().set(name, expr);
+        self.0.borrow_mut().set(name, expr);
     }
 
     pub fn get(&self, name: &String) -> Option<RcValue> {
-        let CellEnv(ref cell) = *self;
-        cell.borrow().get(name)
+        self.0.borrow().get(name)
     }
 
     pub fn replace(&self, name: String, expr: RcValue) -> Option<RcValue> {
-        let CellEnv(ref cell) = *self;
-        cell.borrow_mut().replace(name, expr)
+        self.0.borrow_mut().replace(name, expr)
     }
 
     fn build(env: Env) -> CellEnv {

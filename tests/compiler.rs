@@ -1,5 +1,5 @@
 use ostrov::compiler::compile;
-use ostrov::instructions::{Instruction, Bytecode};
+use ostrov::instructions::{Instruction, Bytecode, ArgumentsType};
 use ostrov::parser::parse;
 use helpers::ast::*;
 
@@ -192,9 +192,8 @@ fn variable_referencing() {
 fn set_bang() {
     assert_eq!(
         vec!(
-            Instruction::load_reference("x".to_string()),
             Instruction::load_constant(integer(23)),
-            Instruction::assignment("x".to_string()),
+            Instruction::replace("x".to_string()),
         ),
         parse_and_compile("(set! x 23)")
     );
@@ -223,7 +222,67 @@ fn define_with_constant() {
 }
 
 #[test]
-fn lambda() {
+fn define_with_lambda_fixed() {
+    assert_eq!(
+        vec!(
+            Instruction::close(
+                vec!(
+                    "a".to_string(),
+                ),
+                ArgumentsType::Fixed,
+                bytecode(vec!(
+                    Instruction::load_reference("a".to_string()),
+                    Instruction::load_reference("b".to_string()),
+                    Instruction::load_reference("c".to_string()),
+                )),
+            ),
+            Instruction::assignment("x".to_string()),
+        ),
+        parse_and_compile("(define (x a) a b c)")
+    );
+}
+
+#[test]
+fn define_with_lambda_variable() {
+    assert_eq!(
+        vec!(
+            Instruction::close(
+                vec!(
+                    "y".to_string(),
+                    "z".to_string(),
+                ),
+                ArgumentsType::Variable,
+                bytecode(vec!(
+                    Instruction::load_reference("z".to_string()),
+                )),
+            ),
+            Instruction::assignment("x".to_string()),
+        ),
+        parse_and_compile("(define (x y . z) z)")
+    );
+}
+
+#[test]
+fn define_with_lambda_any() {
+    assert_eq!(
+        vec!(
+            Instruction::close(
+                vec!(
+                    "z".to_string(),
+                ),
+                ArgumentsType::Any,
+                bytecode(vec!(
+                    Instruction::load_reference("z".to_string()),
+                )),
+            ),
+            Instruction::assignment("x".to_string()),
+        ),
+        parse_and_compile("(define (x . z) z)")
+    );
+}
+
+#[test]
+fn lambda_fixed() {
     assert_eq!(
         vec!(
             Instruction::close(
@@ -232,12 +291,53 @@ fn lambda() {
                     "y".to_string(),
                     "z".to_string(),
                 ),
+                ArgumentsType::Fixed,
+                bytecode(vec!(
+                    Instruction::load_reference("x".to_string()),
+                    Instruction::load_reference("y".to_string()),
+                    Instruction::load_reference("z".to_string()),
+                )),
+            ),
+        ),
+        parse_and_compile("(lambda (x y z) x y z)")
+    );
+}
+
+#[test]
+fn lambda_variable() {
+    assert_eq!(
+        vec!(
+            Instruction::close(
+                vec!(
+                    "x".to_string(),
+                    "y".to_string(),
+                    "z".to_string(),
+                ),
+                ArgumentsType::Variable,
                 bytecode(vec!(
                     Instruction::load_reference("x".to_string()),
                 )),
             ),
         ),
-        parse_and_compile("(lambda (x y z) x)")
+        parse_and_compile("(lambda (x y . z) x)")
+    );
+}
+
+#[test]
+fn lambda_any() {
+    assert_eq!(
+        vec!(
+            Instruction::close(
+                vec!(
+                    "x".to_string(),
+                ),
+                ArgumentsType::Any,
+                bytecode(vec!(
+                    Instruction::load_reference("x".to_string()),
+                )),
+            ),
+        ),
+        parse_and_compile("(lambda x x)")
     );
 }
 

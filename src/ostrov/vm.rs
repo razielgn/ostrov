@@ -66,7 +66,6 @@ impl VM {
         loop {
             match self.next_instruction() {
                 Some(instr) => {
-                    //println!("pc: {:?}, instr: {:?}", self.pc, instr);
                     match instr {
                         Instruction::LoadConstant { ref value } =>
                             self.load_constant(value),
@@ -80,6 +79,8 @@ impl VM {
                             try!(self.load_reference(reference)),
                         Instruction::Assignment { ref reference } =>
                             self.assignment(reference),
+                        Instruction::Replace { ref reference } =>
+                            try!(self.replace(reference)),
                         Instruction::LoadUnspecified =>
                             self.load_unspecified(),
                         Instruction::Apply =>
@@ -88,8 +89,8 @@ impl VM {
                             self.argument(),
                         Instruction::Frame =>
                             self.push_frame(),
-                        Instruction::Close { ref args, ref body } =>
-                            self.push_closure(args, body),
+                        Instruction::Close { ref args, ref args_type, ref body } =>
+                            self.push_closure(args, args_type, body),
                     }
                 }
                 None => {
@@ -104,56 +105,57 @@ impl VM {
         Ok(self.acc.clone())
     }
 
-    fn next_instruction(&self) -> Option<Instruction> {
-        self.instructions.get(self.pc).map(Clone::clone)
+    fn next_instruction(&mut self) -> Option<Instruction> {
+        let instr = self.instructions.get(self.pc).map(Clone::clone);
+        self.pc += 1;
+        instr
     }
 
     fn load_constant(&mut self, ast: &AST) {
         self.acc = Value::from_ast(ast, &mut self.memory);
-        self.pc += 1;
     }
 
     fn jump_on_false(&mut self, times: usize) {
         if self.acc == self.memory.b_false() {
             self.jump(times);
-        } else {
-            self.pc += 1;
         }
     }
 
     fn jump_on_true(&mut self, times: usize) {
         if self.acc != self.memory.b_false() {
             self.jump(times);
-        } else {
-            self.pc += 1;
         }
     }
 
     fn jump(&mut self, times: usize) {
         self.pc += times;
-        self.pc += 1;
     }
 
     fn load_reference(&mut self, reference: &String) -> Result<(), Error> {
         match self.env.get(reference) {
-            Some(value) => {
-                self.acc = value;
-                self.pc += 1;
-                Ok(())
-            }
-            None => Err(Error::UnboundVariable(reference.clone())),
+            Some(value) =>
+                Ok(self.acc = value),
+            None =>
+                Err(Error::UnboundVariable(reference.clone())),
         }
     }
 
     fn assignment(&mut self, reference: &String) {
         self.env.set(reference.clone(), self.acc.clone());
         self.load_unspecified();
-        self.pc += 1;
+    }
+
+    fn replace(&mut self, reference: &String) -> Result<(), Error> {
+        match self.env.replace(reference.clone(), self.acc.clone()) {
+            Some(_) =>
+                Ok(self.load_unspecified()),
+            None =>
+                Err(Error::UnboundVariable(reference.clone())),
+        }
     }
 
     fn load_unspecified(&mut self) {
         self.acc = self.memory.unspecified();
-        self.pc += 1;
     }
 
     fn push_frame(&mut self) {
@@ -162,7 +164,6 @@ impl VM {
         );
 
         self.rib = Vec::new();
-        self.pc += 1;
     }
 
     fn pop_frame(&mut self, a: bool) -> Result<(), Error> {
@@ -197,7 +198,6 @@ impl VM {
                 );
 
                 self.acc = result;
-                self.pc += 1;
 
                 try!(self.pop_frame(false));
 
@@ -207,22 +207,44 @@ impl VM {
                 let mut instructions = Vec::from_iter(body.clone().into_iter());
                 mem::swap(&mut self.instructions, &mut instructions);
 
-                self.code.push((instructions, self.pc + 1));
+                self.code.push((instructions, self.pc));
                 self.pc = 0;
-
-                self.env = CellEnv::wraps(closure.clone());
+                self.env = closure.clone();
 
                 match *args_type {
                     ArgumentsType::Fixed => {
                         if arg_names.len() != self.rib.len() {
-                            return Err(Error::BadArity(Some("closure".to_owned())));
+                            return Err(Error::BadArity(None));
                         }
 
                         for (name, value) in arg_names.iter().zip(self.rib.iter()) {
                             self.env.set(name.clone(), value.clone());
                         }
+                    },
+                    ArgumentsType::Variable => {
+                        let fixed_arg_names = &arg_names[0 .. arg_names.len() - 1];
+
+                        if fixed_arg_names.len() > self.rib.len() {
+                            return Err(Error::BadArity(None));
+                        }
+
+                        for (name, value) in fixed_arg_names.iter().zip(self.rib.iter()) {
+                            self.env.set(name.clone(), value.clone());
+                        }
+
+                        let var_args = self.rib.iter()
+                            .skip(fixed_arg_names.len())
+                            .map(Clone::clone)
+                            .collect();
+
+                        self.env.set(
+                            arg_names.last().unwrap().clone(),
+                            self.memory.list(&var_args)
+                        );
                     }
-                    _ => {}
+                    ArgumentsType::Any => {
+                        self.env.set(arg_names[0].clone(), self.memory.list(&self.rib));
+                    }
                 }
 
                 Ok(())
@@ -233,19 +255,17 @@ impl VM {
         }
     }
 
-    fn push_closure(&mut self, args: &Vec<String>, body: &Bytecode) {
+    fn push_closure(&mut self, args: &Vec<String>, args_type: &ArgumentsType, body: &Bytecode) {
         self.acc = self.memory.closure(
-            ArgumentsType::Fixed,
+            *args_type,
             args.clone(),
-            self.env.clone(),
+            CellEnv::wraps(self.env.clone()),
             body.clone(),
         );
-        self.pc += 1;
     }
 
     fn argument(&mut self) {
         self.rib.push(self.acc.clone());
-        self.pc += 1;
     }
 
     fn init_primitives(&mut self) {

@@ -1,4 +1,5 @@
 use ast::AST;
+pub use values::ArgumentsType;
 use std::collections::LinkedList;
 
 pub type Bytecode = LinkedList<Instruction>;
@@ -9,7 +10,7 @@ pub enum Instruction {
     Apply,
     Argument,
     Assignment { reference: String },
-    Close { args: Vec<String>, body: Bytecode },
+    Close { args: Vec<String>, args_type: ArgumentsType, body: Bytecode },
     Frame,
     LoadConstant { value: AST },
     LoadReference { reference: String },
@@ -17,6 +18,7 @@ pub enum Instruction {
     JumpOnFalse { offset: usize },
     JumpOnTrue { offset: usize },
     Jump { offset: usize },
+    Replace { reference: String },
 }
 
 impl Instruction {
@@ -34,9 +36,10 @@ impl Instruction {
         }
     }
 
-    pub fn close(args: Vec<String>, body: Bytecode) -> Instruction {
+    pub fn close(args: Vec<String>, args_type: ArgumentsType, body: Bytecode) -> Instruction {
         Instruction::Close {
             args: args,
+            args_type: args_type,
             body: body,
         }
     }
@@ -76,6 +79,12 @@ impl Instruction {
     pub fn jump(offset: usize) -> Instruction {
         Instruction::Jump {
             offset: offset,
+        }
+    }
+
+    pub fn replace(reference: String) -> Instruction {
+        Instruction::Replace {
+            reference: reference,
         }
     }
 }

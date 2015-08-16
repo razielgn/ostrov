@@ -24,42 +24,23 @@ fn define_with_two_args() {
 
 #[test]
 fn define_with_one_arg_lambda() {
-    assert_eval_val("(define f (lambda (x) 1))
-                     f", func("f", vec!("x"), vec!(ast::integer(1))));
-    assert_eval("(define f (lambda (x) 1))
-                 (f 9)", "1");
+    assert_eval_vm("(define f (lambda (x) 1))
+                    (f 9)", "1");
 }
 
 #[test]
 fn define_procedure_with_fixed_args() {
-    assert_eval_val("(define (x) 3)", unspecified());
-
-    assert_eval_val("(define (x) 3)
-                     x", func("x", vec!(), vec!(ast::integer(3))));
+    assert_eval_vm_val("(define (x) 3)", unspecified());
 }
 
 #[test]
 fn define_procedure_with_varargs() {
-    assert_eval_val("(define (x a . b) 3)", unspecified());
-
-    assert_eval_val("(define (x a . b) 3)
-                     x", func_var("x", vec!("a", "b"), vec!(ast::integer(3))));
+    assert_eval_vm_val("(define (x a . b) 3)", unspecified());
 }
 
 #[test]
 fn define_procedure_with_any() {
-    assert_eval_val("(define (x . b) 3)", unspecified());
-
-    assert_eval_val("(define (x . b) 3)
-                     x", func_any("x", "b", vec!(ast::integer(3))));
-}
-
-#[test]
-fn define_procedure_with_multiple_expressions() {
-    assert_eval_val("(define (foo . x) 3 2 1)
-                     foo", func_any("foo", "x", vec!(ast::integer(3),
-                                                     ast::integer(2),
-                                                     ast::integer(1))));
+    assert_eval_vm_val("(define (x . b) 3)", unspecified());
 }
 
 #[test]

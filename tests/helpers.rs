@@ -16,15 +16,6 @@ pub fn assert_parse(input: &str, expected: AST) {
     }
 }
 
-pub fn assert_eval(input: &str, expected: &str) {
-    let mut runtime = Runtime::new();
-
-    match (runtime.eval_str(input), runtime.eval_str(expected)) {
-        (Ok(got), Ok(expected)) => assert_eq!(expected.iter().last().unwrap(), got.iter().last().unwrap()),
-        error                   => panic_expected(input, &expected, &error),
-    }
-}
-
 pub fn assert_eval_vm(input: &str, expected: &str) {
     let mut runtime = RuntimeVM::new();
 
@@ -34,30 +25,12 @@ pub fn assert_eval_vm(input: &str, expected: &str) {
     }
 }
 
-pub fn assert_eval_val(input: &str, expected: RcValue) {
-    let mut runtime = Runtime::new();
-
-    match runtime.eval_str(input) {
-        Ok(exprs)  => assert_eq!(expected, *exprs.iter().last().unwrap()),
-        Err(error) => panic_expected(input, &expected, &error),
-    }
-}
-
 pub fn assert_eval_vm_val(input: &str, expected: RcValue) {
     let mut runtime = RuntimeVM::new();
 
     match runtime.eval_str(input) {
         Ok(exprs)  => assert_eq!(expected, *exprs.iter().last().unwrap()),
         Err(error) => panic_expected(input, &expected, &error),
-    }
-}
-
-pub fn assert_eval_err(input: &str, expected: Error) {
-    let mut runtime = Runtime::new();
-
-    match runtime.eval_str(input) {
-        Ok(exprs)  => panic_expected(input, &expected, &exprs),
-        Err(error) => assert_eq!(expected, error),
     }
 }
 
@@ -109,13 +82,6 @@ pub mod values {
     pub fn func(name: &str, args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();
         Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Fixed, args, CellEnv::new(), body))
-    }
-    pub fn func_var(name: &str, args: Vec<&str>, body: Vec<AST>) -> RcValue {
-        let args = args.iter().map(|s| s.to_string()).collect();
-        Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Variable, args, CellEnv::new(), body))
-    }
-    pub fn func_any(name: &str, arg: &str, body: Vec<AST>) -> RcValue {
-        Rc::new(Value::Fn(Some(name.to_string()), ArgumentsType::Any, vec!(arg.to_string()), CellEnv::new(), body))
     }
     pub fn lambda(args: Vec<&str>, body: Vec<AST>) -> RcValue {
         let args = args.iter().map(|s| s.to_string()).collect();

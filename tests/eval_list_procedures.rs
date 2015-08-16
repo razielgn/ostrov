@@ -29,7 +29,7 @@ fn pair_() {
     assert_eval_vm("(pair? 1)", "#f");
     assert_eval_vm("(pair? #t)", "#f");
     assert_eval_vm("(pair? '())", "#f");
-    assert_eval("(pair? (lambda (x) 0))", "#f");
+    assert_eval_vm("(pair? (lambda (x) 0))", "#f");
     assert_eval_vm("(pair? '(1 2 3))", "#t");
     assert_eval_vm("(pair? '(1 2 . 3))", "#t");
 }
