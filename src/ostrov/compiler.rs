@@ -65,6 +65,7 @@ fn emit_application(list: &Vec<AST>) -> Result<Bytecode, Error> {
             "set!"   => return emit_set(args),
             "define" => return emit_define(args),
             "lambda" => return emit_lambda(args),
+            "let"    => return emit_let(args),
             _        => (),
         }
     }
@@ -240,6 +241,50 @@ fn emit_lambda(args_: &[AST]) -> Result<Bytecode, Error> {
     let compiled_body = try!(compile(&args_[1..]));
     let (args, args_type) = try!(function_arguments(&args_[0]));
     instructions.push_back(Instruction::close(args, args_type, compiled_body));
+
+    Ok(instructions)
+}
+
+fn emit_let(args_: &[AST]) -> Result<Bytecode, Error> {
+    if args_.len() < 2 {
+        return Err(Error::BadArity(Some("let".to_owned())));
+    }
+
+    let mut instructions = LinkedList::new();
+
+    if let &AST::List(ref bindings) = args_.first().unwrap() {
+        let mut params = Vec::with_capacity(bindings.len());
+
+        instructions.push_back(Instruction::frame());
+
+        for binding in bindings.iter() {
+            match binding {
+                &AST::List(ref binding) if binding.len() == 2 => {
+                    params.push(try!(unpack_atom(&binding[0])));
+
+                    instructions.append(&mut try!(compile_single(&binding[1])));
+                    instructions.push_back(Instruction::argument());
+                }
+                _ =>
+                    return Err(Error::MalformedExpression),
+            }
+        }
+
+        let mut inner_instr = LinkedList::new();
+        for body in &args_[1..] {
+            inner_instr.append(&mut try!(compile_single(body)));
+        }
+
+        instructions.push_back(Instruction::close(
+            params,
+            ArgumentsType::Fixed,
+            inner_instr,
+        ));
+
+        instructions.push_back(Instruction::apply());
+    } else {
+        return Err(Error::MalformedExpression);
+    }
 
     Ok(instructions)
 }

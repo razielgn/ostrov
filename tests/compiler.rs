@@ -342,6 +342,39 @@ fn lambda_any() {
 }
 
 #[test]
+fn let_() {
+    assert_eq!(
+        vec!(
+            Instruction::frame(),
+            Instruction::load_constant(integer(1)),
+            Instruction::argument(),
+            Instruction::load_constant(integer(2)),
+            Instruction::argument(),
+            Instruction::close(
+                vec!(
+                    "a".to_string(),
+                    "b".to_string(),
+                ),
+                ArgumentsType::Fixed,
+                bytecode(vec!(
+                    Instruction::frame(),
+                    Instruction::load_reference("a".to_string()),
+                    Instruction::argument(),
+                    Instruction::load_reference("b".to_string()),
+                    Instruction::argument(),
+                    Instruction::load_reference("+".to_string()),
+                    Instruction::apply(),
+                )),
+            ),
+            Instruction::apply(),
+        ),
+        parse_and_compile("(let ((a 1)
+                                 (b 2))
+                             (+ a b))")
+    );
+}
+
+#[test]
 fn function_application() {
     assert_eq!(
         vec!(
