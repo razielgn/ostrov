@@ -30,7 +30,7 @@ pub fn parse_sign(str: &str) -> IntegerSign {
 }
 
 pub fn parse_atom(str: &str) -> AST {
-    AST::Atom(str.to_string())
+    AST::Atom(str.to_owned())
 }
 
 pub fn parse_list(values: Vec<AST>) -> AST {
@@ -56,7 +56,7 @@ pub fn parse_bool(str: &str) -> AST {
 }
 
 pub fn parse_quoted(val: AST) -> AST {
-    AST::List(vec!(AST::Atom("quote".to_string()), val))
+    AST::List(vec!(AST::Atom("quote".to_owned()), val))
 }
 
 pub fn parse(input: &str) -> Result<Vec<AST>, Error> {

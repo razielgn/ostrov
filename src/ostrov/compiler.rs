@@ -181,7 +181,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
 
             instructions.push_back(Instruction::assignment(name.clone()));
         }
-        AST::List(ref list) if list.len() > 0 => {
+        AST::List(ref list) if !list.is_empty() => {
             let name = try!(unpack_atom(&list[0]));
             let ref arg_names = list[1..];
             let ref body = args[1..];
@@ -194,7 +194,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
 
             instructions.push_back(Instruction::assignment(name));
         }
-        AST::DottedList(ref list, ref extra) if list.len() > 0 => {
+        AST::DottedList(ref list, ref extra) if !list.is_empty() => {
             let name = try!(unpack_atom(&list[0]));
             let ref arg_names = list[1..];
             let ref body = args[1..];
@@ -329,7 +329,7 @@ fn function_arguments(ast: &AST) -> Result<(Vec<String>, ArgumentsType), Error> 
 
 fn unpack_atom(value: &AST) -> Result<String, Error> {
     if let &AST::Atom(ref atom) = value {
-        Ok(atom.to_string())
+        Ok(atom.to_owned())
     } else {
         Err(Error::MalformedExpression)
     }

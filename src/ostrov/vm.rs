@@ -253,9 +253,8 @@ impl VM {
 
                 Ok(())
             }
-            _ => {
-                return Err(Error::UnappliableValue(self.acc.clone()))
-            }
+            _ =>
+                Err(Error::UnappliableValue(self.acc.clone())),
         }
     }
 
@@ -273,9 +272,9 @@ impl VM {
     }
 
     fn init_primitives(&mut self) {
-        for name in primitives::PRIMITIVES.iter() {
-            let primitive = self.memory.primitive(name.to_string());
-            self.env.set(name.to_string(), primitive);
+        for &name in primitives::PRIMITIVES.iter() {
+            let primitive = self.memory.primitive(name.to_owned());
+            self.env.set(name.to_owned(), primitive);
         }
     }
 }

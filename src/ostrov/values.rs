@@ -215,7 +215,7 @@ impl Value {
     pub fn from_ast(ast: &AST, mem: &mut Memory) -> RcValue {
         match ast {
             &AST::Atom(ref string) =>
-                mem.intern(string.to_string()),
+                mem.intern(string.to_owned()),
             &AST::Bool(b) =>
                 mem.boolean(b),
             &AST::Integer(i) =>

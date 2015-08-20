@@ -124,7 +124,7 @@ fn execute_load_reference() {
     {
         let mut vm = VM::new();
         let instr = vec!(
-            Instruction::load_reference("a".to_string()),
+            Instruction::load_reference("a".to_owned()),
         );
 
         assert_eq!(
@@ -136,10 +136,10 @@ fn execute_load_reference() {
     {
         let mut vm = VM::new();
         let instr = vec!(
-            Instruction::load_reference("a".to_string()),
+            Instruction::load_reference("a".to_owned()),
         );
 
-        vm.env.set("a".to_string(), vm.memory.integer(1));
+        vm.env.set("a".to_owned(), vm.memory.integer(1));
 
         assert_eq!(
             Ok(vm.memory.integer(1)),
@@ -153,9 +153,9 @@ fn execute_assignment() {
     let mut vm = VM::new();
     let instr = vec!(
         Instruction::load_constant(integer(1)),
-        Instruction::assignment("x".to_string()),
+        Instruction::assignment("x".to_owned()),
         Instruction::load_constant(integer(2)),
-        Instruction::load_reference("x".to_string()),
+        Instruction::load_reference("x".to_owned()),
     );
 
     assert_eq!(
@@ -183,7 +183,7 @@ fn execute_apply() {
     let mut vm = VM::new();
     let instr = vec!(
         Instruction::frame(),
-        Instruction::load_reference("+".to_string()),
+        Instruction::load_reference("+".to_owned()),
         Instruction::apply(),
     );
 
@@ -200,7 +200,7 @@ fn execute_argument() {
         Instruction::frame(),
         Instruction::load_constant(integer(2)),
         Instruction::argument(),
-        Instruction::load_reference("+".to_string()),
+        Instruction::load_reference("+".to_owned()),
         Instruction::apply(),
     );
 
@@ -220,7 +220,7 @@ fn execute_nested_arguments() {
         Instruction::argument(),
         Instruction::load_constant(integer(2)),
         Instruction::argument(),
-        Instruction::load_reference("+".to_string()),
+        Instruction::load_reference("+".to_owned()),
         Instruction::apply(),
         Instruction::argument(),
         Instruction::frame(),
@@ -228,10 +228,10 @@ fn execute_nested_arguments() {
         Instruction::argument(),
         Instruction::load_constant(integer(3)),
         Instruction::argument(),
-        Instruction::load_reference("-".to_string()),
+        Instruction::load_reference("-".to_owned()),
         Instruction::apply(),
         Instruction::argument(),
-        Instruction::load_reference("+".to_string()),
+        Instruction::load_reference("+".to_owned()),
         Instruction::apply(),
     );
 
@@ -245,7 +245,7 @@ fn execute_nested_arguments() {
 fn illegal_frame_apply() {
     let mut vm = VM::new();
     let instr = vec!(
-        Instruction::load_reference("+".to_string()),
+        Instruction::load_reference("+".to_owned()),
         Instruction::apply(),
     );
 

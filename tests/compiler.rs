@@ -182,7 +182,7 @@ fn quote() {
 fn variable_referencing() {
     assert_eq!(
         vec!(
-            Instruction::load_reference("+".to_string()),
+            Instruction::load_reference("+".to_owned()),
         ),
         parse_and_compile("+")
     );
@@ -193,7 +193,7 @@ fn set_bang() {
     assert_eq!(
         vec!(
             Instruction::load_constant(integer(23)),
-            Instruction::replace("x".to_string()),
+            Instruction::replace("x".to_owned()),
         ),
         parse_and_compile("(set! x 23)")
     );
@@ -204,7 +204,7 @@ fn define_with_nothing() {
     assert_eq!(
         vec!(
             Instruction::load_unspecified(),
-            Instruction::assignment("x".to_string()),
+            Instruction::assignment("x".to_owned()),
         ),
         parse_and_compile("(define x)")
     );
@@ -215,7 +215,7 @@ fn define_with_constant() {
     assert_eq!(
         vec!(
             Instruction::load_constant(integer(25)),
-            Instruction::assignment("x".to_string()),
+            Instruction::assignment("x".to_owned()),
         ),
         parse_and_compile("(define x 25)")
     );
@@ -227,16 +227,16 @@ fn define_with_lambda_fixed() {
         vec!(
             Instruction::close(
                 vec!(
-                    "a".to_string(),
+                    "a".to_owned(),
                 ),
                 ArgumentsType::Fixed,
                 bytecode(vec!(
-                    Instruction::load_reference("a".to_string()),
-                    Instruction::load_reference("b".to_string()),
-                    Instruction::load_reference("c".to_string()),
+                    Instruction::load_reference("a".to_owned()),
+                    Instruction::load_reference("b".to_owned()),
+                    Instruction::load_reference("c".to_owned()),
                 )),
             ),
-            Instruction::assignment("x".to_string()),
+            Instruction::assignment("x".to_owned()),
         ),
         parse_and_compile("(define (x a) a b c)")
     );
@@ -248,15 +248,15 @@ fn define_with_lambda_variable() {
         vec!(
             Instruction::close(
                 vec!(
-                    "y".to_string(),
-                    "z".to_string(),
+                    "y".to_owned(),
+                    "z".to_owned(),
                 ),
                 ArgumentsType::Variable,
                 bytecode(vec!(
-                    Instruction::load_reference("z".to_string()),
+                    Instruction::load_reference("z".to_owned()),
                 )),
             ),
-            Instruction::assignment("x".to_string()),
+            Instruction::assignment("x".to_owned()),
         ),
         parse_and_compile("(define (x y . z) z)")
     );
@@ -268,14 +268,14 @@ fn define_with_lambda_any() {
         vec!(
             Instruction::close(
                 vec!(
-                    "z".to_string(),
+                    "z".to_owned(),
                 ),
                 ArgumentsType::Any,
                 bytecode(vec!(
-                    Instruction::load_reference("z".to_string()),
+                    Instruction::load_reference("z".to_owned()),
                 )),
             ),
-            Instruction::assignment("x".to_string()),
+            Instruction::assignment("x".to_owned()),
         ),
         parse_and_compile("(define (x . z) z)")
     );
@@ -287,15 +287,15 @@ fn lambda_fixed() {
         vec!(
             Instruction::close(
                 vec!(
-                    "x".to_string(),
-                    "y".to_string(),
-                    "z".to_string(),
+                    "x".to_owned(),
+                    "y".to_owned(),
+                    "z".to_owned(),
                 ),
                 ArgumentsType::Fixed,
                 bytecode(vec!(
-                    Instruction::load_reference("x".to_string()),
-                    Instruction::load_reference("y".to_string()),
-                    Instruction::load_reference("z".to_string()),
+                    Instruction::load_reference("x".to_owned()),
+                    Instruction::load_reference("y".to_owned()),
+                    Instruction::load_reference("z".to_owned()),
                 )),
             ),
         ),
@@ -309,13 +309,13 @@ fn lambda_variable() {
         vec!(
             Instruction::close(
                 vec!(
-                    "x".to_string(),
-                    "y".to_string(),
-                    "z".to_string(),
+                    "x".to_owned(),
+                    "y".to_owned(),
+                    "z".to_owned(),
                 ),
                 ArgumentsType::Variable,
                 bytecode(vec!(
-                    Instruction::load_reference("x".to_string()),
+                    Instruction::load_reference("x".to_owned()),
                 )),
             ),
         ),
@@ -329,11 +329,11 @@ fn lambda_any() {
         vec!(
             Instruction::close(
                 vec!(
-                    "x".to_string(),
+                    "x".to_owned(),
                 ),
                 ArgumentsType::Any,
                 bytecode(vec!(
-                    Instruction::load_reference("x".to_string()),
+                    Instruction::load_reference("x".to_owned()),
                 )),
             ),
         ),
@@ -352,17 +352,17 @@ fn let_() {
             Instruction::argument(),
             Instruction::close(
                 vec!(
-                    "a".to_string(),
-                    "b".to_string(),
+                    "a".to_owned(),
+                    "b".to_owned(),
                 ),
                 ArgumentsType::Fixed,
                 bytecode(vec!(
                     Instruction::frame(),
-                    Instruction::load_reference("a".to_string()),
+                    Instruction::load_reference("a".to_owned()),
                     Instruction::argument(),
-                    Instruction::load_reference("b".to_string()),
+                    Instruction::load_reference("b".to_owned()),
                     Instruction::argument(),
-                    Instruction::load_reference("+".to_string()),
+                    Instruction::load_reference("+".to_owned()),
                     Instruction::apply(),
                 )),
             ),
@@ -379,7 +379,7 @@ fn function_application() {
     assert_eq!(
         vec!(
             Instruction::frame(),
-            Instruction::load_reference("+".to_string()),
+            Instruction::load_reference("+".to_owned()),
             Instruction::apply(),
         ),
         parse_and_compile("(+)")
@@ -394,7 +394,7 @@ fn function_application() {
             Instruction::argument(),
             Instruction::load_constant(integer(3)),
             Instruction::argument(),
-            Instruction::load_reference("+".to_string()),
+            Instruction::load_reference("+".to_owned()),
             Instruction::apply(),
         ),
         parse_and_compile("(+ 1 2 3)")
@@ -408,7 +408,7 @@ fn function_application() {
             Instruction::argument(),
             Instruction::load_constant(integer(2)),
             Instruction::argument(),
-            Instruction::load_reference("+".to_string()),
+            Instruction::load_reference("+".to_owned()),
             Instruction::apply(),
             Instruction::argument(),
             Instruction::frame(),
@@ -416,10 +416,10 @@ fn function_application() {
             Instruction::argument(),
             Instruction::load_constant(integer(3)),
             Instruction::argument(),
-            Instruction::load_reference("-".to_string()),
+            Instruction::load_reference("-".to_owned()),
             Instruction::apply(),
             Instruction::argument(),
-            Instruction::load_reference("+".to_string()),
+            Instruction::load_reference("+".to_owned()),
             Instruction::apply(),
         ),
         parse_and_compile("(+ (+ 1 2) (- 4 3))")
