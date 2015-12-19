@@ -21,7 +21,7 @@ pub fn repl(args: Vec<String>) {
 }
 
 fn enter_repl(runtime: &mut Runtime) {
-    let mut input = io::stdin();
+    let input = io::stdin();
 
     loop {
         print!("> ");
