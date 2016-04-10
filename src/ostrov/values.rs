@@ -152,9 +152,9 @@ impl Display for Value {
                 write!(f, "#f"),
             &Value::Bool(true) =>
                 write!(f, "#t"),
-            &Value::Nil(..) =>
+            &Value::Nil =>
                 write!(f, "()"),
-            &Value::Unspecified(..) =>
+            &Value::Unspecified =>
                 write!(f, "<unspecified>"),
             &Value::Pair(ref left, ref right) => {
                 try!(write!(f, "("));
@@ -177,7 +177,7 @@ impl Debug for Value {
             &Value::Atom(..)        => "Atom",
             &Value::Bool(..)        => "Bool",
             &Value::Integer(..)     => "Integer",
-            &Value::Nil(..)         => "Nil",
+            &Value::Nil             => "Nil",
             &Value::Unspecified     => "Unspecified",
             &Value::Pair(..)        => "Pair",
             &Value::PrimitiveFn(..) => "PrimitiveFn",

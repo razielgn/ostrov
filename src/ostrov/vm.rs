@@ -12,7 +12,7 @@ use std::mem;
 pub type Rib = Vec<RcValue>;
 pub type Stack = LinkedList<Frame>;
 
-struct Frame {
+pub struct Frame {
     rib: Rib,
     env: CellEnv,
 }
