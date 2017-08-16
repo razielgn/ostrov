@@ -5,8 +5,5 @@ use helpers::ast::*;
 fn multiple_expressions() {
     let runtime = Runtime::new();
 
-    assert_eq!(
-        Ok(vec!(integer(1), integer(2))),
-        runtime.parse_str("1 2")
-    );
+    assert_eq!(Ok(vec![integer(1), integer(2)]), runtime.parse_str("1 2"));
 }

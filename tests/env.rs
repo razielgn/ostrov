@@ -1,5 +1,5 @@
-use ostrov::memory::Memory;
 use ostrov::env::CellEnv;
+use ostrov::memory::Memory;
 
 #[test]
 fn set_and_get_ok() {

@@ -1,8 +1,7 @@
-use values::RcValue;
-
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use values::RcValue;
 
 #[derive(Clone)]
 pub struct CellEnv(Rc<RefCell<Env>>);
@@ -60,7 +59,7 @@ impl Env {
     pub fn get(&self, name: &str) -> Option<RcValue> {
         match self.defs.get(name) {
             Some(value) => Some(value.clone()),
-            None        => self.get_from_outer(name),
+            None => self.get_from_outer(name),
         }
     }
 
@@ -81,7 +80,7 @@ impl Env {
     fn replace_on_outer(&self, name: String, expr: RcValue) -> Option<RcValue> {
         match self.outer.clone() {
             Some(outer) => outer.replace(name, expr),
-            None        => None,
+            None => None,
         }
     }
 }

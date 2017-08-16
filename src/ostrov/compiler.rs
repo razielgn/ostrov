@@ -1,16 +1,14 @@
-use instructions::{Instruction, Bytecode, ArgumentsType};
 use ast::AST;
 use ast::AST::*;
 use errors::Error;
+use instructions::{ArgumentsType, Bytecode, Instruction};
 use std::collections::LinkedList;
 
 pub fn compile(ast: &[AST]) -> Result<Bytecode, Error> {
     let mut instructions = LinkedList::new();
 
     for ast_value in ast {
-        instructions.append(
-            &mut try!(compile_single(ast_value))
-        );
+        instructions.append(&mut try!(compile_single(ast_value)));
     }
 
     Ok(instructions)
@@ -18,14 +16,10 @@ pub fn compile(ast: &[AST]) -> Result<Bytecode, Error> {
 
 pub fn compile_single(ast: &AST) -> Result<Bytecode, Error> {
     match *ast {
-        Integer(..) | Bool(..) =>
-            emit_constant(ast),
-        Atom(ref atom) =>
-            emit_reference(atom),
-        List(ref list) =>
-            emit_application(list),
-        _ =>
-            Err(Error::MalformedExpression),
+        Integer(..) | Bool(..) => emit_constant(ast),
+        Atom(ref atom) => emit_reference(atom),
+        List(ref list) => emit_application(list),
+        _ => Err(Error::MalformedExpression),
     }
 }
 
@@ -36,15 +30,11 @@ fn emit_single_instr(instruction: Instruction) -> Result<Bytecode, Error> {
 }
 
 fn emit_constant(value: &AST) -> Result<Bytecode, Error> {
-    emit_single_instr(
-        Instruction::load_constant(value.clone())
-    )
+    emit_single_instr(Instruction::load_constant(value.clone()))
 }
 
 fn emit_reference(atom: &str) -> Result<Bytecode, Error> {
-    emit_single_instr(
-        Instruction::load_reference(atom.into())
-    )
+    emit_single_instr(Instruction::load_reference(atom.into()))
 }
 
 fn emit_application(list: &[AST]) -> Result<Bytecode, Error> {
@@ -59,15 +49,15 @@ fn emit_application(list: &[AST]) -> Result<Bytecode, Error> {
         let args = tail;
 
         match special_form.as_ref() {
-            "if"     => return emit_if(args),
-            "and"    => return emit_and(args),
-            "or"     => return emit_or(args),
-            "quote"  => return emit_constant(&args[0]),
-            "set!"   => return emit_set(args),
+            "if" => return emit_if(args),
+            "and" => return emit_and(args),
+            "or" => return emit_or(args),
+            "quote" => return emit_constant(&args[0]),
+            "set!" => return emit_set(args),
             "define" => return emit_define(args),
             "lambda" => return emit_lambda(args),
-            "let"    => return emit_let(args),
-            _        => (),
+            "let" => return emit_let(args),
+            _ => (),
         }
     }
 
@@ -107,8 +97,13 @@ fn emit_or(args: &[AST]) -> Result<Bytecode, Error> {
     emit_logical_op(args, false, Instruction::jump_on_true)
 }
 
-fn emit_logical_op<F>(args: &[AST], default: bool, instruction: F) -> Result<Bytecode, Error>
-    where F: Fn(usize) -> Instruction
+fn emit_logical_op<F>(
+    args: &[AST],
+    default: bool,
+    instruction: F,
+) -> Result<Bytecode, Error>
+where
+    F: Fn(usize) -> Instruction,
 {
     let mut instructions = LinkedList::new();
 
@@ -130,7 +125,8 @@ fn emit_logical_op<F>(args: &[AST], default: bool, instruction: F) -> Result<Byt
             .iter()
             .enumerate()
             .map(|(i, size)| {
-                let sum_of_previouses = sizes.iter().take(i).fold(0, |acc, n| acc + n);
+                let sum_of_previouses =
+                    sizes.iter().take(i).fold(0, |acc, n| acc + n);
                 size + sum_of_previouses + i
             })
             .rev()
@@ -139,7 +135,9 @@ fn emit_logical_op<F>(args: &[AST], default: bool, instruction: F) -> Result<Byt
 
         jumps.push(0);
 
-        for (mut compiled_arg, jump) in compiled_args.into_iter().zip(jumps.into_iter()) {
+        for (mut compiled_arg, jump) in
+            compiled_args.into_iter().zip(jumps.into_iter())
+        {
             instructions.append(&mut compiled_arg);
             instructions.push_back(instruction(jump));
         }
@@ -187,7 +185,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
             let arg_names = &list[1..];
             let body = &args[1..];
 
-            let mut lambda = vec!(List(arg_names.to_vec()));
+            let mut lambda = vec![List(arg_names.to_vec())];
             for x in body {
                 lambda.push(x.clone());
             }
@@ -215,8 +213,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
 
             instructions.push_back(Instruction::assignment(name));
         }
-        _ =>
-            return Err(Error::MalformedExpression)
+        _ => return Err(Error::MalformedExpression),
     }
 
     Ok(instructions)
@@ -271,8 +268,7 @@ fn emit_let(args_: &[AST]) -> Result<Bytecode, Error> {
                     instructions.append(&mut try!(compile_single(&binding[1])));
                     instructions.push_back(Instruction::argument());
                 }
-                _ =>
-                    return Err(Error::MalformedExpression),
+                _ => return Err(Error::MalformedExpression),
             }
         }
 
@@ -320,11 +316,8 @@ fn function_arguments(ast: &AST) -> Result<(Vec<String>, ArgumentsType), Error> 
 
             Ok((atoms, ArgumentsType::Variable))
         }
-        Atom(ref arg) => {
-            Ok((vec!(arg.clone()), ArgumentsType::Any))
-        }
-        _ =>
-            Err(Error::MalformedExpression)
+        Atom(ref arg) => Ok((vec![arg.clone()], ArgumentsType::Any)),
+        _ => Err(Error::MalformedExpression),
     }
 }
 

@@ -1,6 +1,6 @@
 use ast::AST;
-pub use values::ArgumentsType;
 use std::collections::LinkedList;
+pub use values::ArgumentsType;
 
 pub type Bytecode = LinkedList<Instruction>;
 pub type PackedBytecode = Vec<Instruction>;
@@ -10,7 +10,11 @@ pub enum Instruction {
     Apply,
     Argument,
     Assignment { reference: String },
-    Close { args: Vec<String>, args_type: ArgumentsType, body: Bytecode },
+    Close {
+        args: Vec<String>,
+        args_type: ArgumentsType,
+        body: Bytecode,
+    },
     Frame,
     LoadConstant { value: AST },
     LoadReference { reference: String },
@@ -36,7 +40,11 @@ impl Instruction {
         }
     }
 
-    pub fn close(args: Vec<String>, args_type: ArgumentsType, body: Bytecode) -> Instruction {
+    pub fn close(
+        args: Vec<String>,
+        args_type: ArgumentsType,
+        body: Bytecode,
+    ) -> Instruction {
         Instruction::Close {
             args: args,
             args_type: args_type,
@@ -49,9 +57,7 @@ impl Instruction {
     }
 
     pub fn load_constant(value: AST) -> Instruction {
-        Instruction::LoadConstant {
-            value: value,
-        }
+        Instruction::LoadConstant { value: value }
     }
 
     pub fn load_reference(reference: String) -> Instruction {
@@ -65,21 +71,15 @@ impl Instruction {
     }
 
     pub fn jump_on_false(offset: usize) -> Instruction {
-        Instruction::JumpOnFalse {
-            offset: offset,
-        }
+        Instruction::JumpOnFalse { offset: offset }
     }
 
     pub fn jump_on_true(offset: usize) -> Instruction {
-        Instruction::JumpOnTrue {
-            offset: offset,
-        }
+        Instruction::JumpOnTrue { offset: offset }
     }
 
     pub fn jump(offset: usize) -> Instruction {
-        Instruction::Jump {
-            offset: offset,
-        }
+        Instruction::Jump { offset: offset }
     }
 
     pub fn replace(reference: String) -> Instruction {

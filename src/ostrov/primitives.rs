@@ -25,29 +25,33 @@ pub static PRIMITIVES: [&'static str; 20] = [
     "newline",
 ];
 
-pub fn apply(name: &str, args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+pub fn apply(
+    name: &str,
+    args: &[RcValue],
+    mem: &mut Memory,
+) -> Result<RcValue, Error> {
     match name {
-        "*"      => product(args, mem),
-        "+"      => plus(args, mem),
-        "-"      => minus(args, mem),
-        "/"      => division(args, mem),
-        "<"      => less_than(args, mem),
-        "<="     => less_than_or_equal(args, mem),
-        "="      => equals(args, mem),
-        ">"      => greater_than(args, mem),
-        ">="     => greater_than_or_equal(args, mem),
-        "car"    => car(args),
-        "cdr"    => cdr(args),
-        "cons"   => cons(args, mem),
+        "*" => product(args, mem),
+        "+" => plus(args, mem),
+        "-" => minus(args, mem),
+        "/" => division(args, mem),
+        "<" => less_than(args, mem),
+        "<=" => less_than_or_equal(args, mem),
+        "=" => equals(args, mem),
+        ">" => greater_than(args, mem),
+        ">=" => greater_than_or_equal(args, mem),
+        "car" => car(args),
+        "cdr" => cdr(args),
+        "cons" => cons(args, mem),
         "length" => length(args, mem),
-        "list"   => list(args, mem),
-        "list?"  => is_list(args, mem),
-        "not"    => not(args, mem),
-        "null?"  => null(args, mem),
-        "pair?"  => pair(args, mem),
-        "display"  => display(args, mem),
-        "newline"  => newline(args, mem),
-        _        => Err(Error::PrimitiveFailed(name.to_owned()))
+        "list" => list(args, mem),
+        "list?" => is_list(args, mem),
+        "not" => not(args, mem),
+        "null?" => null(args, mem),
+        "pair?" => pair(args, mem),
+        "display" => display(args, mem),
+        "newline" => newline(args, mem),
+        _ => Err(Error::PrimitiveFailed(name.to_owned())),
     }
 }
 
@@ -59,7 +63,7 @@ fn plus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
 
 fn minus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.is_empty() {
-        return Err(Error::BadArity(Some("-".to_owned())))
+        return Err(Error::BadArity(Some("-".to_owned())));
     }
 
     let integers = try!(list_of_integers(args));
@@ -68,14 +72,15 @@ fn minus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if integers.len() == 1 {
         Ok(mem.integer(-first))
     } else {
-        let sum_of_the_rest = integers.into_iter().skip(1).fold(0, |sum, n| sum + n);
+        let sum_of_the_rest =
+            integers.into_iter().skip(1).fold(0, |sum, n| sum + n);
         Ok(mem.integer(first - sum_of_the_rest))
     }
 }
 
 fn division(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.is_empty() {
-        return Err(Error::BadArity(Some("/".to_owned())))
+        return Err(Error::BadArity(Some("/".to_owned())));
     }
 
     let integers = try!(list_of_integers(args));
@@ -111,7 +116,10 @@ fn less_than(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     ord(args, mem, |a, b| a < b)
 }
 
-fn less_than_or_equal(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn less_than_or_equal(
+    args: &[RcValue],
+    mem: &mut Memory,
+) -> Result<RcValue, Error> {
     ord(args, mem, |a, b| a <= b)
 }
 
@@ -119,13 +127,16 @@ fn greater_than(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     ord(args, mem, |a, b| a > b)
 }
 
-fn greater_than_or_equal(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn greater_than_or_equal(
+    args: &[RcValue],
+    mem: &mut Memory,
+) -> Result<RcValue, Error> {
     ord(args, mem, |a, b| a >= b)
 }
 
 fn not(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() != 1 {
-        return Err(Error::BadArity(Some("not".to_owned())))
+        return Err(Error::BadArity(Some("not".to_owned())));
     }
 
     Ok(mem.boolean(args[0] == mem.b_false()))
@@ -171,10 +182,8 @@ fn car(args: &[RcValue]) -> Result<RcValue, Error> {
     }
 
     match *args[0] {
-        Value::Pair(ref left, ref _right) =>
-            Ok(left.clone()),
-        _ =>
-            Err(Error::WrongArgumentType(args[0].clone())),
+        Value::Pair(ref left, ref _right) => Ok(left.clone()),
+        _ => Err(Error::WrongArgumentType(args[0].clone())),
     }
 }
 
@@ -184,10 +193,8 @@ fn cdr(args: &[RcValue]) -> Result<RcValue, Error> {
     }
 
     match *args[0] {
-        Value::Pair(ref _left, ref right) =>
-            Ok(right.clone()),
-        _ =>
-            Err(Error::WrongArgumentType(args[0].clone())),
+        Value::Pair(ref _left, ref right) => Ok(right.clone()),
+        _ => Err(Error::WrongArgumentType(args[0].clone())),
     }
 }
 
@@ -213,25 +220,25 @@ fn list_of_integers(list: &[RcValue]) -> Result<Vec<i64>, Error> {
 
     for val in list.iter() {
         match **val {
-            Value::Integer(n) =>
-                integers.push(n),
-            _ =>
-                return Err(Error::WrongArgumentType(val.clone())),
+            Value::Integer(n) => integers.push(n),
+            _ => return Err(Error::WrongArgumentType(val.clone())),
         }
     }
 
     Ok(integers)
 }
 
-fn ord<F>(args: &[RcValue], mem: &mut Memory, cmp: F) -> Result<RcValue, Error> where F: Fn(i64, i64) -> bool {
+fn ord<F>(args: &[RcValue], mem: &mut Memory, cmp: F) -> Result<RcValue, Error>
+where
+    F: Fn(i64, i64) -> bool,
+{
     if args.len() < 2 {
-        return Ok(mem.b_true())
+        return Ok(mem.b_true());
     }
 
     let integers = try!(list_of_integers(args));
-    let outcome = (0..integers.len() - 1).all(|i|
-        cmp(integers[i], integers[i + 1])
-    );
+    let outcome =
+        (0..integers.len() - 1).all(|i| cmp(integers[i], integers[i + 1]));
 
     Ok(mem.boolean(outcome))
 }

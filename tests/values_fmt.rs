@@ -29,14 +29,14 @@ fn lists() {
                 integer(1),
                 pair(
                     integer(2),
-                    pair(bool(false),
-                         pair(
-                             pair(
-                                 integer(1),
-                                 pair(
-                                     integer(2),
-                                     nil())),
-                             nil()))))));
+                    pair(
+                        bool(false),
+                        pair(pair(integer(1), pair(integer(2), nil())), nil()),
+                    ),
+                ),
+            ),
+        ),
+    );
 }
 
 #[test]
@@ -45,30 +45,21 @@ fn dotted_lists() {
         "(+ (1 2) . a)",
         pair(
             atom("+"),
-            pair(
-                pair(
-                    integer(1),
-                    pair(
-                        integer(2),
-                        nil())
-                ),
-                atom("a"))));
+            pair(pair(integer(1), pair(integer(2), nil())), atom("a")),
+        ),
+    );
 }
 
 #[test]
 fn procedures() {
-    assert_fmt("<procedure foo (bar baz)>",
-               func("foo", vec!("bar", "baz")));
+    assert_fmt("<procedure foo (bar baz)>", func("foo", vec!["bar", "baz"]));
 }
 
 #[test]
 fn lambdas() {
-    assert_fmt("<lambda (bar baz)>",
-               lambda(vec!("bar", "baz")));
-    assert_fmt("<lambda (bar . baz)>",
-               lambda_var(vec!("bar", "baz")));
-    assert_fmt("<lambda bar>",
-               lambda_any("bar"));
+    assert_fmt("<lambda (bar baz)>", lambda(vec!["bar", "baz"]));
+    assert_fmt("<lambda (bar . baz)>", lambda_var(vec!["bar", "baz"]));
+    assert_fmt("<lambda bar>", lambda_any("bar"));
 }
 
 #[test]

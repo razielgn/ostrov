@@ -1,6 +1,6 @@
 use ast::AST;
-use values::RcValue;
 use parser::ParseError;
+use values::RcValue;
 
 #[derive(PartialEq, Debug)]
 pub enum Error {

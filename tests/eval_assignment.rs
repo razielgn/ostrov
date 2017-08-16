@@ -3,31 +3,41 @@ use helpers::values::*;
 
 #[test]
 fn returns_expression() {
-    assert_eval_val("(define x 0)
-                        (set! x (+ x 1))", unspecified());
+    assert_eval_val(
+        "(define x 0)
+                        (set! x (+ x 1))",
+        unspecified(),
+    );
 }
 
 #[test]
 fn overwrites_variables() {
-    assert_eval("(define x 0)
+    assert_eval(
+        "(define x 0)
                     (set! x (+ x 1))
-                    x", "1");
+                    x",
+        "1",
+    );
 }
 
 #[test]
 fn overwrites_variables_on_upper_scopes() {
-    assert_eval("(define x 0)
+    assert_eval(
+        "(define x 0)
                     (define (f)
                       (set! x (+ x 1)))
                     (f)
                     (f)
                     (f)
-                    x", "3");
+                    x",
+        "3",
+    );
 }
 
 #[test]
 fn overwrites_variables_in_captured_scopes() {
-    assert_eval("(define (gen-counter)
+    assert_eval(
+        "(define (gen-counter)
                       (define counter 0)
                       (lambda ()
                         (set! counter (+ counter 1))
@@ -35,7 +45,9 @@ fn overwrites_variables_in_captured_scopes() {
                     (define count (gen-counter))
                     (count)
                     (count)
-                    (count)", "3");
+                    (count)",
+        "3",
+    );
 }
 
 #[test]

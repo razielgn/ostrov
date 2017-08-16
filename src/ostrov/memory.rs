@@ -1,8 +1,7 @@
 use env::CellEnv;
-use values::{RcValue, Value, ArgumentsType};
 use instructions::Bytecode;
-
 use std::rc::Rc;
+use values::{ArgumentsType, RcValue, Value};
 
 #[derive(Default)]
 pub struct Memory {
@@ -56,9 +55,7 @@ impl Memory {
         elems
             .into_iter()
             .rev()
-            .fold(self.nil(), |cdr, car| {
-                self.pair(car, cdr)
-            })
+            .fold(self.nil(), |cdr, car| self.pair(car, cdr))
     }
 
     pub fn intern(&mut self, atom: String) -> RcValue {
@@ -67,7 +64,13 @@ impl Memory {
         self.store(value)
     }
 
-    pub fn closure(&mut self, args_type: ArgumentsType, args: Vec<String>, closure: CellEnv, bytecode: Bytecode) -> RcValue {
+    pub fn closure(
+        &mut self,
+        args_type: ArgumentsType,
+        args: Vec<String>,
+        closure: CellEnv,
+        bytecode: Bytecode,
+    ) -> RcValue {
         let value = Value::Closure {
             name: None,
             args_type: args_type,

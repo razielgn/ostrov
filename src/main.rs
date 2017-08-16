@@ -1,7 +1,6 @@
 extern crate ostrov;
 
 use ostrov::repl::repl;
-
 use std::env;
 use std::iter::FromIterator;
 

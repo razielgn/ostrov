@@ -2,15 +2,21 @@ use helpers::*;
 
 #[test]
 fn one_definition() {
-    assert_eval("(let ((x 2)
+    assert_eval(
+        "(let ((x 2)
                          (y 3))
-                     (* x y))", "6");
+                     (* x y))",
+        "6",
+    );
 
-    assert_eval("(let ((x 2)
+    assert_eval(
+        "(let ((x 2)
                          (y 3))
                      (let ((x 7)
                            (z (+ x y)))
-                       (* z x)))", "35");
+                       (* z x)))",
+        "35",
+    );
 }
 
 #[test]

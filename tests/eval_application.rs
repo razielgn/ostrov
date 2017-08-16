@@ -28,70 +28,100 @@ fn lists() {
 
 #[test]
 fn expressions_in_first_position() {
-    assert_eval("(define (x) 1)
-                    ((if #t x))", "1");
+    assert_eval(
+        "(define (x) 1)
+                    ((if #t x))",
+        "1",
+    );
 }
 
 #[test]
 fn procedure_with_no_args() {
-    assert_eval("(define (x) 1)
-                    (x)", "1");
+    assert_eval(
+        "(define (x) 1)
+                    (x)",
+        "1",
+    );
 }
 
 #[test]
 fn procedure_with_one_arg() {
-    assert_eval("(define (x y) y)
-                    (x (+ 2 9))", "11");
+    assert_eval(
+        "(define (x y) y)
+                    (x (+ 2 9))",
+        "11",
+    );
 }
 
 #[test]
 fn procedure_with_two_args() {
-    assert_eval("(define (sum x y) (+ x y))
-                    (sum 4 9)", "13");
+    assert_eval(
+        "(define (sum x y) (+ x y))
+                    (sum 4 9)",
+        "13",
+    );
 }
 
 #[test]
 fn procedure_with_var_args() {
-    assert_eval("(define (sum x . y) y)
-                    (sum 4 9)", "'(9)");
+    assert_eval(
+        "(define (sum x . y) y)
+                    (sum 4 9)",
+        "'(9)",
+    );
 }
 
 #[test]
 fn procedure_with_any_args() {
-    assert_eval("(define (sum . y) y)
-                    (sum 4 9)", "'(4 9)");
+    assert_eval(
+        "(define (sum . y) y)
+                    (sum 4 9)",
+        "'(4 9)",
+    );
 }
 
 #[test]
 fn procedure_with_two_args_scoping() {
-    assert_eval("(define x 10)
+    assert_eval(
+        "(define x 10)
                     (define (sum x y) (+ x y))
-                    (sum 4 9)", "13");
+                    (sum 4 9)",
+        "13",
+    );
 }
 
 #[test]
 fn procedure_with_two_args_previous_scoping_is_kept() {
-    assert_eval("(define x 10)
+    assert_eval(
+        "(define x 10)
                     (define (sum x y) (+ x y))
                     (sum 4 9)
-                    x", "10");
+                    x",
+        "10",
+    );
 }
 
 #[test]
 #[ignore]
 fn procedure_with_mismatched_arity() {
-    assert_eval_err("(define (sum x y) (+ x y))
-                        (sum 4)", bad_arity("sum"));
+    assert_eval_err(
+        "(define (sum x y) (+ x y))
+                        (sum 4)",
+        bad_arity("sum"),
+    );
 }
 
 #[test]
 fn lambda_multiple_expressions_are_evaluated_sequentially() {
-    assert_eval("(define (foo)
+    assert_eval(
+        "(define (foo)
                       (define a 10)
                       (define b (+ a 1))
                       (define c (+ b 1))
                       c)
-                    (foo)", "12");
+                    (foo)",
+        "12",
+    );
 }
 
 #[test]
