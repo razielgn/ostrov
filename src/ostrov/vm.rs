@@ -18,9 +18,9 @@ pub struct Frame {
 }
 
 impl Frame {
-    pub fn new(rib: &Rib, env: &CellEnv) -> Frame {
+    pub fn new(rib: &[RcValue], env: &CellEnv) -> Frame {
         Frame {
-            rib: rib.clone(),
+            rib: rib.to_vec(),
             env: env.clone(),
         }
     }
@@ -57,7 +57,7 @@ impl VM {
         vm
     }
 
-    pub fn execute<'a, I>(&mut self, instructions: I) -> Result<RcValue, Error>
+    pub fn execute<I>(&mut self, instructions: I) -> Result<RcValue, Error>
         where I: Iterator<Item = Instruction>
     {
         self.instructions = Vec::from_iter(instructions.into_iter());
@@ -106,7 +106,7 @@ impl VM {
     }
 
     fn next_instruction(&mut self) -> Option<Instruction> {
-        let instr = self.instructions.get(self.pc).map(Clone::clone);
+        let instr = self.instructions.get(self.pc).cloned();
         self.pc += 1;
         instr
     }
@@ -131,26 +131,26 @@ impl VM {
         self.pc += times;
     }
 
-    fn load_reference(&mut self, reference: &String) -> Result<(), Error> {
+    fn load_reference(&mut self, reference: &str) -> Result<(), Error> {
         match self.env.get(reference) {
             Some(value) =>
                 Ok(self.acc = value),
             None =>
-                Err(Error::UnboundVariable(reference.clone())),
+                Err(Error::UnboundVariable(reference.into())),
         }
     }
 
-    fn assignment(&mut self, reference: &String) {
-        self.env.set(reference.clone(), self.acc.clone());
+    fn assignment(&mut self, reference: &str) {
+        self.env.set(reference.into(), self.acc.clone());
         self.load_unspecified();
     }
 
-    fn replace(&mut self, reference: &String) -> Result<(), Error> {
-        match self.env.replace(reference.clone(), self.acc.clone()) {
+    fn replace(&mut self, reference: &str) -> Result<(), Error> {
+        match self.env.replace(reference.into(), self.acc.clone()) {
             Some(_) =>
                 Ok(self.load_unspecified()),
             None =>
-                Err(Error::UnboundVariable(reference.clone())),
+                Err(Error::UnboundVariable(reference.into())),
         }
     }
 
@@ -238,16 +238,16 @@ impl VM {
 
                         let var_args = self.rib.iter()
                             .skip(fixed_arg_names.len())
-                            .map(Clone::clone)
+                            .cloned()
                             .collect();
 
                         self.env.set(
                             arg_names.last().unwrap().clone(),
-                            self.memory.list(&var_args)
+                            self.memory.list(var_args)
                         );
                     }
                     ArgumentsType::Any => {
-                        self.env.set(arg_names[0].clone(), self.memory.list(&self.rib));
+                        self.env.set(arg_names[0].clone(), self.memory.list(self.rib.clone()));
                     }
                 }
 
@@ -258,10 +258,10 @@ impl VM {
         }
     }
 
-    fn push_closure(&mut self, args: &Vec<String>, args_type: &ArgumentsType, body: &Bytecode) {
+    fn push_closure(&mut self, args: &[String], args_type: &ArgumentsType, body: &Bytecode) {
         self.acc = self.memory.closure(
             *args_type,
-            args.clone(),
+            args.to_vec(),
             CellEnv::wraps(self.env.clone()),
             body.clone(),
         );
@@ -272,7 +272,7 @@ impl VM {
     }
 
     fn init_primitives(&mut self) {
-        for &name in primitives::PRIMITIVES.iter() {
+        for &name in &primitives::PRIMITIVES {
             let primitive = self.memory.primitive(name.to_owned());
             self.env.set(name.to_owned(), primitive);
         }

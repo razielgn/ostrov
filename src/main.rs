@@ -6,5 +6,6 @@ use std::env;
 use std::iter::FromIterator;
 
 fn main() {
-    repl(Vec::from_iter(env::args()))
+    let args = Vec::from_iter(env::args());
+    repl(&args)
 }

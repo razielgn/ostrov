@@ -4,6 +4,7 @@ use instructions::Bytecode;
 
 use std::rc::Rc;
 
+#[derive(Default)]
 pub struct Memory {
     heap: Vec<RcValue>,
     reserved: Vec<RcValue>,
@@ -11,13 +12,8 @@ pub struct Memory {
 
 impl Memory {
     pub fn new() -> Memory {
-        let mut memory = Memory {
-            heap: Vec::new(),
-            reserved: Vec::new(),
-        };
-
+        let mut memory = Memory::default();
         memory.init();
-
         memory
     }
 
@@ -56,12 +52,12 @@ impl Memory {
         self.store(value)
     }
 
-    pub fn list(&mut self, elems: &Vec<RcValue>) -> RcValue {
+    pub fn list(&mut self, elems: Vec<RcValue>) -> RcValue {
         elems
-            .iter()
+            .into_iter()
             .rev()
             .fold(self.nil(), |cdr, car| {
-                self.pair(car.clone(), cdr)
+                self.pair(car, cdr)
             })
     }
 

@@ -29,7 +29,7 @@ impl Runtime {
         let exprs = try!(self.parse_str(input));
 
         let mut evalued_exprs = Vec::new();
-        for expr in exprs.iter() {
+        for expr in &exprs {
             let bytecode = try!(compile_single(expr));
             let evalued_expr = try!(self.vm.execute(bytecode.into_iter()));
             evalued_exprs.push(evalued_expr);

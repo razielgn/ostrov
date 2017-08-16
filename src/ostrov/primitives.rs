@@ -25,8 +25,8 @@ pub static PRIMITIVES: [&'static str; 20] = [
     "newline",
 ];
 
-pub fn apply(name: &String, args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
-    match &**name {
+pub fn apply(name: &str, args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+    match name {
         "*"      => product(args, mem),
         "+"      => plus(args, mem),
         "-"      => minus(args, mem),
@@ -51,13 +51,13 @@ pub fn apply(name: &String, args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcV
     }
 }
 
-fn plus(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn plus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     let integers = try!(list_of_integers(args));
     let sum = integers.into_iter().fold(0, |sum, n| sum + n);
     Ok(mem.integer(sum))
 }
 
-fn minus(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn minus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.is_empty() {
         return Err(Error::BadArity(Some("-".to_owned())))
     }
@@ -73,7 +73,7 @@ fn minus(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     }
 }
 
-fn division(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn division(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.is_empty() {
         return Err(Error::BadArity(Some("/".to_owned())))
     }
@@ -89,13 +89,13 @@ fn division(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     }
 }
 
-fn product(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn product(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     let integers = try!(list_of_integers(args));
     let product = integers.into_iter().fold(1, |product, n| product * n);
     Ok(mem.integer(product))
 }
 
-fn equals(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn equals(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() < 2 {
         return Ok(mem.b_true());
     }
@@ -107,23 +107,23 @@ fn equals(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     Ok(mem.boolean(equality))
 }
 
-fn less_than(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn less_than(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     ord(args, mem, |a, b| a < b)
 }
 
-fn less_than_or_equal(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn less_than_or_equal(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     ord(args, mem, |a, b| a <= b)
 }
 
-fn greater_than(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn greater_than(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     ord(args, mem, |a, b| a > b)
 }
 
-fn greater_than_or_equal(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn greater_than_or_equal(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     ord(args, mem, |a, b| a >= b)
 }
 
-fn not(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn not(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("not".to_owned())))
     }
@@ -131,11 +131,11 @@ fn not(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     Ok(mem.boolean(args[0] == mem.b_false()))
 }
 
-fn list(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
-    Ok(mem.list(args))
+fn list(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+    Ok(mem.list(args.to_vec()))
 }
 
-fn length(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn length(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("length".to_owned())));
     }
@@ -146,7 +146,7 @@ fn length(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     )
 }
 
-fn pair(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn pair(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("pair?".to_owned())));
     }
@@ -155,7 +155,7 @@ fn pair(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     Ok(mem.boolean(outcome))
 }
 
-fn cons(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn cons(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() != 2 {
         return Err(Error::BadArity(Some("cons".to_owned())));
     }
@@ -165,7 +165,7 @@ fn cons(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     Ok(mem.pair(left, right))
 }
 
-fn car(args: &Vec<RcValue>) -> Result<RcValue, Error> {
+fn car(args: &[RcValue]) -> Result<RcValue, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("car".to_owned())));
     }
@@ -178,7 +178,7 @@ fn car(args: &Vec<RcValue>) -> Result<RcValue, Error> {
     }
 }
 
-fn cdr(args: &Vec<RcValue>) -> Result<RcValue, Error> {
+fn cdr(args: &[RcValue]) -> Result<RcValue, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("cdr".to_owned())));
     }
@@ -191,7 +191,7 @@ fn cdr(args: &Vec<RcValue>) -> Result<RcValue, Error> {
     }
 }
 
-fn null(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn null(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("null?".to_owned())));
     }
@@ -199,7 +199,7 @@ fn null(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     Ok(mem.boolean(args[0] == mem.nil()))
 }
 
-fn is_list(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn is_list(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("list?".to_owned())));
     }
@@ -208,7 +208,7 @@ fn is_list(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     Ok(mem.boolean(outcome))
 }
 
-fn list_of_integers(list: &Vec<RcValue>) -> Result<Vec<i64>, Error> {
+fn list_of_integers(list: &[RcValue]) -> Result<Vec<i64>, Error> {
     let mut integers = Vec::with_capacity(list.len());
 
     for val in list.iter() {
@@ -223,7 +223,7 @@ fn list_of_integers(list: &Vec<RcValue>) -> Result<Vec<i64>, Error> {
     Ok(integers)
 }
 
-fn ord<F>(args: &Vec<RcValue>, mem: &mut Memory, cmp: F) -> Result<RcValue, Error> where F: Fn(i64, i64) -> bool {
+fn ord<F>(args: &[RcValue], mem: &mut Memory, cmp: F) -> Result<RcValue, Error> where F: Fn(i64, i64) -> bool {
     if args.len() < 2 {
         return Ok(mem.b_true())
     }
@@ -236,7 +236,7 @@ fn ord<F>(args: &Vec<RcValue>, mem: &mut Memory, cmp: F) -> Result<RcValue, Erro
     Ok(mem.boolean(outcome))
 }
 
-fn display(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn display(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if args.len() != 1 {
         return Err(Error::BadArity(Some("display".to_owned())));
     }
@@ -246,7 +246,7 @@ fn display(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
     Ok(mem.b_true())
 }
 
-fn newline(args: &Vec<RcValue>, mem: &mut Memory) -> Result<RcValue, Error> {
+fn newline(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if !args.is_empty() {
         return Err(Error::BadArity(Some("newline".to_owned())));
     }

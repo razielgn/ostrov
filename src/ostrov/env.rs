@@ -20,7 +20,7 @@ impl CellEnv {
         self.0.borrow_mut().set(name, expr);
     }
 
-    pub fn get(&self, name: &String) -> Option<RcValue> {
+    pub fn get(&self, name: &str) -> Option<RcValue> {
         self.0.borrow().get(name)
     }
 
@@ -57,7 +57,7 @@ impl Env {
         self.defs.insert(name, expr);
     }
 
-    pub fn get(&self, name: &String) -> Option<RcValue> {
+    pub fn get(&self, name: &str) -> Option<RcValue> {
         match self.defs.get(name) {
             Some(value) => Some(value.clone()),
             None        => self.get_from_outer(name),
@@ -74,7 +74,7 @@ impl Env {
         }
     }
 
-    fn get_from_outer(&self, name: &String) -> Option<RcValue> {
+    fn get_from_outer(&self, name: &str) -> Option<RcValue> {
         self.outer.clone().and_then(|env| env.get(name))
     }
 

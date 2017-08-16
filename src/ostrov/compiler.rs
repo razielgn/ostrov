@@ -1,5 +1,6 @@
 use instructions::{Instruction, Bytecode, ArgumentsType};
 use ast::AST;
+use ast::AST::*;
 use errors::Error;
 use std::collections::LinkedList;
 
@@ -16,12 +17,12 @@ pub fn compile(ast: &[AST]) -> Result<Bytecode, Error> {
 }
 
 pub fn compile_single(ast: &AST) -> Result<Bytecode, Error> {
-    match ast {
-        &AST::Integer(..) | &AST::Bool(..) =>
+    match *ast {
+        Integer(..) | Bool(..) =>
             emit_constant(ast),
-        &AST::Atom(ref atom) =>
+        Atom(ref atom) =>
             emit_reference(atom),
-        &AST::List(ref list) =>
+        List(ref list) =>
             emit_application(list),
         _ =>
             Err(Error::MalformedExpression),
@@ -40,13 +41,13 @@ fn emit_constant(value: &AST) -> Result<Bytecode, Error> {
     )
 }
 
-fn emit_reference(atom: &String) -> Result<Bytecode, Error> {
+fn emit_reference(atom: &str) -> Result<Bytecode, Error> {
     emit_single_instr(
-        Instruction::load_reference(atom.clone())
+        Instruction::load_reference(atom.into())
     )
 }
 
-fn emit_application(list: &Vec<AST>) -> Result<Bytecode, Error> {
+fn emit_application(list: &[AST]) -> Result<Bytecode, Error> {
     if list.is_empty() {
         return Err(Error::MalformedExpression);
     }
@@ -54,7 +55,7 @@ fn emit_application(list: &Vec<AST>) -> Result<Bytecode, Error> {
     let head = &list[0];
     let tail = &list[1..];
 
-    if let &AST::Atom(ref special_form) = head {
+    if let Atom(ref special_form) = *head {
         let args = tail;
 
         match special_form.as_ref() {
@@ -111,8 +112,8 @@ fn emit_logical_op<F>(args: &[AST], default: bool, instruction: F) -> Result<Byt
 {
     let mut instructions = LinkedList::new();
 
-    if args.len() == 0 {
-        instructions.push_back(Instruction::load_constant(AST::Bool(default)));
+    if args.is_empty() {
+        instructions.push_back(Instruction::load_constant(Bool(default)));
     } else {
         let mut compiled_args = Vec::with_capacity(args.len());
         let mut sizes = Vec::with_capacity(args.len());
@@ -153,7 +154,7 @@ fn emit_set(args: &[AST]) -> Result<Bytecode, Error> {
         return Err(Error::BadArity(Some("set!".to_owned())));
     }
 
-    if let AST::Atom(ref name) = args[0] {
+    if let Atom(ref name) = args[0] {
         let mut argument = try!(compile_single(&args[1]));
         let mut instructions = LinkedList::new();
         instructions.append(&mut argument);
@@ -172,7 +173,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
     let mut instructions = LinkedList::new();
 
     match args[0] {
-        AST::Atom(ref name) => {
+        Atom(ref name) => {
             if args.len() == 2 {
                 instructions.append(&mut try!(compile_single(&args[1])));
             } else {
@@ -181,12 +182,12 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
 
             instructions.push_back(Instruction::assignment(name.clone()));
         }
-        AST::List(ref list) if !list.is_empty() => {
+        List(ref list) if !list.is_empty() => {
             let name = try!(unpack_atom(&list[0]));
-            let ref arg_names = list[1..];
-            let ref body = args[1..];
+            let arg_names = &list[1..];
+            let body = &args[1..];
 
-            let mut lambda = vec!(AST::List(arg_names.to_vec()));
+            let mut lambda = vec!(List(arg_names.to_vec()));
             for x in body {
                 lambda.push(x.clone());
             }
@@ -194,17 +195,17 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
 
             instructions.push_back(Instruction::assignment(name));
         }
-        AST::DottedList(ref list, ref extra) if !list.is_empty() => {
+        DottedList(ref list, ref extra) if !list.is_empty() => {
             let name = try!(unpack_atom(&list[0]));
-            let ref arg_names = list[1..];
-            let ref body = args[1..];
+            let arg_names = &list[1..];
+            let body = &args[1..];
 
             let mut lambda = Vec::new();
 
-            if arg_names.len() > 0 {
-                lambda.push(AST::DottedList(arg_names.to_vec(), extra.clone()));
-            } else {
+            if arg_names.is_empty() {
                 lambda.push(*extra.clone());
+            } else {
+                lambda.push(DottedList(arg_names.to_vec(), extra.clone()));
             }
 
             for x in body {
@@ -236,14 +237,14 @@ fn emit_apply(head: &AST, args: &[AST]) -> Result<Bytecode, Error> {
 }
 
 fn emit_lambda(args_: &[AST]) -> Result<Bytecode, Error> {
-    let ref body = &args_[1..];
+    let body = &args_[1..];
     if body.is_empty() {
         return Err(Error::MalformedExpression);
     }
 
     let mut instructions = LinkedList::new();
 
-    let compiled_body = try!(compile(&body));
+    let compiled_body = try!(compile(body));
     let (args, args_type) = try!(function_arguments(&args_[0]));
     instructions.push_back(Instruction::close(args, args_type, compiled_body));
 
@@ -257,14 +258,14 @@ fn emit_let(args_: &[AST]) -> Result<Bytecode, Error> {
 
     let mut instructions = LinkedList::new();
 
-    if let &AST::List(ref bindings) = args_.first().unwrap() {
+    if let List(ref bindings) = *args_.first().unwrap() {
         let mut params = Vec::with_capacity(bindings.len());
 
         instructions.push_back(Instruction::frame());
 
         for binding in bindings.iter() {
-            match binding {
-                &AST::List(ref binding) if binding.len() == 2 => {
+            match *binding {
+                List(ref binding) if binding.len() == 2 => {
                     params.push(try!(unpack_atom(&binding[0])));
 
                     instructions.append(&mut try!(compile_single(&binding[1])));
@@ -296,7 +297,7 @@ fn emit_let(args_: &[AST]) -> Result<Bytecode, Error> {
 
 fn function_arguments(ast: &AST) -> Result<(Vec<String>, ArgumentsType), Error> {
     match *ast {
-        AST::List(ref list) => {
+        List(ref list) => {
             let mut atoms = Vec::with_capacity(list.len());
 
             for atom in list {
@@ -306,7 +307,7 @@ fn function_arguments(ast: &AST) -> Result<(Vec<String>, ArgumentsType), Error> 
 
             Ok((atoms, ArgumentsType::Fixed))
         }
-        AST::DottedList(ref list, ref extra) => {
+        DottedList(ref list, ref extra) => {
             let mut atoms = Vec::with_capacity(list.len() + 1);
 
             for atom in list {
@@ -319,7 +320,7 @@ fn function_arguments(ast: &AST) -> Result<(Vec<String>, ArgumentsType), Error> 
 
             Ok((atoms, ArgumentsType::Variable))
         }
-        AST::Atom(ref arg) => {
+        Atom(ref arg) => {
             Ok((vec!(arg.clone()), ArgumentsType::Any))
         }
         _ =>
@@ -328,7 +329,7 @@ fn function_arguments(ast: &AST) -> Result<(Vec<String>, ArgumentsType), Error> 
 }
 
 fn unpack_atom(value: &AST) -> Result<String, Error> {
-    if let &AST::Atom(ref atom) = value {
+    if let Atom(ref atom) = *value {
         Ok(atom.to_owned())
     } else {
         Err(Error::MalformedExpression)
