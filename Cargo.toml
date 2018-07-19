@@ -1,5 +1,4 @@
 [package]
-
 name = "ostrov"
 description = "R6RS Scheme implementation"
 homepage = "https://github.com/razielgn/ostrov"
@@ -9,6 +8,7 @@ version = "0.0.1"
 keywords = ["language", "lisp", "scheme"]
 license = "MIT"
 authors = ["Federico Ravasio <ravasio.federico@gmail.com>"]
+autotests = false
 
 [lib]
 name = "ostrov"

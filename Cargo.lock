@@ -1,4 +1,4 @@
-[root]
+[[package]]
 name = "ostrov"
 version = "0.0.1"
 
