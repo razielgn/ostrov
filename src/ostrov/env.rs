@@ -84,3 +84,46 @@ impl Env {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::CellEnv;
+    use memory::Memory;
+
+    #[test]
+    fn set_and_get_ok() {
+        let mut mem = Memory::new();
+        let env = CellEnv::new();
+        let name: String = "foo".into();
+
+        let val = mem.integer(3);
+        env.set(name.clone(), val.clone());
+
+        assert_eq!(Some(val), env.get(&name));
+    }
+
+    #[test]
+    fn set_and_get_none() {
+        let env = CellEnv::new();
+        assert_eq!(None, env.get("foo"));
+    }
+
+    #[test]
+    fn wraps() {
+        let mut mem = Memory::new();
+        let outer = CellEnv::new();
+        let outer_foo = mem.integer(5);
+        let bar = mem.intern("bar".into());
+
+        outer.set("foo".into(), outer_foo.clone());
+        outer.set("bar".into(), bar.clone());
+
+        let inner = CellEnv::wraps(outer);
+        let inner_foo = mem.integer(25);
+
+        inner.set("foo".into(), inner_foo.clone());
+
+        assert_eq!(Some(inner_foo), inner.get("foo"));
+        assert_eq!(Some(bar), inner.get("bar"));
+    }
+}

@@ -86,7 +86,7 @@ fn fmt_join_with_spaces<T: Display>(
 
 fn fmt_list<T: Display>(items: &[T], f: &mut Formatter) -> Result<(), Error> {
     try!(write!(f, "("));
-    try!(fmt_join_with_spaces(items.as_ref(), f));
+    try!(fmt_join_with_spaces(items, f));
     write!(f, ")")
 }
 
@@ -113,7 +113,7 @@ fn fmt_dotted_list<T: Display>(
     f: &mut Formatter,
 ) -> Result<(), Error> {
     try!(write!(f, "("));
-    try!(fmt_join_with_spaces(items.as_ref(), f));
+    try!(fmt_join_with_spaces(items, f));
     write!(f, " . {})", right)
 }
 
@@ -235,5 +235,141 @@ impl Value {
                     .fold(value, |cdr, car| mem.pair(car.clone(), cdr))
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::ArgumentsType::*;
+    use super::Value::*;
+    use env::CellEnv;
+    use std::rc::Rc;
+
+    macro_rules! assert_fmt {
+        ($s:expr, $v:expr) => {
+            assert_eq!($s, format!("{}", $v));
+        };
+    }
+
+    #[test]
+    fn integers() {
+        assert_fmt!("1", Integer(1));
+        assert_fmt!("-213", Integer(-213));
+    }
+
+    #[test]
+    fn booleans() {
+        assert_fmt!("#t", Bool(true));
+        assert_fmt!("#f", Bool(false));
+    }
+
+    #[test]
+    fn atoms() {
+        assert_fmt!("->", Atom("->".into()));
+    }
+
+    #[test]
+    fn nil() {
+        assert_fmt!("()", Nil);
+    }
+
+    #[test]
+    fn unspecified() {
+        assert_fmt!("<unspecified>", Unspecified);
+    }
+
+    #[test]
+    fn pairs() {
+        assert_fmt!(
+            "(+ 1 2 #f (1 2))",
+            Pair(
+                Rc::new(Atom("+".into())),
+                Rc::new(Pair(
+                    Rc::new(Integer(1)),
+                    Rc::new(Pair(
+                        Rc::new(Integer(2)),
+                        Rc::new(Pair(
+                            Rc::new(Bool(false)),
+                            Rc::new(Pair(
+                                Rc::new(Pair(
+                                    Rc::new(Integer(1)),
+                                    Rc::new(Pair(
+                                        Rc::new(Integer(2)),
+                                        Rc::new(Nil)
+                                    ))
+                                )),
+                                Rc::new(Nil)
+                            ))
+                        ))
+                    ))
+                ))
+            )
+        );
+
+        assert_fmt!(
+            "(+ (1 2) . a)",
+            Pair(
+                Rc::new(Atom("+".into())),
+                Rc::new(Pair(
+                    Rc::new(Pair(
+                        Rc::new(Integer(1)),
+                        Rc::new(Pair(Rc::new(Integer(2)), Rc::new(Nil))),
+                    )),
+                    Rc::new(Atom("a".into()))
+                ))
+            )
+        );
+    }
+
+    #[test]
+    fn closures() {
+        assert_fmt!(
+            "<procedure foo (bar baz)>",
+            Closure {
+                name: Some("foo".into()),
+                args_type: Fixed,
+                args: vec!["bar".into(), "baz".into()],
+                code: Default::default(),
+                closure: CellEnv::new(),
+            }
+        );
+
+        assert_fmt!(
+            "<lambda (bar baz)>",
+            Closure {
+                name: None,
+                args_type: Fixed,
+                args: vec!["bar".into(), "baz".into()],
+                code: Default::default(),
+                closure: CellEnv::new(),
+            }
+        );
+
+        assert_fmt!(
+            "<lambda (bar . baz)>",
+            Closure {
+                name: None,
+                args_type: Variable,
+                args: vec!["bar".into(), "baz".into()],
+                code: Default::default(),
+                closure: CellEnv::new(),
+            }
+        );
+
+        assert_fmt!(
+            "<lambda bar>",
+            Closure {
+                name: None,
+                args_type: Any,
+                args: vec!["bar".into()],
+                code: Default::default(),
+                closure: CellEnv::new(),
+            }
+        );
+    }
+
+    #[test]
+    fn primitive_fns() {
+        assert_fmt!("<primitive procedure +>", PrimitiveFn("+".into()));
     }
 }

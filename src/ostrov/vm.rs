@@ -1,7 +1,7 @@
 use ast::AST;
 use env::CellEnv;
 use errors::Error;
-use instructions::{Bytecode, Instruction, PackedBytecode};
+use instructions::{Bytecode, Instruction};
 use memory::Memory;
 use primitives;
 use std::collections::LinkedList;
@@ -32,9 +32,9 @@ pub struct VM {
     pub rib: Rib,
     pub env: CellEnv,
     pub stack: Stack,
-    instructions: PackedBytecode,
+    instructions: Bytecode,
     pc: usize,
-    code: Vec<(PackedBytecode, usize)>,
+    code: Vec<(Bytecode, usize)>,
 }
 
 impl VM {
@@ -43,7 +43,7 @@ impl VM {
 
         let mut vm = VM {
             acc: memory.unspecified(),
-            memory: memory,
+            memory,
             stack: Default::default(),
             rib: Default::default(),
             env: CellEnv::new(),
@@ -57,40 +57,29 @@ impl VM {
         vm
     }
 
-    pub fn execute<I>(&mut self, instructions: I) -> Result<RcValue, Error>
-    where
-        I: Iterator<Item = Instruction>,
-    {
-        self.instructions = Vec::from_iter(instructions.into_iter());
+    pub fn execute(&mut self, instructions: Bytecode) -> Result<RcValue, Error> {
+        self.instructions = instructions;
         self.pc = 0;
 
         loop {
+            use instructions::Instruction::*;
+
             match self.next_instruction() {
                 Some(instr) => match instr {
-                    Instruction::LoadConstant { ref value } => {
-                        self.load_constant(value)
-                    }
-                    Instruction::Jump { offset } => self.jump(offset),
-                    Instruction::JumpOnFalse { offset } => {
-                        self.jump_on_false(offset)
-                    }
-                    Instruction::JumpOnTrue { offset } => {
-                        self.jump_on_true(offset)
-                    }
-                    Instruction::LoadReference { ref reference } => {
+                    LoadConstant(ref value) => self.load_constant(value),
+                    Jump(offset) => self.jump(offset),
+                    JumpOnFalse(offset) => self.jump_on_false(offset),
+                    JumpOnTrue(offset) => self.jump_on_true(offset),
+                    LoadReference(ref reference) => {
                         try!(self.load_reference(reference))
                     }
-                    Instruction::Assignment { ref reference } => {
-                        self.assignment(reference)
-                    }
-                    Instruction::Replace { ref reference } => {
-                        try!(self.replace(reference))
-                    }
-                    Instruction::LoadUnspecified => self.load_unspecified(),
-                    Instruction::Apply => try!(self.apply()),
-                    Instruction::Argument => self.argument(),
-                    Instruction::Frame => self.push_frame(),
-                    Instruction::Close {
+                    Assignment(ref reference) => self.assignment(reference),
+                    Replace(ref reference) => try!(self.replace(reference)),
+                    LoadUnspecified => self.load_unspecified(),
+                    Apply => try!(self.apply()),
+                    Argument => self.argument(),
+                    Frame => self.push_frame(),
+                    Close {
                         ref args,
                         ref args_type,
                         ref body,
@@ -134,7 +123,10 @@ impl VM {
 
     fn load_reference(&mut self, reference: &str) -> Result<(), Error> {
         match self.env.get(reference) {
-            Some(value) => Ok(self.acc = value),
+            Some(value) => {
+                self.acc = value;
+                Ok(())
+            }
             None => Err(Error::UnboundVariable(reference.into())),
         }
     }
@@ -146,7 +138,10 @@ impl VM {
 
     fn replace(&mut self, reference: &str) -> Result<(), Error> {
         match self.env.replace(reference.into(), self.acc.clone()) {
-            Some(_) => Ok(self.load_unspecified()),
+            Some(_) => {
+                self.load_unspecified();
+                Ok(())
+            }
             None => Err(Error::UnboundVariable(reference.into())),
         }
     }
@@ -197,7 +192,7 @@ impl VM {
                 ref closure,
                 code: ref body,
             } => {
-                let mut instructions = Vec::from_iter(body.clone().into_iter());
+                let mut instructions = Vec::from_iter(body.clone());
                 mem::swap(&mut self.instructions, &mut instructions);
 
                 self.code.push((instructions, self.pc));
@@ -210,8 +205,7 @@ impl VM {
                             return Err(Error::BadArity(name.clone()));
                         }
 
-                        for (name, value) in
-                            arg_names.iter().zip(self.rib.iter())
+                        for (name, value) in arg_names.iter().zip(self.rib.iter())
                         {
                             self.env.set(name.clone(), value.clone());
                         }
@@ -277,5 +271,209 @@ impl VM {
             let primitive = self.memory.primitive(name.to_owned());
             self.env.set(name.to_owned(), primitive);
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use ast::AST::*;
+    use errors::Error;
+    use instructions::Instruction::*;
+    use vm::VM;
+
+    #[test]
+    fn execute_load_constant() {
+        {
+            let mut vm = VM::new();
+            let instr = vec![
+                LoadConstant(Integer(1)),
+                LoadConstant(Integer(2)),
+                LoadConstant(Integer(3)),
+            ];
+
+            assert_eq!(Ok(vm.memory.integer(3)), vm.execute(instr));
+        }
+
+        {
+            let mut vm = VM::new();
+            let instr = vec![
+                LoadConstant(Bool(false)),
+                LoadConstant(Bool(true)),
+                LoadConstant(Bool(false)),
+            ];
+
+            assert_eq!(Ok(vm.memory.b_false()), vm.execute(instr));
+        }
+    }
+
+    #[test]
+    fn execute_jump() {
+        {
+            let mut vm = VM::new();
+            let instr = vec![
+                LoadConstant(Integer(23)),
+                Jump(1),
+                LoadConstant(Integer(42)),
+            ];
+
+            assert_eq!(Ok(vm.memory.integer(23)), vm.execute(instr));
+        }
+    }
+
+    #[test]
+    fn execute_jump_on_false() {
+        {
+            let mut vm = VM::new();
+            let instr = vec![
+                LoadConstant(Bool(false)),
+                JumpOnFalse(1),
+                LoadConstant(Integer(23)),
+            ];
+
+            assert_eq!(Ok(vm.memory.b_false()), vm.execute(instr));
+        }
+
+        {
+            let mut vm = VM::new();
+            let instr = vec![
+                LoadConstant(Bool(false)),
+                JumpOnFalse(2),
+                LoadConstant(Integer(1)),
+                Jump(1),
+                LoadConstant(Bool(true)),
+                JumpOnFalse(2),
+                LoadConstant(Integer(1)),
+                Jump(1),
+                LoadConstant(Integer(2)),
+            ];
+
+            assert_eq!(Ok(vm.memory.integer(1)), vm.execute(instr));
+        }
+    }
+
+    #[test]
+    fn execute_jump_on_true() {
+        {
+            let mut vm = VM::new();
+            let instr = vec![
+                LoadConstant(Bool(false)),
+                JumpOnTrue(1),
+                LoadConstant(Integer(23)),
+            ];
+
+            assert_eq!(Ok(vm.memory.integer(23)), vm.execute(instr));
+        }
+
+        {
+            let mut vm = VM::new();
+            let instr = vec![
+                LoadConstant(Bool(true)),
+                JumpOnTrue(1),
+                LoadConstant(Integer(23)),
+            ];
+
+            assert_eq!(Ok(vm.memory.b_true()), vm.execute(instr));
+        }
+    }
+
+    #[test]
+    fn execute_load_reference() {
+        {
+            let mut vm = VM::new();
+            let instr = vec![LoadReference("a".to_owned())];
+
+            assert_eq!(
+                Err(Error::UnboundVariable("a".into())),
+                vm.execute(instr)
+            );
+        }
+
+        {
+            let mut vm = VM::new();
+            let instr = vec![LoadReference("a".to_owned())];
+
+            vm.env.set("a".to_owned(), vm.memory.integer(1));
+
+            assert_eq!(Ok(vm.memory.integer(1)), vm.execute(instr));
+        }
+    }
+
+    #[test]
+    fn execute_assignment() {
+        let mut vm = VM::new();
+        let instr = vec![
+            LoadConstant(Integer(1)),
+            Assignment("x".to_owned()),
+            LoadConstant(Integer(2)),
+            LoadReference("x".to_owned()),
+        ];
+
+        assert_eq!(Ok(vm.memory.integer(1)), vm.execute(instr));
+    }
+
+    #[test]
+    fn execute_load_unspecified() {
+        let mut vm = VM::new();
+        let instr = vec![LoadConstant(Integer(1)), LoadUnspecified];
+
+        assert_eq!(Ok(vm.memory.unspecified()), vm.execute(instr));
+    }
+
+    #[test]
+    fn execute_apply() {
+        let mut vm = VM::new();
+        let instr = vec![Frame, LoadReference("+".to_owned()), Apply];
+
+        assert_eq!(Ok(vm.memory.integer(0)), vm.execute(instr));
+    }
+
+    #[test]
+    fn execute_argument() {
+        let mut vm = VM::new();
+        let instr = vec![
+            Frame,
+            LoadConstant(Integer(2)),
+            Argument,
+            LoadReference("+".to_owned()),
+            Apply,
+        ];
+
+        assert_eq!(Ok(vm.memory.integer(2)), vm.execute(instr));
+    }
+
+    #[test]
+    fn execute_nested_arguments() {
+        let mut vm = VM::new();
+        let instr = vec![
+            Frame,
+            Frame,
+            LoadConstant(Integer(1)),
+            Argument,
+            LoadConstant(Integer(2)),
+            Argument,
+            LoadReference("+".to_owned()),
+            Apply,
+            Argument,
+            Frame,
+            LoadConstant(Integer(4)),
+            Argument,
+            LoadConstant(Integer(3)),
+            Argument,
+            LoadReference("-".to_owned()),
+            Apply,
+            Argument,
+            LoadReference("+".to_owned()),
+            Apply,
+        ];
+
+        assert_eq!(Ok(vm.memory.integer(4)), vm.execute(instr));
+    }
+
+    #[test]
+    fn illegal_frame_apply() {
+        let mut vm = VM::new();
+        let instr = vec![LoadReference("+".to_owned()), Apply];
+
+        assert_eq!(Err(Error::CannotPopLastFrame), vm.execute(instr));
     }
 }

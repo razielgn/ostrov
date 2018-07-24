@@ -3,26 +3,8 @@ use memory::Memory;
 use values::{RcValue, Value};
 
 pub static PRIMITIVES: [&'static str; 20] = [
-    "*",
-    "+",
-    "-",
-    "/",
-    "<",
-    "<=",
-    "=",
-    ">",
-    ">=",
-    "car",
-    "cdr",
-    "cons",
-    "length",
-    "list",
-    "list?",
-    "not",
-    "null?",
-    "pair?",
-    "display",
-    "newline",
+    "*", "+", "-", "/", "<", "<=", "=", ">", ">=", "car", "cdr", "cons",
+    "length", "list", "list?", "not", "null?", "pair?", "display", "newline",
 ];
 
 pub fn apply(
@@ -57,7 +39,7 @@ pub fn apply(
 
 fn plus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     let integers = try!(list_of_integers(args));
-    let sum = integers.into_iter().fold(0, |sum, n| sum + n);
+    let sum = integers.into_iter().sum();
     Ok(mem.integer(sum))
 }
 
@@ -72,8 +54,7 @@ fn minus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     if integers.len() == 1 {
         Ok(mem.integer(-first))
     } else {
-        let sum_of_the_rest =
-            integers.into_iter().skip(1).fold(0, |sum, n| sum + n);
+        let sum_of_the_rest = integers.into_iter().skip(1).sum::<i64>();
         Ok(mem.integer(first - sum_of_the_rest))
     }
 }
@@ -96,7 +77,7 @@ fn division(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
 
 fn product(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     let integers = try!(list_of_integers(args));
-    let product = integers.into_iter().fold(1, |product, n| product * n);
+    let product = integers.into_iter().product();
     Ok(mem.integer(product))
 }
 
@@ -258,7 +239,7 @@ fn newline(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
         return Err(Error::BadArity(Some("newline".to_owned())));
     }
 
-    println!("");
+    println!();
 
     Ok(mem.b_true())
 }

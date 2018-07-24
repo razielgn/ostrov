@@ -15,7 +15,6 @@ name = "ostrov"
 path = "src/ostrov/lib.rs"
 bench = false
 doctest = false
-test = false
 
 [[bin]]
 name = "ostrov"

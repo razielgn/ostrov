@@ -69,14 +69,14 @@ impl Memory {
         args_type: ArgumentsType,
         args: Vec<String>,
         closure: CellEnv,
-        bytecode: Bytecode,
+        code: Bytecode,
     ) -> RcValue {
         let value = Value::Closure {
             name: None,
-            args_type: args_type,
-            args: args,
-            closure: closure,
-            code: bytecode,
+            args_type,
+            args,
+            closure,
+            code,
         };
 
         self.store(value)

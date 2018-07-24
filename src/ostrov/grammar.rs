@@ -32,8 +32,7 @@ impl ::std::fmt::Display for ParseError {
         try!(write!(
             fmt,
             "error at {}:{}: expected ",
-            self.line,
-            self.column
+            self.line, self.column
         ));
         if self.expected.len() == 1 {
             try!(write!(
@@ -88,8 +87,8 @@ fn slice_eq_case_insensitive(
     for m_char_upper in m.chars().flat_map(|x| x.to_uppercase()) {
         used += m_char_upper.len_utf8();
         let input_char_result = input_iter.next();
-        if input_char_result.is_none() ||
-            input_char_result.unwrap() != m_char_upper
+        if input_char_result.is_none()
+            || input_char_result.unwrap() != m_char_upper
         {
             return state.mark_failure(pos, m);
         }
@@ -361,19 +360,8 @@ fn parse_special_initial<'input>(
             let seq_res = if input.len() > pos {
                 let (ch, next) = char_range_at(input, pos);
                 match ch {
-                    '!' |
-                    '$' |
-                    '%' |
-                    '&' |
-                    '*' |
-                    '/' |
-                    '<' |
-                    '=' |
-                    '>' |
-                    '?' |
-                    '^' |
-                    '_' |
-                    '~' => Matched(next, ()),
+                    '!' | '$' | '%' | '&' | '*' | '/' | '<' | '=' | '>' | '?'
+                    | '^' | '_' | '~' => Matched(next, ()),
                     _ => state.mark_failure(pos, "[!$%&*/<=>?^_~]"),
                 }
             } else {
@@ -703,13 +691,11 @@ fn parse_list<'input>(
                                             let mut repeat_value = vec![];
                                             loop {
                                                 let pos = repeat_pos;
-                                                let pos = if repeat_value.len() >
-                                                    0
+                                                let pos = if repeat_value.len()
+                                                    > 0
                                                 {
                                                     let sep_res = parse___(
-                                                        input,
-                                                        state,
-                                                        pos,
+                                                        input, state, pos,
                                                     );
                                                     match sep_res {
                                                         Matched(newpos, _) => {
@@ -721,9 +707,7 @@ fn parse_list<'input>(
                                                     pos
                                                 };
                                                 let step_res = parse_value(
-                                                    input,
-                                                    state,
-                                                    pos,
+                                                    input, state, pos,
                                                 );
                                                 match step_res {
                                                     Matched(newpos, value) => {
@@ -744,17 +728,12 @@ fn parse_list<'input>(
                                         match seq_res {
                                             Matched(pos, left) => {
                                                 let seq_res = slice_eq(
-                                                    input,
-                                                    state,
-                                                    pos,
-                                                    ".",
+                                                    input, state, pos, ".",
                                                 );
                                                 match seq_res {
                                                     Matched(pos, _) => {
                                                         let seq_res = parse___(
-                                                            input,
-                                                            state,
-                                                            pos,
+                                                            input, state, pos,
                                                         );
                                                         match seq_res {
                                                             Matched(pos, _) => {
@@ -845,13 +824,11 @@ fn parse_list<'input>(
                                                 loop {
                                                     let pos = repeat_pos;
                                                     let pos = if repeat_value
-                                                        .len() >
-                                                        0
+                                                        .len()
+                                                        > 0
                                                     {
                                                         let sep_res = parse___(
-                                                            input,
-                                                            state,
-                                                            pos,
+                                                            input, state, pos,
                                                         );
                                                         match sep_res {
                                                             Matched(
@@ -864,9 +841,7 @@ fn parse_list<'input>(
                                                         pos
                                                     };
                                                     let step_res = parse_value(
-                                                        input,
-                                                        state,
-                                                        pos,
+                                                        input, state, pos,
                                                     );
                                                     match step_res {
                                                         Matched(
@@ -894,17 +869,13 @@ fn parse_list<'input>(
                                             match seq_res {
                                                 Matched(pos, left) => {
                                                     let seq_res = slice_eq(
-                                                        input,
-                                                        state,
-                                                        pos,
-                                                        ".",
+                                                        input, state, pos, ".",
                                                     );
                                                     match seq_res {
                                                         Matched(pos, _) => {
                                                             let seq_res =
                                                                 parse___(
-                                                                    input,
-                                                                    state,
+                                                                    input, state,
                                                                     pos,
                                                                 );
                                                             match seq_res {

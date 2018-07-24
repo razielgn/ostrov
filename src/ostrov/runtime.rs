@@ -28,7 +28,7 @@ impl Runtime {
         let mut evalued_exprs = Vec::new();
         for expr in &exprs {
             let bytecode = try!(compile_single(expr));
-            let evalued_expr = try!(self.vm.execute(bytecode.into_iter()));
+            let evalued_expr = try!(self.vm.execute(bytecode));
             evalued_exprs.push(evalued_expr);
         }
 

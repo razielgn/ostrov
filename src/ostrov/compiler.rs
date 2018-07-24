@@ -1,11 +1,11 @@
 use ast::AST;
 use ast::AST::*;
 use errors::Error;
+use instructions::Instruction::*;
 use instructions::{ArgumentsType, Bytecode, Instruction};
-use std::collections::LinkedList;
 
 pub fn compile(ast: &[AST]) -> Result<Bytecode, Error> {
-    let mut instructions = LinkedList::new();
+    let mut instructions = vec![];
 
     for ast_value in ast {
         instructions.append(&mut try!(compile_single(ast_value)));
@@ -24,17 +24,17 @@ pub fn compile_single(ast: &AST) -> Result<Bytecode, Error> {
 }
 
 fn emit_single_instr(instruction: Instruction) -> Result<Bytecode, Error> {
-    let mut bytecode = LinkedList::new();
-    bytecode.push_back(instruction);
+    let mut bytecode = vec![];
+    bytecode.push(instruction);
     Ok(bytecode)
 }
 
 fn emit_constant(value: &AST) -> Result<Bytecode, Error> {
-    emit_single_instr(Instruction::load_constant(value.clone()))
+    emit_single_instr(LoadConstant(value.clone()))
 }
 
 fn emit_reference(atom: &str) -> Result<Bytecode, Error> {
-    emit_single_instr(Instruction::load_reference(atom.into()))
+    emit_single_instr(LoadReference(atom.into()))
 }
 
 fn emit_application(list: &[AST]) -> Result<Bytecode, Error> {
@@ -66,35 +66,35 @@ fn emit_application(list: &[AST]) -> Result<Bytecode, Error> {
 
 fn emit_if(args: &[AST]) -> Result<Bytecode, Error> {
     if args.len() < 2 || args.len() > 3 {
-        return Err(Error::BadArity(Some("if".to_owned())));
+        return Err(Error::BadArity(Some("if".into())));
     }
 
-    let mut instructions = LinkedList::new();
+    let mut instructions = vec![];
 
     instructions.append(&mut try!(compile_single(&args[0])));
 
     let mut then = try!(compile_single(&args[1]));
-    instructions.push_back(Instruction::jump_on_false(then.len() + 1));
+    instructions.push(JumpOnFalse(then.len() + 1));
     instructions.append(&mut then);
 
     if args.len() == 3 {
         let mut else_ = try!(compile_single(&args[2]));
-        instructions.push_back(Instruction::jump(else_.len()));
+        instructions.push(Jump(else_.len()));
         instructions.append(&mut else_);
     } else {
-        instructions.push_back(Instruction::jump(1usize));
-        instructions.push_back(Instruction::load_unspecified());
+        instructions.push(Jump(1usize));
+        instructions.push(LoadUnspecified);
     }
 
     Ok(instructions)
 }
 
 fn emit_and(args: &[AST]) -> Result<Bytecode, Error> {
-    emit_logical_op(args, true, Instruction::jump_on_false)
+    emit_logical_op(args, true, JumpOnFalse)
 }
 
 fn emit_or(args: &[AST]) -> Result<Bytecode, Error> {
-    emit_logical_op(args, false, Instruction::jump_on_true)
+    emit_logical_op(args, false, JumpOnTrue)
 }
 
 fn emit_logical_op<F>(
@@ -105,10 +105,10 @@ fn emit_logical_op<F>(
 where
     F: Fn(usize) -> Instruction,
 {
-    let mut instructions = LinkedList::new();
+    let mut instructions = vec![];
 
     if args.is_empty() {
-        instructions.push_back(Instruction::load_constant(Bool(default)));
+        instructions.push(LoadConstant(Bool(default)));
     } else {
         let mut compiled_args = Vec::with_capacity(args.len());
         let mut sizes = Vec::with_capacity(args.len());
@@ -125,8 +125,7 @@ where
             .iter()
             .enumerate()
             .map(|(i, size)| {
-                let sum_of_previouses =
-                    sizes.iter().take(i).fold(0, |acc, n| acc + n);
+                let sum_of_previouses: usize = sizes.iter().take(i).sum();
                 size + sum_of_previouses + i
             })
             .rev()
@@ -139,9 +138,9 @@ where
             compiled_args.into_iter().zip(jumps.into_iter())
         {
             instructions.append(&mut compiled_arg);
-            instructions.push_back(instruction(jump));
+            instructions.push(instruction(jump));
         }
-        instructions.pop_back();
+        instructions.pop();
     }
 
     Ok(instructions)
@@ -149,14 +148,14 @@ where
 
 fn emit_set(args: &[AST]) -> Result<Bytecode, Error> {
     if args.len() != 2 {
-        return Err(Error::BadArity(Some("set!".to_owned())));
+        return Err(Error::BadArity(Some("set!".into())));
     }
 
     if let Atom(ref name) = args[0] {
         let mut argument = try!(compile_single(&args[1]));
-        let mut instructions = LinkedList::new();
+        let mut instructions = vec![];
         instructions.append(&mut argument);
-        instructions.push_back(Instruction::replace(name.clone()));
+        instructions.push(Replace(name.clone()));
         Ok(instructions)
     } else {
         Err(Error::MalformedExpression)
@@ -168,17 +167,17 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
         return Err(Error::MalformedExpression);
     }
 
-    let mut instructions = LinkedList::new();
+    let mut instructions = vec![];
 
     match args[0] {
         Atom(ref name) => {
             if args.len() == 2 {
                 instructions.append(&mut try!(compile_single(&args[1])));
             } else {
-                instructions.push_back(Instruction::load_unspecified());
+                instructions.push(LoadUnspecified);
             }
 
-            instructions.push_back(Instruction::assignment(name.clone()));
+            instructions.push(Assignment(name.clone()));
         }
         List(ref list) if !list.is_empty() => {
             let name = try!(unpack_atom(&list[0]));
@@ -191,7 +190,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
             }
             instructions.append(&mut try!(emit_lambda(&lambda)));
 
-            instructions.push_back(Instruction::assignment(name));
+            instructions.push(Assignment(name));
         }
         DottedList(ref list, ref extra) if !list.is_empty() => {
             let name = try!(unpack_atom(&list[0]));
@@ -211,7 +210,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
             }
             instructions.append(&mut try!(emit_lambda(&lambda)));
 
-            instructions.push_back(Instruction::assignment(name));
+            instructions.push(Assignment(name));
         }
         _ => return Err(Error::MalformedExpression),
     }
@@ -220,16 +219,16 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
 }
 
 fn emit_apply(head: &AST, args: &[AST]) -> Result<Bytecode, Error> {
-    let mut instructions = LinkedList::new();
-    instructions.push_back(Instruction::frame());
+    let mut instructions = vec![];
+    instructions.push(Frame);
 
     for arg in args {
         instructions.append(&mut try!(compile_single(arg)));
-        instructions.push_back(Instruction::argument());
+        instructions.push(Argument);
     }
 
     instructions.append(&mut try!(compile_single(head)));
-    instructions.push_back(Instruction::apply());
+    instructions.push(Apply);
     Ok(instructions)
 }
 
@@ -239,26 +238,30 @@ fn emit_lambda(args_: &[AST]) -> Result<Bytecode, Error> {
         return Err(Error::MalformedExpression);
     }
 
-    let mut instructions = LinkedList::new();
+    let mut instructions = vec![];
 
     let compiled_body = try!(compile(body));
     let (args, args_type) = try!(function_arguments(&args_[0]));
-    instructions.push_back(Instruction::close(args, args_type, compiled_body));
+    instructions.push(Close {
+        args,
+        args_type,
+        body: compiled_body,
+    });
 
     Ok(instructions)
 }
 
 fn emit_let(args_: &[AST]) -> Result<Bytecode, Error> {
     if args_.len() < 2 {
-        return Err(Error::BadArity(Some("let".to_owned())));
+        return Err(Error::BadArity(Some("let".into())));
     }
 
-    let mut instructions = LinkedList::new();
+    let mut instructions = vec![];
 
     if let List(ref bindings) = *args_.first().unwrap() {
         let mut params = Vec::with_capacity(bindings.len());
 
-        instructions.push_back(Instruction::frame());
+        instructions.push(Frame);
 
         for binding in bindings.iter() {
             match *binding {
@@ -266,24 +269,24 @@ fn emit_let(args_: &[AST]) -> Result<Bytecode, Error> {
                     params.push(try!(unpack_atom(&binding[0])));
 
                     instructions.append(&mut try!(compile_single(&binding[1])));
-                    instructions.push_back(Instruction::argument());
+                    instructions.push(Argument);
                 }
                 _ => return Err(Error::MalformedExpression),
             }
         }
 
-        let mut inner_instr = LinkedList::new();
+        let mut inner_instr = vec![];
         for body in &args_[1..] {
             inner_instr.append(&mut try!(compile_single(body)));
         }
 
-        instructions.push_back(Instruction::close(
-            params,
-            ArgumentsType::Fixed,
-            inner_instr,
-        ));
+        instructions.push(Close {
+            args: params,
+            args_type: ArgumentsType::Fixed,
+            body: inner_instr,
+        });
 
-        instructions.push_back(Instruction::apply());
+        instructions.push(Apply);
     } else {
         return Err(Error::MalformedExpression);
     }
@@ -323,8 +326,343 @@ fn function_arguments(ast: &AST) -> Result<(Vec<String>, ArgumentsType), Error> 
 
 fn unpack_atom(value: &AST) -> Result<String, Error> {
     if let Atom(ref atom) = *value {
-        Ok(atom.to_owned())
+        Ok(atom.clone())
     } else {
         Err(Error::MalformedExpression)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::compile;
+    use ast::AST::*;
+    use instructions::Instruction::*;
+    use instructions::{ArgumentsType, Instruction};
+    use parser::parse;
+
+    fn parse_and_compile(input: &str) -> Vec<Instruction> {
+        parse(input).and_then(|ast| compile(&ast)).unwrap()
+    }
+
+    #[test]
+    fn constants_values_one_integer() {
+        assert_eq!(vec![LoadConstant(Integer(1))], parse_and_compile("1"));
+    }
+
+    #[test]
+    fn constants_values_two_integers() {
+        assert_eq!(
+            vec![LoadConstant(Integer(1)), LoadConstant(Integer(2))],
+            parse_and_compile("1 2")
+        );
+    }
+
+    #[test]
+    fn constants_values_boolean() {
+        assert_eq!(vec![LoadConstant(Bool(true))], parse_and_compile("#t"));
+    }
+
+    #[test]
+    fn if_one_arg() {
+        assert_eq!(
+            vec![
+                LoadConstant(Bool(true)),
+                JumpOnFalse(2),
+                LoadConstant(Integer(1)),
+                Jump(1),
+                LoadUnspecified,
+            ],
+            parse_and_compile("(if #t 1)")
+        );
+    }
+
+    #[test]
+    fn if_two_args() {
+        assert_eq!(
+            vec![
+                LoadConstant(Bool(true)),
+                JumpOnFalse(2),
+                LoadConstant(Integer(1)),
+                Jump(1),
+                LoadConstant(Integer(2)),
+            ],
+            parse_and_compile("(if #t 1 2)")
+        );
+
+        assert_eq!(
+            vec![
+                LoadConstant(Bool(false)),
+                JumpOnFalse(2),
+                LoadConstant(Integer(1)),
+                Jump(1),
+                LoadConstant(Bool(true)),
+                JumpOnFalse(2),
+                LoadConstant(Integer(1)),
+                Jump(1),
+                LoadConstant(Integer(2)),
+            ],
+            parse_and_compile(
+                "(if
+                   (if #f 1 #t)
+                     1
+                     2)",
+            )
+        );
+    }
+
+    #[test]
+    fn and() {
+        assert_eq!(vec![LoadConstant(Bool(true))], parse_and_compile("(and)"));
+
+        assert_eq!(vec![LoadConstant(Integer(1))], parse_and_compile("(and 1)"));
+
+        assert_eq!(
+            vec![
+                Frame,
+                LoadReference("+".into()),
+                Apply,
+                JumpOnFalse(7),
+                LoadConstant(Bool(true)),
+                JumpOnFalse(5),
+                Frame,
+                LoadReference("+".into()),
+                Apply,
+                JumpOnFalse(1),
+                LoadConstant(Bool(false)),
+            ],
+            parse_and_compile("(and (+) #t (+) #f)")
+        );
+    }
+
+    #[test]
+    fn or() {
+        assert_eq!(vec![LoadConstant(Bool(false))], parse_and_compile("(or)"));
+
+        assert_eq!(vec![LoadConstant(Integer(1))], parse_and_compile("(or 1)"));
+
+        assert_eq!(
+            vec![
+                Frame,
+                LoadReference("+".into()),
+                Apply,
+                JumpOnTrue(7),
+                LoadConstant(Bool(true)),
+                JumpOnTrue(5),
+                Frame,
+                LoadReference("+".into()),
+                Apply,
+                JumpOnTrue(1),
+                LoadConstant(Bool(false)),
+            ],
+            parse_and_compile("(or (+) #t (+) #f)")
+        );
+    }
+
+    #[test]
+    fn quote() {
+        assert_eq!(
+            vec![LoadConstant(Atom("a".into()))],
+            parse_and_compile("'a")
+        );
+
+        assert_eq!(vec![LoadConstant(List(vec![]))], parse_and_compile("'()"));
+    }
+
+    #[test]
+    fn variable_referencing() {
+        assert_eq!(vec![LoadReference("+".into())], parse_and_compile("+"));
+    }
+
+    #[test]
+    fn set_bang() {
+        assert_eq!(
+            vec![LoadConstant(Integer(23)), Replace("x".into())],
+            parse_and_compile("(set! x 23)")
+        );
+    }
+
+    #[test]
+    fn define_with_nothing() {
+        assert_eq!(
+            vec![LoadUnspecified, Assignment("x".into())],
+            parse_and_compile("(define x)")
+        );
+    }
+
+    #[test]
+    fn define_with_constant() {
+        assert_eq!(
+            vec![LoadConstant(Integer(25)), Assignment("x".into())],
+            parse_and_compile("(define x 25)")
+        );
+    }
+
+    #[test]
+    fn define_with_lambda_fixed() {
+        assert_eq!(
+            vec![
+                Close {
+                    args: vec!["a".into()],
+                    args_type: ArgumentsType::Fixed,
+                    body: vec![
+                        LoadReference("a".into()),
+                        LoadReference("b".into()),
+                        LoadReference("c".into()),
+                    ],
+                },
+                Assignment("x".into()),
+            ],
+            parse_and_compile("(define (x a) a b c)")
+        );
+    }
+
+    #[test]
+    fn define_with_lambda_variable() {
+        assert_eq!(
+            vec![
+                Close {
+                    args: vec!["y".into(), "z".into()],
+                    args_type: ArgumentsType::Variable,
+                    body: vec![LoadReference("z".into())],
+                },
+                Assignment("x".into()),
+            ],
+            parse_and_compile("(define (x y . z) z)")
+        );
+    }
+
+    #[test]
+    fn define_with_lambda_any() {
+        assert_eq!(
+            vec![
+                Close {
+                    args: vec!["z".into()],
+                    args_type: ArgumentsType::Any,
+                    body: vec![LoadReference("z".into())],
+                },
+                Assignment("x".into()),
+            ],
+            parse_and_compile("(define (x . z) z)")
+        );
+    }
+
+    #[test]
+    fn lambda_fixed() {
+        assert_eq!(
+            vec![Close {
+                args: vec!["x".into(), "y".into(), "z".into()],
+                args_type: ArgumentsType::Fixed,
+                body: vec![
+                    LoadReference("x".into()),
+                    LoadReference("y".into()),
+                    LoadReference("z".into()),
+                ],
+            }],
+            parse_and_compile("(lambda (x y z) x y z)")
+        );
+    }
+
+    #[test]
+    fn lambda_variable() {
+        assert_eq!(
+            vec![Close {
+                args: vec!["x".into(), "y".into(), "z".into()],
+                args_type: ArgumentsType::Variable,
+                body: vec![LoadReference("x".into())],
+            }],
+            parse_and_compile("(lambda (x y . z) x)")
+        );
+    }
+
+    #[test]
+    fn lambda_any() {
+        assert_eq!(
+            vec![Close {
+                args: vec!["x".into()],
+                args_type: ArgumentsType::Any,
+                body: vec![LoadReference("x".into())],
+            }],
+            parse_and_compile("(lambda x x)")
+        );
+    }
+
+    #[test]
+    fn let_() {
+        assert_eq!(
+            vec![
+                Frame,
+                LoadConstant(Integer(1)),
+                Argument,
+                LoadConstant(Integer(2)),
+                Argument,
+                Close {
+                    args: vec!["a".into(), "b".into()],
+                    args_type: ArgumentsType::Fixed,
+                    body: vec![
+                        Frame,
+                        LoadReference("a".into()),
+                        Argument,
+                        LoadReference("b".into()),
+                        Argument,
+                        LoadReference("+".into()),
+                        Apply,
+                    ],
+                },
+                Apply,
+            ],
+            parse_and_compile(
+                "(let ((a 1)
+                       (b 2))
+                   (+ a b))",
+            )
+        );
+    }
+
+    #[test]
+    fn function_application() {
+        assert_eq!(
+            vec![Frame, LoadReference("+".into()), Apply],
+            parse_and_compile("(+)")
+        );
+
+        assert_eq!(
+            vec![
+                Frame,
+                LoadConstant(Integer(1)),
+                Argument,
+                LoadConstant(Integer(2)),
+                Argument,
+                LoadConstant(Integer(3)),
+                Argument,
+                LoadReference("+".into()),
+                Apply,
+            ],
+            parse_and_compile("(+ 1 2 3)")
+        );
+
+        assert_eq!(
+            vec![
+                Frame,
+                Frame,
+                LoadConstant(Integer(1)),
+                Argument,
+                LoadConstant(Integer(2)),
+                Argument,
+                LoadReference("+".into()),
+                Apply,
+                Argument,
+                Frame,
+                LoadConstant(Integer(4)),
+                Argument,
+                LoadConstant(Integer(3)),
+                Argument,
+                LoadReference("-".into()),
+                Apply,
+                Argument,
+                LoadReference("+".into()),
+                Apply,
+            ],
+            parse_and_compile("(+ (+ 1 2) (- 4 3))")
+        );
     }
 }
