@@ -1,75 +1,131 @@
 use ast::AST;
-use errors::Error;
-use grammar;
+use ast::AST::*;
+use nom::types::CompleteStr;
+use nom::{alpha1, digit1, multispace0, multispace1, Err};
+use nom_locate::LocatedSpan;
 
-pub type ParseError = grammar::ParseError;
+pub type Span<'a> = LocatedSpan<CompleteStr<'a>>;
 
-#[derive(PartialEq)]
-pub enum IntegerSign {
-    Positive,
-    Negative,
-}
+#[derive(PartialEq, Debug)]
+pub struct ParseError<'a>(Err<Span<'a>>);
 
-pub fn parse_decimal(str: &str, sign: &IntegerSign) -> AST {
-    let integer: i64 = str.parse().unwrap();
+named!(boolean(Span) -> AST,
+    do_parse!(
+        tag!("#") >>
+        c: one_of!("ftFT") >>
+        (Bool(c == 't' || c == 'T'))
+    )
+);
 
-    AST::Integer(if *sign == IntegerSign::Negative {
-        -integer
-    } else {
-        integer
-    })
-}
+named!(integer(Span) -> AST,
+    do_parse!(
+        sign: opt!(one_of!("-+")) >>
+        n: map_res!(digit1, |d: Span| d.fragment.parse::<i64>()) >>
+        (Integer(if sign == Some('-') { -n } else { n }))
+    )
+);
 
-pub fn parse_sign(str: &str) -> IntegerSign {
-    match str {
-        "-" => IntegerSign::Negative,
-        _ => IntegerSign::Positive,
-    }
-}
+named!(initial(Span) -> Span, alt!(constituent | special_initial));
+named!(constituent(Span) -> Span, recognize!(count!(alpha1, 1)));
+named!(special_initial(Span) -> Span, recognize!(one_of!("!$%&*/<=>?^_~")));
+named!(one_digit(Span) -> Span, recognize!(count!(digit1, 1)));
+named!(subsequent(Span) -> Span, alt!(initial | one_digit | special_subsequent));
+named!(special_subsequent(Span) -> Span, recognize!(one_of!("+-.@")));
+named!(peculiar_identifier(Span) -> Span,
+    alt!(
+        recognize!(preceded!(tag!("->"), many0!(subsequent))) |
+        tag!("...") |
+        tag!("+") |
+        tag!("-")
+    )
+);
+named!(atom(Span) -> AST,
+    map!(
+        alt!(
+            recognize!(preceded!(initial, many0!(subsequent))) |
+            peculiar_identifier
+        ),
+        |span| Atom(span.fragment.to_string())
+    )
+);
 
-pub fn parse_atom(str: &str) -> AST {
-    AST::Atom(str.to_owned())
-}
+named!(quoted(Span) -> AST,
+    map!(
+        preceded!(char!('\''), value),
+        |ast| List(vec![Atom("quote".into()), ast])
+    )
+);
 
-pub fn parse_list(values: Vec<AST>) -> AST {
-    AST::List(values)
-}
+named_args!(list(op: char, cl: char) <Span, AST>,
+    delimited!(
+        char!(op),
+        map!(separated_list_complete!(multispace1, value), List),
+        char!(cl)
+    )
+);
 
-pub fn parse_dotted_list(mut left: Vec<AST>, right: AST) -> AST {
-    match right {
-        AST::List(list) => {
-            for x in list {
-                left.push(x);
+named_args!(dotted(op: char, cl: char) <Span, AST>,
+    delimited!(
+        char!(op),
+        map!(
+            do_parse!(
+                left: separated_nonempty_list_complete!(multispace1, value) >>
+                ws!(char!('.')) >>
+                right: value >>
+                (left, right)
+            ),
+            |(mut left, right)| {
+                match right {
+                    List(mut list) => {
+                        left.append(&mut list);
+                        List(left)
+                    }
+                    DottedList(mut list, right) => {
+                        left.append(&mut list);
+                        DottedList(left, right)
+                    }
+                    _ => DottedList(left, Box::new(right))
+                }
             }
-            AST::List(left)
-        }
-        AST::DottedList(list, right) => {
-            for x in list {
-                left.push(x);
-            }
-            AST::DottedList(left, right)
-        }
-        _ => AST::DottedList(left, Box::new(right)),
-    }
-}
+        ),
+        char!(cl)
+    )
+);
 
-pub fn parse_bool(str: &str) -> AST {
-    AST::Bool(str == "t" || str == "T")
-}
+named!(list_or_dotted(Span) -> AST,
+    alt!(
+        apply!(list, '(', ')')
+      | apply!(list, '[', ']')
+      | apply!(dotted, '(', ')')
+      | apply!(dotted, '[', ']')
+    )
+);
 
-pub fn parse_quoted(val: AST) -> AST {
-    AST::List(vec![AST::Atom("quote".to_owned()), val])
-}
+named!(value(Span) -> AST,
+    alt!(boolean | integer | atom | quoted | list_or_dotted)
+);
 
-pub fn parse(input: &str) -> Result<Vec<AST>, Error> {
-    match grammar::grammar(input) {
-        Ok(exprs) => Ok(exprs),
-        Err(error) => Err(Error::ParseError(error)),
-    }
+named!(exprs(Span) -> Vec<AST>,
+    do_parse!(
+        values: delimited!(
+            multispace0,
+            separated_list_complete!(multispace1, value),
+            multispace0
+        ) >>
+        eof!() >>
+        (values)
+    )
+);
+
+pub fn parse<'a>(input: &'a str) -> Result<Vec<AST>, ParseError<'a>> {
+    let input = Span::new(CompleteStr(input));
+
+    exprs(input).map(|(_, v)| v).map_err(ParseError)
 }
 
 #[cfg(test)]
 mod test {
+    use ast::AST;
     use ast::AST::*;
 
     macro_rules! assert_parse {
@@ -85,6 +141,11 @@ mod test {
                 Err(err) => panic!("Failed to parse {:?}: {:?}", $str, err),
             }
         };
+    }
+
+    #[test]
+    fn no_expressions() {
+        assert_parse!([] as [AST; 0], " \r\n\t \t\n\r");
     }
 
     #[test]

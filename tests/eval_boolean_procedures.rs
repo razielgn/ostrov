@@ -1,4 +1,5 @@
 use helpers::*;
+use ostrov::errors::RuntimeError::*;
 
 #[test]
 fn and() {
@@ -28,6 +29,6 @@ fn not() {
 
 #[test]
 fn not_bad_arity() {
-    assert_eval_err("(not)", bad_arity("not"));
-    assert_eval_err("(not 2 3)", bad_arity("not"));
+    assert_eval_err("(not)", BadArity(Some("not".into())));
+    assert_eval_err("(not 2 3)", BadArity(Some("not".into())));
 }

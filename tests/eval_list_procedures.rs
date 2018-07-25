@@ -1,5 +1,6 @@
 use helpers::values::*;
 use helpers::*;
+use ostrov::errors::RuntimeError::*;
 
 #[test]
 fn list_() {
@@ -15,13 +16,13 @@ fn length() {
 }
 
 #[test]
-fn length_bad_arity() {
-    assert_eval_err("(length '() '())", bad_arity("length"));
+fn length_BadArity() {
+    assert_eval_err("(length '() '())", BadArity(Some("length".into())));
 }
 
 #[test]
 fn length_bad_arguments() {
-    assert_eval_err("(length 1)", wrong_argument_type(integer(1)));
+    assert_eval_err("(length 1)", WrongArgumentType(integer(1)));
 }
 
 #[test]
@@ -36,8 +37,8 @@ fn pair_() {
 
 #[test]
 fn pair_bad_arity() {
-    assert_eval_err("(pair?)", bad_arity("pair?"));
-    assert_eval_err("(pair? 1 2)", bad_arity("pair?"));
+    assert_eval_err("(pair?)", BadArity(Some("pair?".into())));
+    assert_eval_err("(pair? 1 2)", BadArity(Some("pair?".into())));
 }
 
 #[test]
@@ -51,9 +52,9 @@ fn cons() {
 
 #[test]
 fn cons_bad_arity() {
-    assert_eval_err("(cons)", bad_arity("cons"));
-    assert_eval_err("(cons 1)", bad_arity("cons"));
-    assert_eval_err("(cons 1 2 3)", bad_arity("cons"));
+    assert_eval_err("(cons)", BadArity(Some("cons".into())));
+    assert_eval_err("(cons 1)", BadArity(Some("cons".into())));
+    assert_eval_err("(cons 1 2 3)", BadArity(Some("cons".into())));
 }
 
 #[test]
@@ -64,14 +65,14 @@ fn car() {
 
 #[test]
 fn car_bad_arity() {
-    assert_eval_err("(car)", bad_arity("car"));
-    assert_eval_err("(car '(a) '(b))", bad_arity("car"));
+    assert_eval_err("(car)", BadArity(Some("car".into())));
+    assert_eval_err("(car '(a) '(b))", BadArity(Some("car".into())));
 }
 
 #[test]
 fn car_wrong_argument_type() {
-    assert_eval_err("(car 12)", wrong_argument_type(integer(12)));
-    assert_eval_err("(car '())", wrong_argument_type(nil()));
+    assert_eval_err("(car 12)", WrongArgumentType(integer(12)));
+    assert_eval_err("(car '())", WrongArgumentType(nil()));
 }
 
 #[test]
@@ -82,14 +83,14 @@ fn cdr() {
 
 #[test]
 fn cdr_bad_arity() {
-    assert_eval_err("(cdr)", bad_arity("cdr"));
-    assert_eval_err("(cdr '(a) '(b))", bad_arity("cdr"));
+    assert_eval_err("(cdr)", BadArity(Some("cdr".into())));
+    assert_eval_err("(cdr '(a) '(b))", BadArity(Some("cdr".into())));
 }
 
 #[test]
 fn cdr_wrong_argument_type() {
-    assert_eval_err("(cdr 12)", wrong_argument_type(integer(12)));
-    assert_eval_err("(cdr '())", wrong_argument_type(nil()));
+    assert_eval_err("(cdr 12)", WrongArgumentType(integer(12)));
+    assert_eval_err("(cdr '())", WrongArgumentType(nil()));
 }
 
 #[test]
@@ -102,8 +103,8 @@ fn null() {
 
 #[test]
 fn null_bad_arity() {
-    assert_eval_err("(null?)", bad_arity("null?"));
-    assert_eval_err("(null? '(a) '(b))", bad_arity("null?"));
+    assert_eval_err("(null?)", BadArity(Some("null?".into())));
+    assert_eval_err("(null? '(a) '(b))", BadArity(Some("null?".into())));
 }
 
 #[test]
@@ -116,6 +117,6 @@ fn list_question_mark() {
 
 #[test]
 fn list_question_mark_bad_arity() {
-    assert_eval_err("(list?)", bad_arity("list?"));
-    assert_eval_err("(list? '() '())", bad_arity("list?"));
+    assert_eval_err("(list?)", BadArity(Some("list?".into())));
+    assert_eval_err("(list? '() '())", BadArity(Some("list?".into())));
 }

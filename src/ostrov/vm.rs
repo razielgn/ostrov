@@ -1,6 +1,6 @@
 use ast::AST;
 use env::CellEnv;
-use errors::Error;
+use errors::RuntimeError;
 use instructions::{Bytecode, Instruction};
 use memory::Memory;
 use primitives;
@@ -57,7 +57,7 @@ impl VM {
         vm
     }
 
-    pub fn execute(&mut self, instructions: Bytecode) -> Result<RcValue, Error> {
+    pub fn execute(&mut self, instructions: Bytecode) -> Result<RcValue, RuntimeError> {
         self.instructions = instructions;
         self.pc = 0;
 
@@ -121,13 +121,13 @@ impl VM {
         self.pc += times;
     }
 
-    fn load_reference(&mut self, reference: &str) -> Result<(), Error> {
+    fn load_reference(&mut self, reference: &str) -> Result<(), RuntimeError> {
         match self.env.get(reference) {
             Some(value) => {
                 self.acc = value;
                 Ok(())
             }
-            None => Err(Error::UnboundVariable(reference.into())),
+            None => Err(RuntimeError::UnboundVariable(reference.into())),
         }
     }
 
@@ -136,13 +136,13 @@ impl VM {
         self.load_unspecified();
     }
 
-    fn replace(&mut self, reference: &str) -> Result<(), Error> {
+    fn replace(&mut self, reference: &str) -> Result<(), RuntimeError> {
         match self.env.replace(reference.into(), self.acc.clone()) {
             Some(_) => {
                 self.load_unspecified();
                 Ok(())
             }
-            None => Err(Error::UnboundVariable(reference.into())),
+            None => Err(RuntimeError::UnboundVariable(reference.into())),
         }
     }
 
@@ -156,15 +156,15 @@ impl VM {
         self.rib = Vec::new();
     }
 
-    fn pop_frame(&mut self, a: bool) -> Result<(), Error> {
-        let frame = try!(self.stack.pop_back().ok_or(Error::CannotPopLastFrame));
+    fn pop_frame(&mut self, a: bool) -> Result<(), RuntimeError> {
+        let frame = try!(self.stack.pop_back().ok_or(RuntimeError::CannotPopLastFrame));
 
         self.rib = frame.rib;
         self.env = frame.env;
 
         if a {
             let (instr, pc) =
-                try!(self.code.pop().ok_or(Error::CannotPopLastFrame));
+                try!(self.code.pop().ok_or(RuntimeError::CannotPopLastFrame));
 
             self.instructions = instr;
             self.pc = pc;
@@ -173,7 +173,7 @@ impl VM {
         Ok(())
     }
 
-    fn apply(&mut self) -> Result<(), Error> {
+    fn apply(&mut self) -> Result<(), RuntimeError> {
         match *self.acc.clone() {
             Value::PrimitiveFn(ref name) => {
                 let result =
@@ -202,7 +202,7 @@ impl VM {
                 match *args_type {
                     ArgumentsType::Fixed => {
                         if arg_names.len() != self.rib.len() {
-                            return Err(Error::BadArity(name.clone()));
+                            return Err(RuntimeError::BadArity(name.clone()));
                         }
 
                         for (name, value) in arg_names.iter().zip(self.rib.iter())
@@ -214,7 +214,7 @@ impl VM {
                         let fixed_arg_names = &arg_names[0..arg_names.len() - 1];
 
                         if fixed_arg_names.len() > self.rib.len() {
-                            return Err(Error::BadArity(name.clone()));
+                            return Err(RuntimeError::BadArity(name.clone()));
                         }
 
                         for (name, value) in
@@ -244,7 +244,7 @@ impl VM {
 
                 Ok(())
             }
-            _ => Err(Error::UnappliableValue(self.acc.clone())),
+            _ => Err(RuntimeError::UnappliableValue(self.acc.clone())),
         }
     }
 
@@ -277,7 +277,7 @@ impl VM {
 #[cfg(test)]
 mod test {
     use ast::AST::*;
-    use errors::Error;
+    use errors::RuntimeError;
     use instructions::Instruction::*;
     use vm::VM;
 
@@ -383,7 +383,7 @@ mod test {
             let instr = vec![LoadReference("a".to_owned())];
 
             assert_eq!(
-                Err(Error::UnboundVariable("a".into())),
+                Err(RuntimeError::UnboundVariable("a".into())),
                 vm.execute(instr)
             );
         }
@@ -474,6 +474,6 @@ mod test {
         let mut vm = VM::new();
         let instr = vec![LoadReference("+".to_owned()), Apply];
 
-        assert_eq!(Err(Error::CannotPopLastFrame), vm.execute(instr));
+        assert_eq!(Err(RuntimeError::CannotPopLastFrame), vm.execute(instr));
     }
 }

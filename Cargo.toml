@@ -31,3 +31,10 @@ doc = false
 name = "benchmarks"
 doc = false
 test = false
+
+[profile.release]
+lto = true
+
+[dependencies]
+nom = "4.0"
+nom_locate = "0.3"

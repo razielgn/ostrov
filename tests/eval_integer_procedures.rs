@@ -1,4 +1,5 @@
 use helpers::*;
+use ostrov::errors::RuntimeError::*;
 
 #[test]
 fn plus() {
@@ -11,7 +12,7 @@ fn plus() {
 
 #[test]
 fn plus_bad_arity() {
-    assert_eval_err("(+ ())", malformed_expr());
+    assert_eval_err("(+ ())", MalformedExpression);
 }
 
 #[test]
@@ -24,7 +25,7 @@ fn minus() {
 
 #[test]
 fn minus_bad_arity() {
-    assert_eval_err("(-)", bad_arity("-"));
+    assert_eval_err("(-)", BadArity(Some("-".into())));
 }
 
 #[test]
@@ -46,7 +47,7 @@ fn division() {
 
 #[test]
 fn division_bad_arity() {
-    assert_eval_err("(/)", bad_arity("/"));
+    assert_eval_err("(/)", BadArity(Some("/".into())));
 }
 
 #[test]

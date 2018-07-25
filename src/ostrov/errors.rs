@@ -1,17 +1,27 @@
-use ast::AST;
-use parser::ParseError;
 use values::RcValue;
+use parser::ParseError;
 
 #[derive(PartialEq, Debug)]
-pub enum Error {
+pub enum Error<'a> {
+    ParseError(ParseError<'a>),
+    RuntimeError(RuntimeError),
+}
+
+impl<'a> From<RuntimeError> for Error<'a> {
+    fn from(e: RuntimeError) -> Error<'a> { Error::RuntimeError(e) }
+}
+
+impl<'a> From<ParseError<'a>> for Error<'a> {
+    fn from(e: ParseError<'a>) -> Error<'a> { Error::ParseError(e) }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum RuntimeError {
     BadArity(Option<String>),
-    IrreducibleValue(AST),
-    LoadError(String),
+    CannotPopLastFrame,
     MalformedExpression,
-    ParseError(ParseError),
     PrimitiveFailed(String),
     UnappliableValue(RcValue),
     UnboundVariable(String),
     WrongArgumentType(RcValue),
-    CannotPopLastFrame,
 }

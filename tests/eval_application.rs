@@ -1,36 +1,37 @@
 use helpers::values::*;
 use helpers::*;
+use ostrov::errors::RuntimeError::*;
 
 #[test]
 fn integers() {
-    assert_eval_err("(0 1 2)", unappliable_value_error(integer(0)));
+    assert_eval_err("(0 1 2)", UnappliableValue(integer(0)));
 }
 
 #[test]
 fn dotted_lists() {
-    assert_eval_err("(1 . 2)", malformed_expr());
+    assert_eval_err("(1 . 2)", MalformedExpression);
 }
 
 #[test]
 fn booleans() {
-    assert_eval_err("(#t #f #t)", unappliable_value_error(bool(true)));
+    assert_eval_err("(#t #f #t)", UnappliableValue(bool(true)));
 }
 
 #[test]
 fn atoms() {
-    assert_eval_err("(a b c)", unbound_variable_error("b"));
+    assert_eval_err("(a b c)", UnboundVariable("b".into()));
 }
 
 #[test]
 fn lists() {
-    assert_eval_err("('(1))", unappliable_value_error(pair(integer(1), nil())));
+    assert_eval_err("('(1))", UnappliableValue(pair(integer(1), nil())));
 }
 
 #[test]
 fn expressions_in_first_position() {
     assert_eval(
         "(define (x) 1)
-                    ((if #t x))",
+         ((if #t x))",
         "1",
     );
 }
@@ -39,7 +40,7 @@ fn expressions_in_first_position() {
 fn procedure_with_no_args() {
     assert_eval(
         "(define (x) 1)
-                    (x)",
+         (x)",
         "1",
     );
 }
@@ -48,7 +49,7 @@ fn procedure_with_no_args() {
 fn procedure_with_one_arg() {
     assert_eval(
         "(define (x y) y)
-                    (x (+ 2 9))",
+         (x (+ 2 9))",
         "11",
     );
 }
@@ -57,7 +58,7 @@ fn procedure_with_one_arg() {
 fn procedure_with_two_args() {
     assert_eval(
         "(define (sum x y) (+ x y))
-                    (sum 4 9)",
+         (sum 4 9)",
         "13",
     );
 }
@@ -66,7 +67,7 @@ fn procedure_with_two_args() {
 fn procedure_with_var_args() {
     assert_eval(
         "(define (sum x . y) y)
-                    (sum 4 9)",
+         (sum 4 9)",
         "'(9)",
     );
 }
@@ -75,7 +76,7 @@ fn procedure_with_var_args() {
 fn procedure_with_any_args() {
     assert_eval(
         "(define (sum . y) y)
-                    (sum 4 9)",
+         (sum 4 9)",
         "'(4 9)",
     );
 }
@@ -84,8 +85,8 @@ fn procedure_with_any_args() {
 fn procedure_with_two_args_scoping() {
     assert_eval(
         "(define x 10)
-                    (define (sum x y) (+ x y))
-                    (sum 4 9)",
+         (define (sum x y) (+ x y))
+         (sum 4 9)",
         "13",
     );
 }
@@ -94,9 +95,9 @@ fn procedure_with_two_args_scoping() {
 fn procedure_with_two_args_previous_scoping_is_kept() {
     assert_eval(
         "(define x 10)
-                    (define (sum x y) (+ x y))
-                    (sum 4 9)
-                    x",
+         (define (sum x y) (+ x y))
+         (sum 4 9)
+         x",
         "10",
     );
 }
@@ -106,8 +107,8 @@ fn procedure_with_two_args_previous_scoping_is_kept() {
 fn procedure_with_mismatched_arity() {
     assert_eval_err(
         "(define (sum x y) (+ x y))
-                        (sum 4)",
-        bad_arity("sum"),
+         (sum 4)",
+        BadArity(Some("sum".into())),
     );
 }
 
@@ -115,18 +116,18 @@ fn procedure_with_mismatched_arity() {
 fn lambda_multiple_expressions_are_evaluated_sequentially() {
     assert_eval(
         "(define (foo)
-                      (define a 10)
-                      (define b (+ a 1))
-                      (define c (+ b 1))
-                      c)
-                    (foo)",
+            (define a 10)
+            (define b (+ a 1))
+            (define c (+ b 1))
+            c)
+         (foo)",
         "12",
     );
 }
 
 #[test]
 fn lambda_with_fixed_arguments_number() {
-    assert_eval_err("((lambda ()))", malformed_expr());
+    assert_eval_err("((lambda ()))", MalformedExpression);
     assert_eval("((lambda () 1))", "1");
     assert_eval("((lambda () 1 2 3))", "3");
     assert_eval("((lambda (x y) (+ x y)) 6 8)", "14");
@@ -134,7 +135,7 @@ fn lambda_with_fixed_arguments_number() {
 
 #[test]
 fn lambda_with_fixed_arguments_number_bad_arity() {
-    assert_eval_err("((lambda (x y) (+ x y)) 6 8 9)", bad_arity_lambda());
+    assert_eval_err("((lambda (x y) (+ x y)) 6 8 9)", BadArity(None));
 }
 
 #[test]
@@ -153,6 +154,6 @@ fn lambda_with_variable_arguments_number() {
 
 #[test]
 fn lambda_with_variable_arguments_number_bad_arity() {
-    assert_eval_err("((lambda (x . y) 1))", bad_arity_lambda());
-    assert_eval_err("((lambda (x y . z) 1) 1)", bad_arity_lambda());
+    assert_eval_err("((lambda (x . y) 1))", BadArity(None));
+    assert_eval_err("((lambda (x y . z) 1) 1)", BadArity(None));
 }

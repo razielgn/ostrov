@@ -1,5 +1,6 @@
 use helpers::values::*;
 use helpers::*;
+use ostrov::errors::RuntimeError::*;
 
 #[test]
 fn define_with_one_arg() {
@@ -60,5 +61,5 @@ fn define_procedure_with_any() {
 
 #[test]
 fn define_bad_arity() {
-    assert_eval_err("(define)", malformed_expr());
+    assert_eval_err("(define)", MalformedExpression);
 }

@@ -1,11 +1,12 @@
 use helpers::values::*;
 use helpers::*;
+use ostrov::errors::RuntimeError::*;
 
 #[test]
 fn returns_expression() {
     assert_eval_val(
         "(define x 0)
-                        (set! x (+ x 1))",
+         (set! x (+ x 1))",
         unspecified(),
     );
 }
@@ -14,8 +15,8 @@ fn returns_expression() {
 fn overwrites_variables() {
     assert_eval(
         "(define x 0)
-                    (set! x (+ x 1))
-                    x",
+         (set! x (+ x 1))
+         x",
         "1",
     );
 }
@@ -24,12 +25,12 @@ fn overwrites_variables() {
 fn overwrites_variables_on_upper_scopes() {
     assert_eval(
         "(define x 0)
-                    (define (f)
-                      (set! x (+ x 1)))
-                    (f)
-                    (f)
-                    (f)
-                    x",
+         (define (f)
+           (set! x (+ x 1)))
+         (f)
+         (f)
+         (f)
+         x",
         "3",
     );
 }
@@ -38,31 +39,31 @@ fn overwrites_variables_on_upper_scopes() {
 fn overwrites_variables_in_captured_scopes() {
     assert_eval(
         "(define (gen-counter)
-                      (define counter 0)
-                      (lambda ()
-                        (set! counter (+ counter 1))
-                        counter))
-                    (define count (gen-counter))
-                    (count)
-                    (count)
-                    (count)",
+           (define counter 0)
+           (lambda ()
+             (set! counter (+ counter 1))
+             counter))
+         (define count (gen-counter))
+         (count)
+         (count)
+         (count)",
         "3",
     );
 }
 
 #[test]
 fn malformed_variable_name() {
-    assert_eval_err("(set! 3 3)", malformed_expr());
+    assert_eval_err("(set! 3 3)", MalformedExpression);
 }
 
 #[test]
 fn unknown_variable() {
-    assert_eval_err("(set! x 3)", unbound_variable_error("x"));
+    assert_eval_err("(set! x 3)", UnboundVariable("x".into()));
 }
 
 #[test]
 fn wrong_arguments_number() {
-    assert_eval_err("(set!)", bad_arity("set!"));
-    assert_eval_err("(set! x)", bad_arity("set!"));
-    assert_eval_err("(set! x 2 3)", bad_arity("set!"));
+    assert_eval_err("(set!)", BadArity(Some("set!".into())));
+    assert_eval_err("(set! x)", BadArity(Some("set!".into())));
+    assert_eval_err("(set! x 2 3)", BadArity(Some("set!".into())));
 }

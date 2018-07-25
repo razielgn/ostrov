@@ -1,8 +1,11 @@
+#[macro_use]
+extern crate nom;
+extern crate nom_locate;
+
 mod ast;
 mod compiler;
 mod env;
 pub mod errors;
-mod grammar;
 mod instructions;
 mod memory;
 mod parser;

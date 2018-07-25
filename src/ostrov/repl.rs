@@ -10,10 +10,7 @@ pub fn repl(args: &[String]) {
     if args.len() > 1 {
         let path = Path::new(&args[1]);
 
-        match runtime.eval_file(path) {
-            Ok(_) => (),
-            Err(error) => println!("{:?}", error),
-        }
+        runtime.eval_file(path);
     } else {
         enter_repl(&mut runtime);
     }

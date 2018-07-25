@@ -1,5 +1,6 @@
 use helpers::values::*;
 use helpers::*;
+use ostrov::errors::RuntimeError::*;
 
 #[test]
 fn if_with_one_arg() {
@@ -16,6 +17,6 @@ fn if_with_two_args() {
 
 #[test]
 fn if_bad_arity() {
-    assert_eval_err("(if)", bad_arity("if"));
-    assert_eval_err("(if a b c d)", bad_arity("if"));
+    assert_eval_err("(if)", BadArity(Some("if".into())));
+    assert_eval_err("(if a b c d)", BadArity(Some("if".into())));
 }

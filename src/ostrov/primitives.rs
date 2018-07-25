@@ -1,4 +1,4 @@
-use errors::Error;
+use errors::RuntimeError;
 use memory::Memory;
 use values::{RcValue, Value};
 
@@ -11,7 +11,7 @@ pub fn apply(
     name: &str,
     args: &[RcValue],
     mem: &mut Memory,
-) -> Result<RcValue, Error> {
+) -> Result<RcValue, RuntimeError> {
     match name {
         "*" => product(args, mem),
         "+" => plus(args, mem),
@@ -33,19 +33,19 @@ pub fn apply(
         "pair?" => pair(args, mem),
         "display" => display(args, mem),
         "newline" => newline(args, mem),
-        _ => Err(Error::PrimitiveFailed(name.to_owned())),
+        _ => Err(RuntimeError::PrimitiveFailed(name.to_owned())),
     }
 }
 
-fn plus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn plus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     let integers = try!(list_of_integers(args));
     let sum = integers.into_iter().sum();
     Ok(mem.integer(sum))
 }
 
-fn minus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn minus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     if args.is_empty() {
-        return Err(Error::BadArity(Some("-".to_owned())));
+        return Err(RuntimeError::BadArity(Some("-".to_owned())));
     }
 
     let integers = try!(list_of_integers(args));
@@ -59,9 +59,9 @@ fn minus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     }
 }
 
-fn division(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn division(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     if args.is_empty() {
-        return Err(Error::BadArity(Some("/".to_owned())));
+        return Err(RuntimeError::BadArity(Some("/".to_owned())));
     }
 
     let integers = try!(list_of_integers(args));
@@ -75,13 +75,13 @@ fn division(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     }
 }
 
-fn product(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn product(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     let integers = try!(list_of_integers(args));
     let product = integers.into_iter().product();
     Ok(mem.integer(product))
 }
 
-fn equals(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn equals(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     if args.len() < 2 {
         return Ok(mem.b_true());
     }
@@ -93,63 +93,63 @@ fn equals(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     Ok(mem.boolean(equality))
 }
 
-fn less_than(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn less_than(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     ord(args, mem, |a, b| a < b)
 }
 
 fn less_than_or_equal(
     args: &[RcValue],
     mem: &mut Memory,
-) -> Result<RcValue, Error> {
+) -> Result<RcValue, RuntimeError> {
     ord(args, mem, |a, b| a <= b)
 }
 
-fn greater_than(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn greater_than(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     ord(args, mem, |a, b| a > b)
 }
 
 fn greater_than_or_equal(
     args: &[RcValue],
     mem: &mut Memory,
-) -> Result<RcValue, Error> {
+) -> Result<RcValue, RuntimeError> {
     ord(args, mem, |a, b| a >= b)
 }
 
-fn not(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn not(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     if args.len() != 1 {
-        return Err(Error::BadArity(Some("not".to_owned())));
+        return Err(RuntimeError::BadArity(Some("not".to_owned())));
     }
 
     Ok(mem.boolean(args[0] == mem.b_false()))
 }
 
-fn list(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn list(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     Ok(mem.list(args.to_vec()))
 }
 
-fn length(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn length(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     if args.len() != 1 {
-        return Err(Error::BadArity(Some("length".to_owned())));
+        return Err(RuntimeError::BadArity(Some("length".to_owned())));
     }
 
     args[0].pair_len().map_or_else(
-        || Err(Error::WrongArgumentType(args[0].clone())),
+        || Err(RuntimeError::WrongArgumentType(args[0].clone())),
         |length| Ok(mem.integer(length)),
     )
 }
 
-fn pair(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn pair(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     if args.len() != 1 {
-        return Err(Error::BadArity(Some("pair?".to_owned())));
+        return Err(RuntimeError::BadArity(Some("pair?".to_owned())));
     }
 
     let outcome = args[0].is_pair();
     Ok(mem.boolean(outcome))
 }
 
-fn cons(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn cons(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     if args.len() != 2 {
-        return Err(Error::BadArity(Some("cons".to_owned())));
+        return Err(RuntimeError::BadArity(Some("cons".to_owned())));
     }
 
     let left = args[0].clone();
@@ -157,59 +157,59 @@ fn cons(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     Ok(mem.pair(left, right))
 }
 
-fn car(args: &[RcValue]) -> Result<RcValue, Error> {
+fn car(args: &[RcValue]) -> Result<RcValue, RuntimeError> {
     if args.len() != 1 {
-        return Err(Error::BadArity(Some("car".to_owned())));
+        return Err(RuntimeError::BadArity(Some("car".to_owned())));
     }
 
     match *args[0] {
         Value::Pair(ref left, ref _right) => Ok(left.clone()),
-        _ => Err(Error::WrongArgumentType(args[0].clone())),
+        _ => Err(RuntimeError::WrongArgumentType(args[0].clone())),
     }
 }
 
-fn cdr(args: &[RcValue]) -> Result<RcValue, Error> {
+fn cdr(args: &[RcValue]) -> Result<RcValue, RuntimeError> {
     if args.len() != 1 {
-        return Err(Error::BadArity(Some("cdr".to_owned())));
+        return Err(RuntimeError::BadArity(Some("cdr".to_owned())));
     }
 
     match *args[0] {
         Value::Pair(ref _left, ref right) => Ok(right.clone()),
-        _ => Err(Error::WrongArgumentType(args[0].clone())),
+        _ => Err(RuntimeError::WrongArgumentType(args[0].clone())),
     }
 }
 
-fn null(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn null(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     if args.len() != 1 {
-        return Err(Error::BadArity(Some("null?".to_owned())));
+        return Err(RuntimeError::BadArity(Some("null?".to_owned())));
     }
 
     Ok(mem.boolean(args[0] == mem.nil()))
 }
 
-fn is_list(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn is_list(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     if args.len() != 1 {
-        return Err(Error::BadArity(Some("list?".to_owned())));
+        return Err(RuntimeError::BadArity(Some("list?".to_owned())));
     }
 
     let outcome = args[0].is_list();
     Ok(mem.boolean(outcome))
 }
 
-fn list_of_integers(list: &[RcValue]) -> Result<Vec<i64>, Error> {
+fn list_of_integers(list: &[RcValue]) -> Result<Vec<i64>, RuntimeError> {
     let mut integers = Vec::with_capacity(list.len());
 
     for val in list.iter() {
         match **val {
             Value::Integer(n) => integers.push(n),
-            _ => return Err(Error::WrongArgumentType(val.clone())),
+            _ => return Err(RuntimeError::WrongArgumentType(val.clone())),
         }
     }
 
     Ok(integers)
 }
 
-fn ord<F>(args: &[RcValue], mem: &mut Memory, cmp: F) -> Result<RcValue, Error>
+fn ord<F>(args: &[RcValue], mem: &mut Memory, cmp: F) -> Result<RcValue, RuntimeError>
 where
     F: Fn(i64, i64) -> bool,
 {
@@ -224,9 +224,9 @@ where
     Ok(mem.boolean(outcome))
 }
 
-fn display(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn display(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     if args.len() != 1 {
-        return Err(Error::BadArity(Some("display".to_owned())));
+        return Err(RuntimeError::BadArity(Some("display".to_owned())));
     }
 
     print!("{}", args.first().unwrap());
@@ -234,9 +234,9 @@ fn display(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
     Ok(mem.b_true())
 }
 
-fn newline(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, Error> {
+fn newline(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
     if !args.is_empty() {
-        return Err(Error::BadArity(Some("newline".to_owned())));
+        return Err(RuntimeError::BadArity(Some("newline".to_owned())));
     }
 
     println!();

@@ -1,6 +1,7 @@
 use ostrov::errors::Error;
 pub use ostrov::runtime::Runtime;
 use ostrov::values::RcValue;
+use std::fmt::Debug;
 
 macro_rules! panic_expected {
     ($input:expr, $expected:expr, $actual:expr) => {
@@ -32,12 +33,15 @@ pub fn assert_eval_val(input: &str, expected: RcValue) {
     }
 }
 
-pub fn assert_eval_err(input: &str, expected: Error) {
+pub fn assert_eval_err<'a, T>(input: &'a str, expected: T)
+where
+    T: Into<Error<'a>> + Debug,
+{
     let mut runtime = Runtime::new();
 
     match runtime.eval_str(input) {
         Ok(exprs) => panic_expected!(input, &expected, &exprs),
-        Err(error) => assert_eq!(expected, error),
+        Err(error) => assert_eq!(expected.into(), error),
     }
 }
 
@@ -61,23 +65,4 @@ pub mod values {
     pub fn bool(val: bool) -> RcValue {
         Rc::new(Value::Bool(val))
     }
-}
-
-pub fn unbound_variable_error(val: &str) -> Error {
-    Error::UnboundVariable(val.to_owned())
-}
-pub fn unappliable_value_error(val: RcValue) -> Error {
-    Error::UnappliableValue(val)
-}
-pub fn wrong_argument_type(val: RcValue) -> Error {
-    Error::WrongArgumentType(val)
-}
-pub fn bad_arity(val: &str) -> Error {
-    Error::BadArity(Some(val.to_owned()))
-}
-pub fn bad_arity_lambda() -> Error {
-    Error::BadArity(None)
-}
-pub fn malformed_expr() -> Error {
-    Error::MalformedExpression
 }

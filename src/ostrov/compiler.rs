@@ -1,10 +1,10 @@
 use ast::AST;
 use ast::AST::*;
-use errors::Error;
+use errors::RuntimeError;
 use instructions::Instruction::*;
 use instructions::{ArgumentsType, Bytecode, Instruction};
 
-pub fn compile(ast: &[AST]) -> Result<Bytecode, Error> {
+pub fn compile(ast: &[AST]) -> Result<Bytecode, RuntimeError> {
     let mut instructions = vec![];
 
     for ast_value in ast {
@@ -14,32 +14,32 @@ pub fn compile(ast: &[AST]) -> Result<Bytecode, Error> {
     Ok(instructions)
 }
 
-pub fn compile_single(ast: &AST) -> Result<Bytecode, Error> {
+pub fn compile_single(ast: &AST) -> Result<Bytecode, RuntimeError> {
     match *ast {
         Integer(..) | Bool(..) => emit_constant(ast),
         Atom(ref atom) => emit_reference(atom),
         List(ref list) => emit_application(list),
-        _ => Err(Error::MalformedExpression),
+        _ => Err(RuntimeError::MalformedExpression),
     }
 }
 
-fn emit_single_instr(instruction: Instruction) -> Result<Bytecode, Error> {
+fn emit_single_instr(instruction: Instruction) -> Result<Bytecode, RuntimeError> {
     let mut bytecode = vec![];
     bytecode.push(instruction);
     Ok(bytecode)
 }
 
-fn emit_constant(value: &AST) -> Result<Bytecode, Error> {
+fn emit_constant(value: &AST) -> Result<Bytecode, RuntimeError> {
     emit_single_instr(LoadConstant(value.clone()))
 }
 
-fn emit_reference(atom: &str) -> Result<Bytecode, Error> {
+fn emit_reference(atom: &str) -> Result<Bytecode, RuntimeError> {
     emit_single_instr(LoadReference(atom.into()))
 }
 
-fn emit_application(list: &[AST]) -> Result<Bytecode, Error> {
+fn emit_application(list: &[AST]) -> Result<Bytecode, RuntimeError> {
     if list.is_empty() {
-        return Err(Error::MalformedExpression);
+        return Err(RuntimeError::MalformedExpression);
     }
 
     let head = &list[0];
@@ -64,9 +64,9 @@ fn emit_application(list: &[AST]) -> Result<Bytecode, Error> {
     emit_apply(head, tail)
 }
 
-fn emit_if(args: &[AST]) -> Result<Bytecode, Error> {
+fn emit_if(args: &[AST]) -> Result<Bytecode, RuntimeError> {
     if args.len() < 2 || args.len() > 3 {
-        return Err(Error::BadArity(Some("if".into())));
+        return Err(RuntimeError::BadArity(Some("if".into())));
     }
 
     let mut instructions = vec![];
@@ -89,11 +89,11 @@ fn emit_if(args: &[AST]) -> Result<Bytecode, Error> {
     Ok(instructions)
 }
 
-fn emit_and(args: &[AST]) -> Result<Bytecode, Error> {
+fn emit_and(args: &[AST]) -> Result<Bytecode, RuntimeError> {
     emit_logical_op(args, true, JumpOnFalse)
 }
 
-fn emit_or(args: &[AST]) -> Result<Bytecode, Error> {
+fn emit_or(args: &[AST]) -> Result<Bytecode, RuntimeError> {
     emit_logical_op(args, false, JumpOnTrue)
 }
 
@@ -101,7 +101,7 @@ fn emit_logical_op<F>(
     args: &[AST],
     default: bool,
     instruction: F,
-) -> Result<Bytecode, Error>
+) -> Result<Bytecode, RuntimeError>
 where
     F: Fn(usize) -> Instruction,
 {
@@ -146,9 +146,9 @@ where
     Ok(instructions)
 }
 
-fn emit_set(args: &[AST]) -> Result<Bytecode, Error> {
+fn emit_set(args: &[AST]) -> Result<Bytecode, RuntimeError> {
     if args.len() != 2 {
-        return Err(Error::BadArity(Some("set!".into())));
+        return Err(RuntimeError::BadArity(Some("set!".into())));
     }
 
     if let Atom(ref name) = args[0] {
@@ -158,13 +158,13 @@ fn emit_set(args: &[AST]) -> Result<Bytecode, Error> {
         instructions.push(Replace(name.clone()));
         Ok(instructions)
     } else {
-        Err(Error::MalformedExpression)
+        Err(RuntimeError::MalformedExpression)
     }
 }
 
-fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
+fn emit_define(args: &[AST]) -> Result<Bytecode, RuntimeError> {
     if args.is_empty() {
-        return Err(Error::MalformedExpression);
+        return Err(RuntimeError::MalformedExpression);
     }
 
     let mut instructions = vec![];
@@ -212,13 +212,13 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, Error> {
 
             instructions.push(Assignment(name));
         }
-        _ => return Err(Error::MalformedExpression),
+        _ => return Err(RuntimeError::MalformedExpression),
     }
 
     Ok(instructions)
 }
 
-fn emit_apply(head: &AST, args: &[AST]) -> Result<Bytecode, Error> {
+fn emit_apply(head: &AST, args: &[AST]) -> Result<Bytecode, RuntimeError> {
     let mut instructions = vec![];
     instructions.push(Frame);
 
@@ -232,10 +232,10 @@ fn emit_apply(head: &AST, args: &[AST]) -> Result<Bytecode, Error> {
     Ok(instructions)
 }
 
-fn emit_lambda(args_: &[AST]) -> Result<Bytecode, Error> {
+fn emit_lambda(args_: &[AST]) -> Result<Bytecode, RuntimeError> {
     let body = &args_[1..];
     if body.is_empty() {
-        return Err(Error::MalformedExpression);
+        return Err(RuntimeError::MalformedExpression);
     }
 
     let mut instructions = vec![];
@@ -251,9 +251,9 @@ fn emit_lambda(args_: &[AST]) -> Result<Bytecode, Error> {
     Ok(instructions)
 }
 
-fn emit_let(args_: &[AST]) -> Result<Bytecode, Error> {
+fn emit_let(args_: &[AST]) -> Result<Bytecode, RuntimeError> {
     if args_.len() < 2 {
-        return Err(Error::BadArity(Some("let".into())));
+        return Err(RuntimeError::BadArity(Some("let".into())));
     }
 
     let mut instructions = vec![];
@@ -271,7 +271,7 @@ fn emit_let(args_: &[AST]) -> Result<Bytecode, Error> {
                     instructions.append(&mut try!(compile_single(&binding[1])));
                     instructions.push(Argument);
                 }
-                _ => return Err(Error::MalformedExpression),
+                _ => return Err(RuntimeError::MalformedExpression),
             }
         }
 
@@ -288,13 +288,15 @@ fn emit_let(args_: &[AST]) -> Result<Bytecode, Error> {
 
         instructions.push(Apply);
     } else {
-        return Err(Error::MalformedExpression);
+        return Err(RuntimeError::MalformedExpression);
     }
 
     Ok(instructions)
 }
 
-fn function_arguments(ast: &AST) -> Result<(Vec<String>, ArgumentsType), Error> {
+fn function_arguments(
+    ast: &AST,
+) -> Result<(Vec<String>, ArgumentsType), RuntimeError> {
     match *ast {
         List(ref list) => {
             let mut atoms = Vec::with_capacity(list.len());
@@ -320,15 +322,15 @@ fn function_arguments(ast: &AST) -> Result<(Vec<String>, ArgumentsType), Error> 
             Ok((atoms, ArgumentsType::Variable))
         }
         Atom(ref arg) => Ok((vec![arg.clone()], ArgumentsType::Any)),
-        _ => Err(Error::MalformedExpression),
+        _ => Err(RuntimeError::MalformedExpression),
     }
 }
 
-fn unpack_atom(value: &AST) -> Result<String, Error> {
+fn unpack_atom(value: &AST) -> Result<String, RuntimeError> {
     if let Atom(ref atom) = *value {
         Ok(atom.clone())
     } else {
-        Err(Error::MalformedExpression)
+        Err(RuntimeError::MalformedExpression)
     }
 }
 
@@ -341,7 +343,8 @@ mod test {
     use parser::parse;
 
     fn parse_and_compile(input: &str) -> Vec<Instruction> {
-        parse(input).and_then(|ast| compile(&ast)).unwrap()
+        let ast = parse(input).expect(&format!("failed to parse {:?}", input));
+        compile(&ast).expect(&format!("failed to compile {:?}", input))
     }
 
     #[test]

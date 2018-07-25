@@ -1,10 +1,8 @@
 use ast::AST;
 use compiler::compile_single;
 use errors::Error;
-use parser::parse;
-use std::fs::File;
-use std::io;
-use std::io::Read;
+use parser::{parse, ParseError};
+use std::fs;
 use std::path::Path;
 use values::RcValue;
 use vm::VM;
@@ -18,11 +16,17 @@ impl Runtime {
         Runtime { vm: VM::new() }
     }
 
-    pub fn parse_str(&self, input: &str) -> Result<Vec<AST>, Error> {
+    pub fn parse_str<'a>(
+        &self,
+        input: &'a str,
+    ) -> Result<Vec<AST>, ParseError<'a>> {
         parse(input)
     }
 
-    pub fn eval_str(&mut self, input: &str) -> Result<Vec<RcValue>, Error> {
+    pub fn eval_str<'a>(
+        &mut self,
+        input: &'a str,
+    ) -> Result<Vec<RcValue>, Error<'a>> {
         let exprs = try!(self.parse_str(input));
 
         let mut evalued_exprs = Vec::new();
@@ -35,35 +39,22 @@ impl Runtime {
         Ok(evalued_exprs)
     }
 
-    pub fn eval_file(&mut self, path: &Path) -> Result<Vec<RcValue>, Error> {
-        let mut file = try!(Runtime::open_file(path));
-        let mut content = String::new();
-        try!(Runtime::handle_io_error(
-            file.read_to_string(&mut content),
-            path,
-        ));
+    pub fn eval_file(&mut self, path: &Path) {
+        let content = match fs::read_to_string(path) {
+            Ok(content) => content,
+            Err(e) => {
+                eprintln!("Failed loading {:?}: {:?}", path, e);
+                return;
+            }
+        };
 
-        self.eval_str(&*content)
+        match self.eval_str(&content) {
+            Ok(_) => (),
+            Err(e) => eprintln!("{:?}", e),
+        }
     }
 
     pub fn dump_heap(&self) {
         self.vm.memory.dump();
-    }
-
-    fn open_file(path: &Path) -> Result<File, Error> {
-        Runtime::handle_io_error(File::open(path), path)
-    }
-
-    fn handle_io_error<T>(
-        result: io::Result<T>,
-        path: &Path,
-    ) -> Result<T, Error> {
-        match result {
-            Ok(value) => Ok(value),
-            Err(_err) => {
-                let str_path = path.display().to_string();
-                Err(Error::LoadError(str_path))
-            }
-        }
     }
 }
