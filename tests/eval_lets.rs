@@ -1,4 +1,4 @@
-use helpers::*;
+use crate::helpers::*;
 use ostrov::errors::RuntimeError::*;
 
 #[test]

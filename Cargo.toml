@@ -9,6 +9,7 @@ keywords = ["language", "lisp", "scheme"]
 license = "MIT"
 authors = ["Federico Ravasio <ravasio.federico@gmail.com>"]
 autotests = false
+edition = "2018"
 
 [lib]
 name = "ostrov"

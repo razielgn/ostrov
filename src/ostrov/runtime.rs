@@ -1,11 +1,12 @@
-use ast::AST;
-use compiler::compile_single;
-use errors::Error;
-use parser::{parse, ParseError};
-use std::fs;
-use std::path::Path;
-use values::RcValue;
-use vm::VM;
+use crate::{
+    ast::AST,
+    compiler::compile_single,
+    errors::Error,
+    parser::{parse, ParseError},
+    values::RcValue,
+    vm::VM,
+};
+use std::{fs, path::Path};
 
 pub struct Runtime {
     vm: VM,
@@ -27,12 +28,12 @@ impl Runtime {
         &mut self,
         input: &'a str,
     ) -> Result<Vec<RcValue>, Error<'a>> {
-        let exprs = try!(self.parse_str(input));
+        let exprs = self.parse_str(input)?;
 
         let mut evalued_exprs = Vec::new();
         for expr in &exprs {
-            let bytecode = try!(compile_single(expr));
-            let evalued_expr = try!(self.vm.execute(bytecode));
+            let bytecode = compile_single(expr)?;
+            let evalued_expr = self.vm.execute(bytecode)?;
             evalued_exprs.push(evalued_expr);
         }
 

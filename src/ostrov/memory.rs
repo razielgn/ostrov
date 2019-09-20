@@ -1,7 +1,9 @@
-use env::CellEnv;
-use instructions::Bytecode;
+use crate::{
+    env::CellEnv,
+    instructions::Bytecode,
+    values::{ArgumentsType, RcValue, Value},
+};
 use std::rc::Rc;
-use values::{ArgumentsType, RcValue, Value};
 
 #[derive(Default)]
 pub struct Memory {

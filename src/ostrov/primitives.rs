@@ -1,6 +1,8 @@
-use errors::RuntimeError;
-use memory::Memory;
-use values::{RcValue, Value};
+use crate::{
+    errors::RuntimeError,
+    memory::Memory,
+    values::{RcValue, Value},
+};
 
 pub static PRIMITIVES: [&'static str; 20] = [
     "*", "+", "-", "/", "<", "<=", "=", ">", ">=", "car", "cdr", "cons",
@@ -38,7 +40,7 @@ pub fn apply(
 }
 
 fn plus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
-    let integers = try!(list_of_integers(args));
+    let integers = list_of_integers(args)?;
     let sum = integers.into_iter().sum();
     Ok(mem.integer(sum))
 }
@@ -48,7 +50,7 @@ fn minus(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
         return Err(RuntimeError::BadArity(Some("-".to_owned())));
     }
 
-    let integers = try!(list_of_integers(args));
+    let integers = list_of_integers(args)?;
     let first = integers[0];
 
     if integers.len() == 1 {
@@ -64,7 +66,7 @@ fn division(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError>
         return Err(RuntimeError::BadArity(Some("/".to_owned())));
     }
 
-    let integers = try!(list_of_integers(args));
+    let integers = list_of_integers(args)?;
     let first = integers[0];
 
     if integers.len() == 1 {
@@ -76,7 +78,7 @@ fn division(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError>
 }
 
 fn product(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
-    let integers = try!(list_of_integers(args));
+    let integers = list_of_integers(args)?;
     let product = integers.into_iter().product();
     Ok(mem.integer(product))
 }
@@ -86,14 +88,17 @@ fn equals(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
         return Ok(mem.b_true());
     }
 
-    let integers = try!(list_of_integers(args));
+    let integers = list_of_integers(args)?;
     let first = integers[0];
 
     let equality = integers.into_iter().skip(1).all(|n| n == first);
     Ok(mem.boolean(equality))
 }
 
-fn less_than(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
+fn less_than(
+    args: &[RcValue],
+    mem: &mut Memory,
+) -> Result<RcValue, RuntimeError> {
     ord(args, mem, |a, b| a < b)
 }
 
@@ -104,7 +109,10 @@ fn less_than_or_equal(
     ord(args, mem, |a, b| a <= b)
 }
 
-fn greater_than(args: &[RcValue], mem: &mut Memory) -> Result<RcValue, RuntimeError> {
+fn greater_than(
+    args: &[RcValue],
+    mem: &mut Memory,
+) -> Result<RcValue, RuntimeError> {
     ord(args, mem, |a, b| a > b)
 }
 
@@ -209,7 +217,11 @@ fn list_of_integers(list: &[RcValue]) -> Result<Vec<i64>, RuntimeError> {
     Ok(integers)
 }
 
-fn ord<F>(args: &[RcValue], mem: &mut Memory, cmp: F) -> Result<RcValue, RuntimeError>
+fn ord<F>(
+    args: &[RcValue],
+    mem: &mut Memory,
+    cmp: F,
+) -> Result<RcValue, RuntimeError>
 where
     F: Fn(i64, i64) -> bool,
 {
@@ -217,7 +229,7 @@ where
         return Ok(mem.b_true());
     }
 
-    let integers = try!(list_of_integers(args));
+    let integers = list_of_integers(args)?;
     let outcome =
         (0..integers.len() - 1).all(|i| cmp(integers[i], integers[i + 1]));
 

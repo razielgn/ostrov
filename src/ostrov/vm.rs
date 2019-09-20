@@ -1,13 +1,13 @@
-use ast::AST;
-use env::CellEnv;
-use errors::RuntimeError;
-use instructions::{Bytecode, Instruction};
-use memory::Memory;
-use primitives;
-use std::collections::LinkedList;
-use std::iter::FromIterator;
-use std::mem;
-use values::{ArgumentsType, RcValue, Value};
+use crate::{
+    ast::AST,
+    env::CellEnv,
+    errors::RuntimeError,
+    instructions::{Bytecode, Instruction},
+    memory::Memory,
+    primitives,
+    values::{ArgumentsType, RcValue, Value},
+};
+use std::{collections::LinkedList, iter::FromIterator, mem};
 
 pub type Rib = Vec<RcValue>;
 pub type Stack = LinkedList<Frame>;
@@ -57,12 +57,15 @@ impl VM {
         vm
     }
 
-    pub fn execute(&mut self, instructions: Bytecode) -> Result<RcValue, RuntimeError> {
+    pub fn execute(
+        &mut self,
+        instructions: Bytecode,
+    ) -> Result<RcValue, RuntimeError> {
         self.instructions = instructions;
         self.pc = 0;
 
         loop {
-            use instructions::Instruction::*;
+            use crate::instructions::Instruction::*;
 
             match self.next_instruction() {
                 Some(instr) => match instr {
@@ -71,12 +74,12 @@ impl VM {
                     JumpOnFalse(offset) => self.jump_on_false(offset),
                     JumpOnTrue(offset) => self.jump_on_true(offset),
                     LoadReference(ref reference) => {
-                        try!(self.load_reference(reference))
+                        self.load_reference(reference)?
                     }
                     Assignment(ref reference) => self.assignment(reference),
-                    Replace(ref reference) => try!(self.replace(reference)),
+                    Replace(ref reference) => self.replace(reference)?,
                     LoadUnspecified => self.load_unspecified(),
-                    Apply => try!(self.apply()),
+                    Apply => self.apply()?,
                     Argument => self.argument(),
                     Frame => self.push_frame(),
                     Close {
@@ -157,14 +160,17 @@ impl VM {
     }
 
     fn pop_frame(&mut self, a: bool) -> Result<(), RuntimeError> {
-        let frame = try!(self.stack.pop_back().ok_or(RuntimeError::CannotPopLastFrame));
+        let frame = self
+            .stack
+            .pop_back()
+            .ok_or(RuntimeError::CannotPopLastFrame)?;
 
         self.rib = frame.rib;
         self.env = frame.env;
 
         if a {
             let (instr, pc) =
-                try!(self.code.pop().ok_or(RuntimeError::CannotPopLastFrame));
+                self.code.pop().ok_or(RuntimeError::CannotPopLastFrame)?;
 
             self.instructions = instr;
             self.pc = pc;
@@ -177,11 +183,11 @@ impl VM {
         match *self.acc.clone() {
             Value::PrimitiveFn(ref name) => {
                 let result =
-                    try!(primitives::apply(name, &self.rib, &mut self.memory));
+                    primitives::apply(name, &self.rib, &mut self.memory)?;
 
                 self.acc = result;
 
-                try!(self.pop_frame(false));
+                self.pop_frame(false)?;
 
                 Ok(())
             }
@@ -223,7 +229,8 @@ impl VM {
                             self.env.set(name.clone(), value.clone());
                         }
 
-                        let var_args = self.rib
+                        let var_args = self
+                            .rib
                             .iter()
                             .skip(fixed_arg_names.len())
                             .cloned()
@@ -276,10 +283,9 @@ impl VM {
 
 #[cfg(test)]
 mod test {
-    use ast::AST::*;
-    use errors::RuntimeError;
-    use instructions::Instruction::*;
-    use vm::VM;
+    use crate::{
+        ast::AST::*, errors::RuntimeError, instructions::Instruction::*, vm::VM,
+    };
 
     #[test]
     fn execute_load_constant() {

@@ -1,8 +1,8 @@
-use runtime::Runtime;
-use std::io;
-use std::io::Write;
-use std::path::Path;
-use values::Value;
+use crate::{runtime::Runtime, values::Value};
+use std::{
+    io::{self, Write},
+    path::Path,
+};
 
 pub fn repl(args: &[String]) {
     let mut runtime = Runtime::new();
@@ -32,11 +32,13 @@ fn enter_repl(runtime: &mut Runtime) {
                     runtime.dump_heap();
                 }
                 line => match runtime.eval_str(line) {
-                    Ok(exprs) => for expr in &exprs {
-                        if **expr != Value::Unspecified {
-                            println!("=> {}", expr);
+                    Ok(exprs) => {
+                        for expr in &exprs {
+                            if **expr != Value::Unspecified {
+                                println!("=> {}", expr);
+                            }
                         }
-                    },
+                    }
                     Err(error) => println!("Error: {:?}", error),
                 },
             },

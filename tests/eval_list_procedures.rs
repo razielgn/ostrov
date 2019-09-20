@@ -1,5 +1,4 @@
-use helpers::values::*;
-use helpers::*;
+use crate::helpers::{values::*, *};
 use ostrov::errors::RuntimeError::*;
 
 #[test]
@@ -16,7 +15,7 @@ fn length() {
 }
 
 #[test]
-fn length_BadArity() {
+fn length_bad_arity() {
     assert_eval_err("(length '() '())", BadArity(Some("length".into())));
 }
 

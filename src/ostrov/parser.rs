@@ -1,7 +1,5 @@
-use ast::AST;
-use ast::AST::*;
-use nom::types::CompleteStr;
-use nom::{alpha1, digit1, multispace0, multispace1, Err};
+use crate::ast::AST::{self, *};
+use nom::{types::CompleteStr, Err, *};
 use nom_locate::LocatedSpan;
 
 pub type Span<'a> = LocatedSpan<CompleteStr<'a>>;
@@ -125,8 +123,7 @@ pub fn parse<'a>(input: &'a str) -> Result<Vec<AST>, ParseError<'a>> {
 
 #[cfg(test)]
 mod test {
-    use ast::AST;
-    use ast::AST::*;
+    use crate::ast::AST::{self, *};
 
     macro_rules! assert_parse {
         ($expected:expr, $str:expr) => {

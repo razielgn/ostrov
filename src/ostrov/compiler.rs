@@ -1,14 +1,17 @@
-use ast::AST;
-use ast::AST::*;
-use errors::RuntimeError;
-use instructions::Instruction::*;
-use instructions::{ArgumentsType, Bytecode, Instruction};
+use crate::{
+    ast::AST::{self, *},
+    errors::RuntimeError,
+    instructions::{
+        ArgumentsType, Bytecode,
+        Instruction::{self, *},
+    },
+};
 
 pub fn compile(ast: &[AST]) -> Result<Bytecode, RuntimeError> {
     let mut instructions = vec![];
 
     for ast_value in ast {
-        instructions.append(&mut try!(compile_single(ast_value)));
+        instructions.append(&mut compile_single(ast_value)?);
     }
 
     Ok(instructions)
@@ -71,14 +74,14 @@ fn emit_if(args: &[AST]) -> Result<Bytecode, RuntimeError> {
 
     let mut instructions = vec![];
 
-    instructions.append(&mut try!(compile_single(&args[0])));
+    instructions.append(&mut compile_single(&args[0])?);
 
-    let mut then = try!(compile_single(&args[1]));
+    let mut then = compile_single(&args[1])?;
     instructions.push(JumpOnFalse(then.len() + 1));
     instructions.append(&mut then);
 
     if args.len() == 3 {
-        let mut else_ = try!(compile_single(&args[2]));
+        let mut else_ = compile_single(&args[2])?;
         instructions.push(Jump(else_.len()));
         instructions.append(&mut else_);
     } else {
@@ -114,7 +117,7 @@ where
         let mut sizes = Vec::with_capacity(args.len());
 
         for arg in args {
-            let compiled_single = try!(compile_single(arg));
+            let compiled_single = compile_single(arg)?;
             sizes.push(compiled_single.len());
             compiled_args.push(compiled_single);
         }
@@ -152,7 +155,7 @@ fn emit_set(args: &[AST]) -> Result<Bytecode, RuntimeError> {
     }
 
     if let Atom(ref name) = args[0] {
-        let mut argument = try!(compile_single(&args[1]));
+        let mut argument = compile_single(&args[1])?;
         let mut instructions = vec![];
         instructions.append(&mut argument);
         instructions.push(Replace(name.clone()));
@@ -172,7 +175,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, RuntimeError> {
     match args[0] {
         Atom(ref name) => {
             if args.len() == 2 {
-                instructions.append(&mut try!(compile_single(&args[1])));
+                instructions.append(&mut compile_single(&args[1])?);
             } else {
                 instructions.push(LoadUnspecified);
             }
@@ -180,7 +183,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, RuntimeError> {
             instructions.push(Assignment(name.clone()));
         }
         List(ref list) if !list.is_empty() => {
-            let name = try!(unpack_atom(&list[0]));
+            let name = unpack_atom(&list[0])?;
             let arg_names = &list[1..];
             let body = &args[1..];
 
@@ -188,12 +191,12 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, RuntimeError> {
             for x in body {
                 lambda.push(x.clone());
             }
-            instructions.append(&mut try!(emit_lambda(&lambda)));
+            instructions.append(&mut emit_lambda(&lambda)?);
 
             instructions.push(Assignment(name));
         }
         DottedList(ref list, ref extra) if !list.is_empty() => {
-            let name = try!(unpack_atom(&list[0]));
+            let name = unpack_atom(&list[0])?;
             let arg_names = &list[1..];
             let body = &args[1..];
 
@@ -208,7 +211,7 @@ fn emit_define(args: &[AST]) -> Result<Bytecode, RuntimeError> {
             for x in body {
                 lambda.push(x.clone());
             }
-            instructions.append(&mut try!(emit_lambda(&lambda)));
+            instructions.append(&mut emit_lambda(&lambda)?);
 
             instructions.push(Assignment(name));
         }
@@ -223,11 +226,11 @@ fn emit_apply(head: &AST, args: &[AST]) -> Result<Bytecode, RuntimeError> {
     instructions.push(Frame);
 
     for arg in args {
-        instructions.append(&mut try!(compile_single(arg)));
+        instructions.append(&mut compile_single(arg)?);
         instructions.push(Argument);
     }
 
-    instructions.append(&mut try!(compile_single(head)));
+    instructions.append(&mut compile_single(head)?);
     instructions.push(Apply);
     Ok(instructions)
 }
@@ -240,8 +243,8 @@ fn emit_lambda(args_: &[AST]) -> Result<Bytecode, RuntimeError> {
 
     let mut instructions = vec![];
 
-    let compiled_body = try!(compile(body));
-    let (args, args_type) = try!(function_arguments(&args_[0]));
+    let compiled_body = compile(body)?;
+    let (args, args_type) = function_arguments(&args_[0])?;
     instructions.push(Close {
         args,
         args_type,
@@ -266,9 +269,9 @@ fn emit_let(args_: &[AST]) -> Result<Bytecode, RuntimeError> {
         for binding in bindings.iter() {
             match *binding {
                 List(ref binding) if binding.len() == 2 => {
-                    params.push(try!(unpack_atom(&binding[0])));
+                    params.push(unpack_atom(&binding[0])?);
 
-                    instructions.append(&mut try!(compile_single(&binding[1])));
+                    instructions.append(&mut compile_single(&binding[1])?);
                     instructions.push(Argument);
                 }
                 _ => return Err(RuntimeError::MalformedExpression),
@@ -277,7 +280,7 @@ fn emit_let(args_: &[AST]) -> Result<Bytecode, RuntimeError> {
 
         let mut inner_instr = vec![];
         for body in &args_[1..] {
-            inner_instr.append(&mut try!(compile_single(body)));
+            inner_instr.append(&mut compile_single(body)?);
         }
 
         instructions.push(Close {
@@ -302,7 +305,7 @@ fn function_arguments(
             let mut atoms = Vec::with_capacity(list.len());
 
             for atom in list {
-                let arg = try!(unpack_atom(atom));
+                let arg = unpack_atom(atom)?;
                 atoms.push(arg.clone());
             }
 
@@ -312,11 +315,11 @@ fn function_arguments(
             let mut atoms = Vec::with_capacity(list.len() + 1);
 
             for atom in list {
-                let arg = try!(unpack_atom(atom));
+                let arg = unpack_atom(atom)?;
                 atoms.push(arg.clone());
             }
 
-            let arg = try!(unpack_atom(extra));
+            let arg = unpack_atom(extra)?;
             atoms.push(arg);
 
             Ok((atoms, ArgumentsType::Variable))
@@ -337,10 +340,14 @@ fn unpack_atom(value: &AST) -> Result<String, RuntimeError> {
 #[cfg(test)]
 mod test {
     use super::compile;
-    use ast::AST::*;
-    use instructions::Instruction::*;
-    use instructions::{ArgumentsType, Instruction};
-    use parser::parse;
+    use crate::{
+        ast::AST::*,
+        instructions::{
+            ArgumentsType,
+            Instruction::{self, *},
+        },
+        parser::parse,
+    };
 
     fn parse_and_compile(input: &str) -> Vec<Instruction> {
         let ast = parse(input).expect(&format!("failed to parse {:?}", input));

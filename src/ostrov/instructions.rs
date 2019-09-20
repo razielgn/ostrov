@@ -1,5 +1,5 @@
-use ast::AST;
-pub use values::ArgumentsType;
+use crate::ast::AST;
+pub use crate::values::ArgumentsType;
 
 pub type Bytecode = Vec<Instruction>;
 

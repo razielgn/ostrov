@@ -1,5 +1,4 @@
-use values::RcValue;
-use parser::ParseError;
+use crate::{parser::ParseError, values::RcValue};
 
 #[derive(PartialEq, Debug)]
 pub enum Error<'a> {
@@ -8,11 +7,15 @@ pub enum Error<'a> {
 }
 
 impl<'a> From<RuntimeError> for Error<'a> {
-    fn from(e: RuntimeError) -> Error<'a> { Error::RuntimeError(e) }
+    fn from(e: RuntimeError) -> Error<'a> {
+        Error::RuntimeError(e)
+    }
 }
 
 impl<'a> From<ParseError<'a>> for Error<'a> {
-    fn from(e: ParseError<'a>) -> Error<'a> { Error::ParseError(e) }
+    fn from(e: ParseError<'a>) -> Error<'a> {
+        Error::ParseError(e)
+    }
 }
 
 #[derive(PartialEq, Debug)]

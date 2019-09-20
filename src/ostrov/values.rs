@@ -1,12 +1,8 @@
-use ast::AST;
-use env::CellEnv;
-use instructions::Bytecode;
-use memory::Memory;
-use std::fmt::Debug;
-use std::fmt::Display;
-use std::fmt::Error;
-use std::fmt::Formatter;
-use std::rc::Rc;
+use crate::{ast::AST, env::CellEnv, instructions::Bytecode, memory::Memory};
+use std::{
+    fmt::{Debug, Display, Error, Formatter},
+    rc::Rc,
+};
 
 pub type RcValue = Rc<Value>;
 
@@ -74,10 +70,10 @@ fn fmt_join_with_spaces<T: Display>(
     f: &mut Formatter,
 ) -> Result<(), Error> {
     for (i, item) in items.iter().enumerate() {
-        try!(write!(f, "{}", item));
+        write!(f, "{}", item)?;
 
         if i + 1 != items.len() {
-            try!(write!(f, " "));
+            write!(f, " ")?;
         }
     }
 
@@ -85,8 +81,8 @@ fn fmt_join_with_spaces<T: Display>(
 }
 
 fn fmt_list<T: Display>(items: &[T], f: &mut Formatter) -> Result<(), Error> {
-    try!(write!(f, "("));
-    try!(fmt_join_with_spaces(items, f));
+    write!(f, "(")?;
+    fmt_join_with_spaces(items, f)?;
     write!(f, ")")
 }
 
@@ -95,12 +91,12 @@ fn fmt_pair(
     right: &RcValue,
     f: &mut Formatter,
 ) -> Result<(), Error> {
-    try!(write!(f, "{}", left));
+    write!(f, "{}", left)?;
 
     match **right {
         Nil => Ok(()),
         Pair(ref left, ref right) => {
-            try!(write!(f, " "));
+            write!(f, " ")?;
             fmt_pair(left, right, f)
         }
         _ => write!(f, " . {}", right),
@@ -112,8 +108,8 @@ fn fmt_dotted_list<T: Display>(
     right: &T,
     f: &mut Formatter,
 ) -> Result<(), Error> {
-    try!(write!(f, "("));
-    try!(fmt_join_with_spaces(items, f));
+    write!(f, "(")?;
+    fmt_join_with_spaces(items, f)?;
     write!(f, " . {})", right)
 }
 
@@ -127,26 +123,26 @@ fn fmt_procedure(
     args: &[String],
     f: &mut Formatter,
 ) -> Result<(), Error> {
-    try!(write!(f, "<"));
+    write!(f, "<")?;
 
     match *name {
         Some(ref n) => {
-            try!(write!(f, "procedure {}", n));
+            write!(f, "procedure {}", n)?;
         }
         _ => {
-            try!(write!(f, "lambda"));
+            write!(f, "lambda")?;
         }
     };
 
-    try!(write!(f, " "));
+    write!(f, " ")?;
 
     match *args_type {
-        Any => try!(write!(f, "{}", args[0])),
-        Fixed => try!(fmt_list(args, f)),
+        Any => write!(f, "{}", args[0])?,
+        Fixed => fmt_list(args, f)?,
         Variable => {
             let head = &args[0..args.len() - 1];
             let tail = args.last().unwrap();
-            try!(fmt_dotted_list(head, tail, f));
+            fmt_dotted_list(head, tail, f)?;
         }
     }
 
@@ -162,8 +158,8 @@ impl Display for Value {
             Nil => write!(f, "()"),
             Unspecified => write!(f, "<unspecified>"),
             Pair(ref left, ref right) => {
-                try!(write!(f, "("));
-                try!(fmt_pair(left, right, f));
+                write!(f, "(")?;
+                fmt_pair(left, right, f)?;
                 write!(f, ")")
             }
             Closure {
@@ -240,9 +236,8 @@ impl Value {
 
 #[cfg(test)]
 mod test {
-    use super::ArgumentsType::*;
-    use super::Value::*;
-    use env::CellEnv;
+    use super::{ArgumentsType::*, Value::*};
+    use crate::env::CellEnv;
     use std::rc::Rc;
 
     macro_rules! assert_fmt {

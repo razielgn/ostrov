@@ -1,7 +1,5 @@
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
-use values::RcValue;
+use crate::values::RcValue;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Clone)]
 pub struct CellEnv(Rc<RefCell<Env>>);
@@ -88,7 +86,7 @@ impl Env {
 #[cfg(test)]
 mod test {
     use super::CellEnv;
-    use memory::Memory;
+    use crate::memory::Memory;
 
     #[test]
     fn set_and_get_ok() {
