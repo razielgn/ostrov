@@ -86,7 +86,7 @@ impl VM {
                         ref args,
                         ref args_type,
                         ref body,
-                    } => self.push_closure(args, args_type, body),
+                    } => self.push_closure(args, *args_type, body),
                 },
                 None => match self.pop_frame(true) {
                     Ok(()) => (),
@@ -258,11 +258,11 @@ impl VM {
     fn push_closure(
         &mut self,
         args: &[String],
-        args_type: &ArgumentsType,
+        args_type: ArgumentsType,
         body: &Bytecode,
     ) {
         self.acc = self.memory.closure(
-            *args_type,
+            args_type,
             args.to_vec(),
             CellEnv::wraps(self.env.clone()),
             body.clone(),

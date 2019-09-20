@@ -119,7 +119,7 @@ fn fmt_primitive(name: &str, f: &mut Formatter) -> Result<(), Error> {
 
 fn fmt_procedure(
     name: &Option<String>,
-    args_type: &ArgumentsType,
+    args_type: ArgumentsType,
     args: &[String],
     f: &mut Formatter,
 ) -> Result<(), Error> {
@@ -136,7 +136,7 @@ fn fmt_procedure(
 
     write!(f, " ")?;
 
-    match *args_type {
+    match args_type {
         Any => write!(f, "{}", args[0])?,
         Fixed => fmt_list(args, f)?,
         Variable => {
@@ -167,7 +167,7 @@ impl Display for Value {
                 ref args_type,
                 ref args,
                 ..
-            } => fmt_procedure(name, args_type, args, f),
+            } => fmt_procedure(name, *args_type, args, f),
             Integer(ref i) => write!(f, "{}", i),
             PrimitiveFn(ref name) => fmt_primitive(name, f),
         }

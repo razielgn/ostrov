@@ -4,7 +4,7 @@ use crate::{
     values::{RcValue, Value},
 };
 
-pub static PRIMITIVES: [&'static str; 20] = [
+pub static PRIMITIVES: [&str; 20] = [
     "*", "+", "-", "/", "<", "<=", "=", ">", ">=", "car", "cdr", "cons",
     "length", "list", "list?", "not", "null?", "pair?", "display", "newline",
 ];
